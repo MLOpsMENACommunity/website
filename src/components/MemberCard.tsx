@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import { Linkedin, ArrowUpRight } from 'lucide-react'
 import type { Member } from '~/data/team'
+import { asset } from '@/lib/asset'
 
 /**
  * Renders a team member. Falls back to an initials avatar when no photo is set,
@@ -20,7 +21,7 @@ export default function MemberCard({
       <div className="flex items-start gap-4">
         {member.photo ? (
           <Image
-            src={member.photo}
+            src={asset(member.photo)}
             alt={member.name}
             width={64}
             height={64}

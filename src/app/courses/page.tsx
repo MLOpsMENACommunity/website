@@ -10,6 +10,7 @@ import HexField from '@/components/HexField'
 import { course } from '~/data/mlops-practitioner'
 import { upcomingCourse } from '~/data/offerings'
 import { partners, channels } from '~/site.config'
+import { asset } from '@/lib/asset'
 
 export const metadata: Metadata = {
   title: 'Courses',
@@ -57,7 +58,7 @@ export default function CoursesPage() {
               </div>
               <div className="relative h-56 sm:h-full sm:min-h-[16rem]">
                 <Image
-                  src="/course/milestone-1200.jpg"
+                  src={asset("/course/milestone-1200.jpg")}
                   alt="Celebrating 1,200+ registered students for the MLOps Practitioner course"
                   fill
                   sizes="(max-width: 640px) 100vw, 20rem"

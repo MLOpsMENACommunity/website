@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from 'next/font/google'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import { site } from '~/site.config'
+import { asset } from '@/lib/asset'
 import './globals.css'
 
 const inter = Inter({
@@ -29,15 +30,15 @@ export const metadata: Metadata = {
     siteName: site.name,
     title: `${site.name} — Free AI & MLOps education for MENA`,
     description: site.description,
-    images: ['/logo-full.png'],
+    images: [asset('/logo-full.png')],
   },
   twitter: {
     card: 'summary_large_image',
     title: site.name,
     description: site.description,
-    images: ['/logo-full.png'],
+    images: [asset('/logo-full.png')],
   },
-  icons: { icon: '/logo-mark.png', apple: '/logo-mark.png' },
+  icons: { icon: asset('/logo-mark.png'), apple: asset('/logo-mark.png') },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

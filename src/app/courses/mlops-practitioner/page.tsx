@@ -15,6 +15,7 @@ import { course } from '~/data/mlops-practitioner'
 import { studyGroups, groupRule, groupRuleNote } from '~/data/study-groups'
 import { faqs, sessionMaterial } from '~/data/faq'
 import { channels, partners } from '~/site.config'
+import { asset } from '@/lib/asset'
 
 
 export const metadata: Metadata = {
@@ -77,7 +78,7 @@ export default function CoursePage() {
 
               {/* Instructor */}
               <div className="mt-8 flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <Image src="/logo-mark.png" alt="" width={52} height={52}
+                <Image src={asset("/logo-mark.png")} alt="" width={52} height={52}
                        className="h-13 w-13 shrink-0 rounded-full object-cover ring-1 ring-white/15" />
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-white">{course.instructor.name}</p>

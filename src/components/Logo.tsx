@@ -1,11 +1,12 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { asset } from '@/lib/asset'
 
 export default function Logo({ compact = false }: { compact?: boolean }) {
   return (
     <Link href="/" className="group flex items-center gap-3" aria-label="MLOps MENA Community — home">
       <Image
-        src="/logo-mark.png"
+        src={asset("/logo-mark.png")}
         alt=""
         width={48}
         height={48}

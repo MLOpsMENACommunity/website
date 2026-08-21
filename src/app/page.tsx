@@ -11,6 +11,7 @@ import FaqAccordion from '@/components/FaqAccordion'
 import JoinCTA from '@/components/JoinCTA'
 import HexField from '@/components/HexField'
 import MemberCard from '@/components/MemberCard'
+import { asset } from '@/lib/asset'
 import { getRoadmaps, accentClasses } from '@/lib/roadmaps'
 import { course } from '~/data/mlops-practitioner'
 import { upcomingCourse } from '~/data/offerings'
@@ -204,7 +205,7 @@ export default function HomePage() {
                   <article className="card card-hover group flex h-full flex-col overflow-hidden">
                     <div className="relative h-48 w-full overflow-hidden bg-ink-850">
                       <Image
-                        src={`/sessions/${s.slug}.jpg`}
+                        src={asset(`/sessions/${s.slug}.jpg`)}
                         alt={s.title}
                         fill
                         sizes="(max-width: 768px) 100vw, 36rem"
@@ -466,7 +467,7 @@ export default function HomePage() {
                 {p.logo ? (
                   // DevisionX: logo only, no label — per your instruction.
                   <span className="inline-flex items-center justify-center rounded-2xl bg-white px-8 py-6">
-                    <Image src={p.logo} alt={p.name} width={260} height={104}
+                    <Image src={asset(p.logo)} alt={p.name} width={260} height={104}
                            className="h-16 w-auto object-contain" />
                   </span>
                 ) : (
