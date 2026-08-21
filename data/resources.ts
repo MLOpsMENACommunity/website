@@ -1,0 +1,22 @@
+/** Key free resources referenced across the roadmaps. Source: master reference §5. */
+export const keyResources = [
+  { name: 'MLOps Zoomcamp', href: 'https://github.com/DataTalksClub/mlops-zoomcamp', kind: 'Course' },
+  { name: 'Made With ML', href: 'https://madewithml.com', kind: 'Course' },
+  { name: 'MIT Missing Semester', href: 'https://missing.csail.mit.edu', kind: 'Course' },
+  { name: 'MIT 6.5940 TinyML', href: 'https://efficientml.ai', kind: 'Course' },
+  { name: 'Efficient Deep Learning book', href: 'https://efficientdlbook.com', kind: 'Book' },
+  { name: 'Stanford CS329S', href: 'https://stanford-cs329s.github.io', kind: 'Course' },
+  { name: 'Full Stack Deep Learning', href: 'https://fullstackdeeplearning.com', kind: 'Course' },
+  { name: 'Machine Learning Engineering (Burkov)', href: 'https://mlebook.com', kind: 'Book' },
+  { name: 'Hugging Face LLM Course', href: 'https://huggingface.co/learn/llm-course', kind: 'Course' },
+  { name: 'Hugging Face Agents Course', href: 'https://huggingface.co/learn/agents-course', kind: 'Course' },
+  { name: 'vLLM', href: 'https://docs.vllm.ai', kind: 'Docs' },
+  { name: 'Langfuse', href: 'https://langfuse.com', kind: 'Tool' },
+  { name: 'Evidently AI', href: 'https://github.com/evidentlyai/evidently', kind: 'Tool' },
+  { name: 'MLflow', href: 'https://mlflow.org', kind: 'Tool' },
+  { name: 'DVC', href: 'https://dvc.org', kind: 'Tool' },
+  { name: 'Apache Airflow', href: 'https://airflow.apache.org', kind: 'Tool' },
+  { name: 'KServe', href: 'https://kserve.github.io', kind: 'Tool' },
+  { name: 'Kubeflow', href: 'https://kubeflow.org', kind: 'Tool' },
+  { name: 'Seldon Core', href: 'https://github.com/SeldonIO/seldon-core', kind: 'Tool' },
+] as const

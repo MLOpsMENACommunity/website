@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand-teal: #33cec0;
+  --brand-cyan: #2cacd1;
+  --brand-cyan-bright: #22c3e6;
+  --brand-amber: #ec9723;
+  --brand-amber-light: #f5a623;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    /* Offset anchor targets so the sticky header never covers a heading. */
+    scroll-padding-top: 6rem;
+  }
+  body {
+    @apply bg-ink-900 text-slate-300 antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 15% -10%, rgba(51, 206, 192, 0.13), transparent 60%),
+      radial-gradient(ellipse 70% 50% at 90% 5%, rgba(236, 151, 35, 0.11), transparent 60%);
+    background-attachment: fixed;
+  }
+  h1, h2, h3, h4 {
+    @apply text-white font-semibold tracking-tight;
+    text-wrap: balance;
+  }
+  ::selection {
+    background: rgba(51, 206, 192, 0.3);
+    color: #fff;
+  }
+}
+
+@layer components {
+  /* The teal→amber sweep of the logo's infinity loop. */
+  .brand-gradient {
+    background-image: linear-gradient(100deg, var(--brand-teal), var(--brand-cyan) 42%, var(--brand-amber));
+  }
+  .brand-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(100deg, var(--brand-teal), var(--brand-cyan-bright) 45%, var(--brand-amber-light));
+  }
+  .eyebrow {
+    @apply inline-flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-400;
+  }
+  /* Vertical accent bar used on the roadmap covers. */
+  .eyebrow::before {
+    content: '';
+    @apply block h-4 w-[3px] rounded-full brand-gradient;
+  }
+  .card {
+    @apply relative rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm transition duration-300;
+  }
+  .card-hover {
+    @apply hover:border-cyan-400/40 hover:bg-white/[0.055] hover:-translate-y-1;
+    box-shadow: 0 0 0 0 rgba(44, 172, 209, 0);
+  }
+  .card-hover:hover {
+    box-shadow: 0 18px 50px -22px rgba(44, 172, 209, 0.55);
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold
+           transition duration-200 focus-visible:outline focus-visible:outline-2
+           focus-visible:outline-offset-2 focus-visible:outline-cyan-400;
+  }
+  .btn-primary {
+    @apply btn brand-gradient text-ink-950;
+    box-shadow: 0 10px 34px -12px rgba(51, 206, 192, 0.75);
+  }
+  .btn-primary:hover {
+    filter: brightness(1.09);
+    transform: translateY(-1px);
+  }
+  .btn-ghost {
+    @apply btn border border-white/15 text-white hover:border-cyan-400/50 hover:bg-white/5;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-white/5
+           px-3 py-1 text-xs font-medium text-slate-300;
+  }
+  /* Hairline divider that fades at both ends. */
+  .rule {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+  }
+}
+
+@layer utilities {
+  .glow-teal { box-shadow: 0 0 60px -12px rgba(51, 206, 192, 0.55); }
+  .glow-amber { box-shadow: 0 0 60px -12px rgba(236, 151, 35, 0.5); }
+  .text-shadow-glow { text-shadow: 0 0 28px rgba(44, 172, 209, 0.45); }
+}
+
+/* ---- Scroll reveal (see components/Reveal.tsx) ---- */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Anyone who asks for less motion gets none of it. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---- Article prose ---- */
+.prose-brand {
+  @apply prose prose-invert max-w-none
+         prose-headings:tracking-tight prose-headings:text-white
+         prose-a:text-cyan-400 prose-a:no-underline hover:prose-a:underline
+         prose-strong:text-white
+         prose-code:rounded prose-code:bg-white/10 prose-code:px-1.5 prose-code:py-0.5
+         prose-code:text-cyan-400 prose-code:before:content-none prose-code:after:content-none
+         prose-pre:border prose-pre:border-white/10 prose-pre:bg-ink-950
+         prose-blockquote:border-l-cyan-400 prose-blockquote:text-slate-300
+         prose-blockquote:before:content-none prose-blockquote:after:content-none
+         [&_blockquote_p:first-of-type::before]:content-none
+         [&_blockquote_p:last-of-type::after]:content-none
+         prose-li:marker:text-cyan-400;
+}
