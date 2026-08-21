@@ -5,3 +5,6 @@ out/
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
+
+# Raw team photos and bio drafts — processed copies live in public/team/
+data/core_team/

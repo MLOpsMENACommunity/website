@@ -1,11 +1,14 @@
 import Image from 'next/image'
-import { Linkedin, ArrowUpRight } from 'lucide-react'
-import type { Member } from '~/data/team'
+import { Linkedin, ArrowUpRight, Mail } from 'lucide-react'
 import { asset } from '@/lib/asset'
+import { SHOW_TEAM_EMAILS, type Member } from '~/data/team'
 
 /**
- * Renders a team member. Falls back to an initials avatar when no photo is set,
- * and hides the LinkedIn link when no URL is set — so placeholders never look broken.
+ * Renders a team member. Falls back to an initials avatar when no photo is set
+ * and hides the LinkedIn link when no URL is set, so a member who has not sent
+ * their details yet still looks intentional rather than broken.
+ *
+ * Emails render only when SHOW_TEAM_EMAILS is on — see the note in data/team.ts.
  */
 export default function MemberCard({
   member,
@@ -17,22 +20,20 @@ export default function MemberCard({
   featured?: boolean
 }) {
   return (
-    <div className={`card h-full p-6 ${featured ? 'border-cyan-400/30 bg-cyan-400/[0.04]' : ''}`}>
+    <div className={`card flex h-full flex-col p-6 ${featured ? 'border-cyan-400/30 bg-cyan-400/[0.04]' : ''}`}>
       <div className="flex items-start gap-4">
         {member.photo ? (
           <Image
             src={asset(member.photo)}
             alt={member.name}
-            width={64}
-            height={64}
-            className="h-16 w-16 shrink-0 rounded-full object-cover ring-1 ring-white/15"
+            width={72}
+            height={72}
+            className="h-[72px] w-[72px] shrink-0 rounded-full object-cover ring-1 ring-white/15"
           />
         ) : (
           <span
-            className={`grid h-16 w-16 shrink-0 place-items-center rounded-full text-lg font-bold ${
-              featured
-                ? 'brand-gradient text-ink-950'
-                : 'border border-white/12 bg-white/5 text-slate-300'
+            className={`grid h-[72px] w-[72px] shrink-0 place-items-center rounded-full text-xl font-bold ${
+              featured ? 'brand-gradient text-ink-950' : 'border border-white/12 bg-white/5 text-slate-300'
             }`}
             aria-hidden
           >
@@ -54,21 +55,32 @@ export default function MemberCard({
         </div>
       </div>
 
-      <p className="mt-4 text-sm leading-relaxed text-slate-400">{member.bio}</p>
+      <p className="mt-4 flex-1 text-sm leading-relaxed text-slate-400">{member.bio}</p>
 
-      {member.linkedin ? (
-        <a
-          href={member.linkedin}
-          target="_blank"
-          rel="noreferrer"
-          className="group mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-400 transition hover:text-cyan-400"
-        >
-          <Linkedin className="h-4 w-4" /> LinkedIn
-          <ArrowUpRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-        </a>
-      ) : (
-        <p className="mt-4 text-xs text-slate-600">LinkedIn profile coming soon</p>
-      )}
+      <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-white/10 pt-4">
+        {member.linkedin ? (
+          <a
+            href={member.linkedin}
+            target="_blank"
+            rel="noreferrer"
+            className="group inline-flex items-center gap-1.5 text-sm font-medium text-slate-400 transition hover:text-cyan-400"
+          >
+            <Linkedin className="h-4 w-4" /> LinkedIn
+            <ArrowUpRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </a>
+        ) : (
+          <span className="text-xs text-slate-600">LinkedIn coming soon</span>
+        )}
+
+        {SHOW_TEAM_EMAILS && member.email && (
+          <a
+            href={`mailto:${member.email}`}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-400 transition hover:text-cyan-400"
+          >
+            <Mail className="h-4 w-4" /> Email
+          </a>
+        )}
+      </div>
     </div>
   )
 }
