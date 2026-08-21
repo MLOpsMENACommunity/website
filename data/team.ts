@@ -85,8 +85,7 @@ export const leads: (Member & { axis: number })[] = [
     role: 'AI Research Lead',
     initials: 'AA',
     photo: '/team/adham-abdelazeem.jpg',
-    // TODO: replace with Adham's own bio — this describes the role.
-    bio: 'Leads the research track — supporting members with papers, reproducibility, and the engineering behind publishable work.',
+    bio: 'Research Associate at the Institute of Sport and Sport Science, TU Dortmund, working on applied machine learning in Python. Previously a year at MARS GmbH on computer vision for product imagery and ML for manufacturing process improvement. Started in Biomedical Engineering in Egypt before a Master\'s in Germany.',
     linkedin: 'https://www.linkedin.com/in/adham-abdelazeem/',
     email: '',
   },
@@ -113,7 +112,7 @@ export const leads: (Member & { axis: number })[] = [
   {
     axis: 6,
     name: 'Mahmoud Abu Al-Nour',
-    role: 'AI Platform Lead',
+    role: 'AI Platform & Social Media Lead',
     initials: 'MA',
     photo: '/team/mahmoud-abu-alnour.jpg',
     bio: 'Computer Science student focused on AI, Machine Learning, and Data Science. Builds practical AI solutions with Python, SQL, FastAPI, Docker, and MLOps tooling, turning ideas into real projects.',
