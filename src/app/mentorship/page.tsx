@@ -85,7 +85,7 @@ export default function MentorshipPage() {
             </div>
           </Reveal>
 
-          <div className="mx-auto mt-10 grid max-w-4xl gap-4 md:grid-cols-2">
+          <div className="mx-auto mt-10 grid max-w-4xl gap-4 [&>*]:min-w-0 md:grid-cols-2">
             <Reveal>
               <div className="card h-full p-6">
                 <h3 className="text-base font-semibold text-white">Community &amp; general</h3>
@@ -96,7 +96,7 @@ export default function MentorshipPage() {
                   <a href={`mailto:${contacts.email}`}
                      className="group flex items-center gap-3 rounded-xl border border-white/10 p-3 transition hover:border-cyan-400/40 hover:bg-white/[0.03]">
                     <Mail className="h-4 w-4 shrink-0 text-cyan-400" />
-                    <span className="min-w-0 flex-1 truncate text-sm text-slate-300">{contacts.email}</span>
+                    <span className="min-w-0 flex-1 break-all text-sm text-slate-300">{contacts.email}</span>
                     <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-slate-600 transition group-hover:text-cyan-400" />
                   </a>
                   <a href={channels.whatsapp} target="_blank" rel="noreferrer"
@@ -124,7 +124,7 @@ export default function MentorshipPage() {
                   <a href={`mailto:${contacts.founder.email}`}
                      className="group flex items-center gap-3 rounded-xl border border-white/10 p-3 transition hover:border-amber-400/40 hover:bg-white/[0.03]">
                     <Mail className="h-4 w-4 shrink-0 text-amber-400" />
-                    <span className="min-w-0 flex-1 truncate text-sm text-slate-300">
+                    <span className="min-w-0 flex-1 break-all text-sm text-slate-300">
                       {contacts.founder.email}
                     </span>
                     <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-slate-600 transition group-hover:text-amber-400" />

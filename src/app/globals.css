@@ -131,3 +131,9 @@
          [&_blockquote_p:last-of-type::after]:content-none
          prose-li:marker:text-cyan-400;
 }
+
+/* Bare URLs in the markdown have no break opportunity and would otherwise
+   push the page wider than a phone screen. */
+.prose-brand :where(p, li, a, td, th, h1, h2, h3, h4) {
+  overflow-wrap: anywhere;
+}

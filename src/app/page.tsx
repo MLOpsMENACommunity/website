@@ -47,7 +47,7 @@ export default function HomePage() {
           </SectionHeading>
         </Reveal>
 
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid gap-4 [&>*]:min-w-0 sm:grid-cols-2 lg:grid-cols-3">
           {pillars.map((p, i) => {
             const Icon = icons[p.icon as keyof typeof icons]
             return (
@@ -295,7 +295,7 @@ export default function HomePage() {
             </div>
           </Reveal>
 
-          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-12 grid gap-4 [&>*]:min-w-0 sm:grid-cols-2 lg:grid-cols-3">
             <Reveal>
               <a href={course.repoUrl} target="_blank" rel="noreferrer"
                  className="card card-hover group flex h-full flex-col border-cyan-400/30 bg-cyan-400/[0.05] p-5">
@@ -384,7 +384,7 @@ export default function HomePage() {
           <div className="card relative overflow-hidden p-7 sm:p-10">
             <div className="absolute -left-16 -top-20 h-64 w-64 rounded-full bg-teal/15 blur-3xl animate-pulse-glow" />
             <div className="absolute -bottom-24 -right-12 h-72 w-72 rounded-full bg-amber/15 blur-3xl animate-pulse-glow" />
-            <div className="relative grid items-center gap-8 lg:grid-cols-[1.5fr_1fr]">
+            <div className="relative grid items-center gap-8 [&>*]:min-w-0 lg:grid-cols-[1.5fr_1fr]">
               <div>
                 <span className="chip border-amber-400/30 text-amber-400">
                   <Sparkles className="h-3 w-3" /> Limited time
@@ -398,11 +398,11 @@ export default function HomePage() {
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-amber-400/25 bg-amber-400/[0.06] p-6 text-center">
+              <div className="rounded-2xl border border-amber-400/25 bg-amber-400/[0.06] p-5 text-center sm:p-6">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
                   {brainsmingle.note}
                 </p>
-                <p className="mt-3 select-all font-mono text-2xl font-bold tracking-[0.12em] text-amber-400">
+                <p className="mt-3 select-all break-all font-mono text-xl font-bold tracking-[0.12em] text-amber-400 sm:text-2xl">
                   {brainsmingle.code}
                 </p>
                 <a href={brainsmingle.href} target="_blank" rel="noreferrer" className="btn-primary mt-5 w-full">
@@ -424,7 +424,7 @@ export default function HomePage() {
             </SectionHeading>
           </Reveal>
 
-          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-12 grid gap-4 [&>*]:min-w-0 sm:grid-cols-2 lg:grid-cols-3">
             <Reveal>
               <MemberCard member={founder} badge="Founder" featured />
             </Reveal>
@@ -529,7 +529,7 @@ export default function HomePage() {
           </div>
         </Reveal>
 
-        <div className="mx-auto mt-12 grid max-w-4xl gap-4 md:grid-cols-2">
+        <div className="mx-auto mt-12 grid max-w-4xl gap-4 [&>*]:min-w-0 md:grid-cols-2">
           <Reveal>
             <div className="card h-full p-6">
               <h3 className="text-base font-semibold text-white">Community &amp; general</h3>
@@ -539,7 +539,7 @@ export default function HomePage() {
               <a href={`mailto:${contacts.email}`}
                  className="group mt-5 flex items-center gap-3 rounded-xl border border-white/10 p-3 transition hover:border-cyan-400/40 hover:bg-white/[0.03]">
                 <Mail className="h-4 w-4 shrink-0 text-cyan-400" />
-                <span className="min-w-0 flex-1 truncate text-sm text-slate-300">{contacts.email}</span>
+                <span className="min-w-0 flex-1 break-all text-sm text-slate-300">{contacts.email}</span>
                 <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-slate-600 transition group-hover:text-cyan-400" />
               </a>
             </div>
@@ -557,7 +557,7 @@ export default function HomePage() {
                 <a href={`mailto:${contacts.founder.email}`}
                    className="group flex items-center gap-3 rounded-xl border border-white/10 p-3 transition hover:border-amber-400/40 hover:bg-white/[0.03]">
                   <Mail className="h-4 w-4 shrink-0 text-amber-400" />
-                  <span className="min-w-0 flex-1 truncate text-sm text-slate-300">{contacts.founder.email}</span>
+                  <span className="min-w-0 flex-1 break-all text-sm text-slate-300">{contacts.founder.email}</span>
                   <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-slate-600 transition group-hover:text-amber-400" />
                 </a>
                 <a href={contacts.founder.linkedin} target="_blank" rel="noreferrer"

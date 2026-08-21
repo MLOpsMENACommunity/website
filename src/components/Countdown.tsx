@@ -55,11 +55,11 @@ export default function Countdown({ iso }: { iso: string }) {
   ]
 
   return (
-    <div className="flex gap-2.5" role="timer" aria-live="off">
+    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4" role="timer" aria-live="off">
       {cells.map(([label, value]) => (
         <div
           key={label}
-          className="min-w-[68px] rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-center"
+          className="min-w-0 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-center"
         >
           <div className="font-mono text-2xl font-bold tabular-nums text-white">
             {String(value).padStart(2, '0')}

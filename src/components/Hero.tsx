@@ -14,7 +14,7 @@ export default function Hero() {
       <HexField className="pointer-events-none absolute right-4 top-24 hidden h-64 w-96 text-white/[0.055] lg:block" />
 
       <div className="relative mx-auto max-w-content px-5 pb-20 pt-20 sm:px-8 sm:pt-28">
-        <div className="grid items-center gap-14 lg:grid-cols-[1.15fr_1fr]">
+        <div className="grid items-center gap-14 [&>*]:min-w-0 lg:grid-cols-[1.15fr_1fr]">
           <div>
             <span className="eyebrow">MLOps MENA Community</span>
 
