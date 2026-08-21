@@ -26,6 +26,11 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+        env:
+          # Pages serves this repo at <org>.github.io/website, so every asset
+          # needs the /website prefix. When the custom domain goes live, drop
+          # this env block and restore public/CNAME (see README).
+          NEXT_PUBLIC_BASE_PATH: /website
       - uses: actions/configure-pages@v5
         with:
           # Turns Pages on for the repo if it is not enabled yet, so no manual

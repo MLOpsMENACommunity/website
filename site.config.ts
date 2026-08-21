@@ -6,7 +6,8 @@
 export const site = {
   name: 'MLOps MENA Community',
   shortName: 'MLOps MENA',
-  url: 'https://mlopsmena.com',
+  // Update to https://mlopsmena.com once the custom domain is live.
+  url: 'https://mlopsmenacommunity.github.io/website',
   tagline: 'Free MLOps and AI learning for engineers across the Middle East and North Africa.',
   description:
     'Free MLOps and AI learning for engineers across the Middle East and North Africa. Live sessions, three structured roadmaps, open cohort courses, study groups, and mentorship.',
