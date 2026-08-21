@@ -78,7 +78,8 @@ export const nav = [
   { label: 'Roadmaps', href: '/roadmaps' },
   { label: 'Courses', href: '/courses' },
   { label: 'Sessions', href: '/sessions' },
-  { label: 'Articles', href: '/articles' },
+  { label: 'Team', href: '/team' },
   { label: 'Mentorship', href: '/mentorship' },
+  { label: 'Articles', href: '/articles' },
   { label: 'FAQ', href: '/faq' },
 ] as const

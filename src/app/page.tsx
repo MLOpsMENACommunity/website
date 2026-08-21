@@ -10,6 +10,7 @@ import SectionHeading from '@/components/SectionHeading'
 import FaqAccordion from '@/components/FaqAccordion'
 import JoinCTA from '@/components/JoinCTA'
 import HexField from '@/components/HexField'
+import MemberCard from '@/components/MemberCard'
 import { getRoadmaps, accentClasses } from '@/lib/roadmaps'
 import { course } from '~/data/mlops-practitioner'
 import { upcomingCourse } from '~/data/offerings'
@@ -17,7 +18,8 @@ import { studyGroups } from '~/data/study-groups'
 import { externalArticles } from '~/data/articles'
 import { upcomingSessions, pastSessions } from '~/data/sessions'
 import { faqs } from '~/data/faq'
-import { repos, pillars, mentors } from '~/data/community'
+import { repos, pillars } from '~/data/community'
+import { founder, directors, leads, teamCount } from '~/data/team'
 import { partners, channels, contacts, brainsmingle } from '~/site.config'
 
 const icons = { Radio, Map, GraduationCap, FlaskConical, Briefcase, Users } as const
@@ -422,43 +424,31 @@ export default function HomePage() {
           </Reveal>
 
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {mentors.filter((m) => m.real).map((m, i) => (
-              <Reveal key={m.name} delay={i * 80}>
-                <div className="card h-full p-6">
-                  <span className="grid h-12 w-12 place-items-center rounded-full brand-gradient font-bold text-ink-950">
-                    {m.initials}
-                  </span>
-                  <h3 className="mt-4 text-base font-semibold text-white">{m.name}</h3>
-                  <p className="mt-1 text-xs font-medium text-cyan-400">{m.role}</p>
-                  <p className="mt-3 text-sm leading-relaxed text-slate-400">{m.bio}</p>
-                </div>
+            <Reveal>
+              <MemberCard member={founder} badge="Founder" featured />
+            </Reveal>
+            {directors.map((d, i) => (
+              <Reveal key={d.name} delay={(i + 1) * 80}>
+                <MemberCard member={d} badge="Community Director" />
               </Reveal>
             ))}
-            <Reveal delay={80}>
-              <Link href="/mentorship"
-                    className="card card-hover flex h-full flex-col justify-center p-6 text-center">
-                <p className="text-sm font-semibold text-white">Mentorship &amp; consultation</p>
-                <p className="mt-2 text-sm leading-relaxed text-slate-400">
-                  Free mentorship for members, and MLOps consultation for companies.
-                </p>
-                <span className="mt-4 inline-flex items-center justify-center gap-1.5 text-sm font-medium text-cyan-400">
-                  See what we offer <ArrowRight className="h-3.5 w-3.5" />
-                </span>
-              </Link>
-            </Reveal>
-            <Reveal delay={160}>
-              <a href={channels.linkedin} target="_blank" rel="noreferrer"
-                 className="card card-hover flex h-full flex-col justify-center border-dashed p-6 text-center">
-                <p className="text-sm font-semibold text-white">Want to teach with us?</p>
-                <p className="mt-2 text-sm leading-relaxed text-slate-400">
-                  We are always looking for practitioners to run a session.
-                </p>
-                <span className="mt-4 inline-flex items-center justify-center gap-1.5 text-sm font-medium text-cyan-400">
-                  Get in touch <ArrowUpRight className="h-3.5 w-3.5" />
-                </span>
-              </a>
-            </Reveal>
           </div>
+
+          <Reveal delay={120}>
+            <div className="mt-4 card flex flex-col items-center justify-between gap-5 p-6 sm:flex-row sm:p-7">
+              <div>
+                <p className="text-sm font-semibold text-white">
+                  Plus {leads.length} leads across six owned axes
+                </p>
+                <p className="mt-1.5 text-sm leading-relaxed text-slate-400">
+                  {leads.map((l) => l.role.replace(/^AI /, '')).join(' · ')}
+                </p>
+              </div>
+              <Link href="/team" className="btn-ghost shrink-0">
+                Meet the team ({teamCount}) <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </Reveal>
         </div>
       </section>
 
@@ -523,6 +513,19 @@ export default function HomePage() {
           <SectionHeading eyebrow="Contact us" title="Talk to" accent="the community" align="center">
             Questions, partnerships, sponsorship, or hiring — here is how to reach us.
           </SectionHeading>
+        </Reveal>
+
+        <Reveal delay={60}>
+          <div className="mt-10 flex justify-center">
+            <a
+              href={`mailto:${contacts.email}`}
+              className="btn-primary group !rounded-2xl !px-10 !py-5 text-base sm:!px-14 sm:!py-6 sm:text-lg"
+            >
+              <Mail className="h-5 w-5 sm:h-6 sm:w-6" />
+              Contact us
+              <ArrowUpRight className="h-5 w-5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </a>
+          </div>
         </Reveal>
 
         <div className="mx-auto mt-12 grid max-w-4xl gap-4 md:grid-cols-2">
