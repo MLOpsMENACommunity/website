@@ -57,5 +57,8 @@ export const pastSessions: Session[] = [
   },
 ]
 
-/** Soonest upcoming session — drives the homepage countdown. */
-export const nextSession = upcomingSessions[0]
+/**
+ * The homepage "This week at MLOps MENA" band renders `upcomingSessions`
+ * directly, newest first — move a session to `pastSessions` once it has aired
+ * so the band never advertises a session that already happened.
+ */

@@ -79,9 +79,9 @@ export default function HomeView({ lang }: { lang: Lang }) {
             const p = tPillar(lang, raw)
             const Icon = icons[raw.icon as keyof typeof icons]
             return (
-              <Reveal key={raw.title} delay={i * 70}>
-                <div className="card card-hover h-full p-6">
-                  <span className="grid h-11 w-11 place-items-center rounded-xl bg-cyan-400/10 text-cyan-400">
+              <Reveal key={raw.title} delay={i * 70} variant="scale">
+                <div className="card card-hover group h-full p-6">
+                  <span className="grid h-11 w-11 place-items-center rounded-xl bg-cyan-400/10 text-cyan-400 transition duration-300 group-hover:scale-110 group-hover:bg-cyan-400/15">
                     <Icon className="h-5 w-5" />
                   </span>
                   <h3 className="mt-5 text-base font-semibold text-fg">{p.title}</h3>
@@ -283,7 +283,7 @@ export default function HomeView({ lang }: { lang: Lang }) {
           {studyGroups.map((raw, i) => {
             const g = tStudyGroup(lang, raw)
             return (
-              <Reveal key={raw.n} delay={i * 70}>
+              <Reveal key={raw.n} delay={i * 70} variant="scale">
                 <a href={raw.href} target="_blank" rel="noreferrer"
                    className="card card-hover group flex h-full flex-col p-5">
                   <div className="flex items-center justify-between">
@@ -411,7 +411,7 @@ export default function HomeView({ lang }: { lang: Lang }) {
 
       {/* ---------- Brainsmingle ---------- */}
       <section className="mx-auto max-w-content px-5 pb-20 sm:px-8">
-        <Reveal>
+        <Reveal variant="scale">
           <div className="card relative overflow-hidden p-7 sm:p-10">
             <div className="absolute -left-16 -top-20 h-64 w-64 rounded-full bg-teal/15 blur-3xl animate-pulse-glow" />
             <div className="absolute -bottom-24 -right-12 h-72 w-72 rounded-full bg-amber/15 blur-3xl animate-pulse-glow" />
@@ -488,7 +488,7 @@ export default function HomeView({ lang }: { lang: Lang }) {
           {partners.map((raw, i) => {
             const p = tPartner(lang, raw)
             return (
-              <Reveal key={raw.name} delay={i * 90}>
+              <Reveal key={raw.name} delay={i * 90} variant="scale">
                 <a href={raw.href} target="_blank" rel="noreferrer"
                    className="card card-hover flex h-full flex-col items-center justify-center p-8 text-center">
                   {raw.logo ? (

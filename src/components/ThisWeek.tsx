@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, ArrowUpRight, CalendarDays, Mic, Ticket } from 'lucide-react'
 import Countdown from './Countdown'
+import Reveal from './Reveal'
 import { upcomingSessions } from '~/data/sessions'
 import { channels, primaryChannel } from '~/site.config'
 import { asset } from '@/lib/asset'
@@ -28,6 +29,7 @@ export default function ThisWeek({ lang = 'en' }: { lang?: Lang }) {
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px brand-gradient" />
 
       <div className="relative mx-auto max-w-content px-5 py-16 sm:px-8 sm:py-20">
+        <Reveal variant="blur">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="max-w-2xl">
             <span className="inline-flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-amber-400">
@@ -42,13 +44,16 @@ export default function ThisWeek({ lang = 'en' }: { lang?: Lang }) {
             </h2>
             <p className="mt-4 text-base leading-relaxed text-muted">{c.lead}</p>
           </div>
-          <Link href={localeHref(lang, '/sessions')} className="btn-ghost shrink-0">
-            {copy.common.allSessions} <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
+          <Link href={localeHref(lang, '/sessions')} className="btn-ghost group shrink-0">
+            {copy.common.allSessions}
+            <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 rtl:-scale-x-100 rtl:group-hover:-translate-x-1" />
           </Link>
         </div>
+        </Reveal>
 
         {featured ? (
-          <article className="card mt-10 overflow-hidden !border-cyan-400/30 shadow-lg">
+          <Reveal variant="scale" delay={80}>
+          <article className="card group/poster mt-10 overflow-hidden !border-cyan-400/30 shadow-lg">
             <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
               {/* Poster */}
               <div className="relative h-56 w-full overflow-hidden bg-surface-2 sm:h-72 lg:h-full lg:min-h-[22rem]">
@@ -57,7 +62,7 @@ export default function ThisWeek({ lang = 'en' }: { lang?: Lang }) {
                   alt={featured.title}
                   fill
                   sizes="(max-width: 1024px) 100vw, 34rem"
-                  className="object-cover object-top"
+                  className="object-cover object-top transition-transform duration-[900ms] ease-out group-hover/poster:scale-[1.04]"
                   priority
                 />
               </div>
@@ -119,6 +124,7 @@ export default function ThisWeek({ lang = 'en' }: { lang?: Lang }) {
               </div>
             </div>
           </article>
+          </Reveal>
         ) : (
           <div className="card mt-10 border-dashed p-10 text-center">
             <p className="mx-auto max-w-lg text-sm leading-relaxed text-muted">{c.nothing}</p>
@@ -130,8 +136,9 @@ export default function ThisWeek({ lang = 'en' }: { lang?: Lang }) {
 
         {rest.length > 0 && (
           <div className="mt-4 grid gap-4 md:grid-cols-2">
-            {rest.map((s) => (
-              <article key={s.slug} className="card card-hover flex h-full flex-col p-5">
+            {rest.map((s, i) => (
+              <Reveal key={s.slug} delay={i * 80}>
+              <article className="card card-hover flex h-full flex-col p-5">
                 <span className="chip w-fit border-amber-400/30 text-amber-400">
                   {copy.common.registrationOpen}
                 </span>
@@ -147,6 +154,7 @@ export default function ThisWeek({ lang = 'en' }: { lang?: Lang }) {
                   </a>
                 )}
               </article>
+              </Reveal>
             ))}
           </div>
         )}

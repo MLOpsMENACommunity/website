@@ -1,4 +1,3 @@
-import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
@@ -11,61 +10,56 @@ import { course } from '~/data/mlops-practitioner'
 import { upcomingCourse } from '~/data/offerings'
 import { partners, channels } from '~/site.config'
 import { asset } from '@/lib/asset'
+import { t, localeHref, type Lang } from '@/lib/i18n'
+import { courseAr, upcomingCourseAr } from '@/lib/content-i18n'
 
-export const metadata: Metadata = {
-  title: 'Courses',
-  description:
-    'Free cohort-based courses on production machine learning — The MLOps Practitioner (running now) and LLMOps (coming soon), delivered with our educational partner Zomra.',
-}
-
-export default function CoursesPage() {
+export default function CoursesView({ lang }: { lang: Lang }) {
+  const copy = t(lang)
+  const c = copy.coursesPage
   const zomra = partners.find((p) => p.name === 'Zomra')
+  const cc = lang === 'ar' ? courseAr : course
+  const uc = lang === 'ar' ? upcomingCourseAr : upcomingCourse
 
   return (
     <>
       <section className="relative overflow-hidden border-b border-line">
         <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-teal/10 blur-[100px]" />
-        <HexField className="pointer-events-none absolute right-6 top-16 hidden h-56 w-80 text-hex lg:block" />
+        <HexField className="pointer-events-none absolute end-6 top-16 hidden h-56 w-80 text-hex lg:block" />
         <div className="relative mx-auto max-w-content px-5 py-20 sm:px-8">
-          <span className="eyebrow">Courses</span>
+          <span className="eyebrow">{c.eyebrow}</span>
           <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-[1.1] sm:text-5xl">
-            Cohort-based, live, and <span className="brand-text">free to join</span>
+            {c.titleBefore} <span className="brand-text">{c.accent}</span>
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
-            Real projects, live lessons, and a certificate at the end — delivered together with
-            our educational platform partner {zomra?.name}.
+            {c.lead} {zomra?.name}.
           </p>
         </div>
       </section>
 
       {/* ---------- Milestone banner ---------- */}
       <section className="mx-auto max-w-content px-5 pt-14 sm:px-8">
-        <Reveal>
+        <Reveal variant="scale">
           <div className="card relative overflow-hidden">
             <div className="grid items-center gap-0 sm:grid-cols-[1fr_minmax(0,20rem)]">
               <div className="p-7 sm:p-10">
                 <span className="chip border-amber-400/30 text-amber-400">
-                  <Trophy className="h-3 w-3" /> Milestone
+                  <Trophy className="h-3 w-3" /> {c.milestone}
                 </span>
                 <h2 className="mt-5 text-3xl font-bold leading-tight sm:text-4xl">
-                  <span className="brand-text">1,200+ students</span> registered for
-                  The MLOps Practitioner
+                  <span className="brand-text">{c.milestoneTitleAccent}</span> {c.milestoneTitleAfter}
                 </h2>
-                <p className="mt-4 max-w-xl text-base leading-relaxed text-muted">
-                  Cohort 1 is running now with a 4.9 rating from its first reviews. Cohort 2 and
-                  our second course are already in preparation.
-                </p>
+                <p className="mt-4 max-w-xl text-base leading-relaxed text-muted">{c.milestoneLead}</p>
               </div>
               <div className="relative h-56 sm:h-full sm:min-h-[16rem]">
                 <Image
-                  src={asset("/course/milestone-1200.jpg")}
-                  alt="Celebrating 1,200+ registered students for the MLOps Practitioner course"
+                  src={asset('/course/milestone-1200.jpg')}
+                  alt=""
                   fill
                   sizes="(max-width: 640px) 100vw, 20rem"
                   className="object-cover"
                 />
                 {/* Fade the image into the card on wide screens */}
-                <div className="absolute inset-0 bg-gradient-to-r from-bg via-bg/30 to-transparent sm:bg-gradient-to-r" />
+                <div className="absolute inset-0 bg-gradient-to-r from-bg via-bg/30 to-transparent rtl:bg-gradient-to-l" />
               </div>
             </div>
           </div>
@@ -74,7 +68,7 @@ export default function CoursesPage() {
 
       {/* ---------- Course 01 ---------- */}
       <section className="mx-auto max-w-content px-5 py-14 sm:px-8">
-        <Reveal>
+        <Reveal variant="start">
           <article className="card relative overflow-hidden p-7 sm:p-10">
             <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-teal/10 blur-3xl" />
             <div className="relative">
@@ -85,53 +79,51 @@ export default function CoursesPage() {
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal opacity-70" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-teal" />
                   </span>
-                  {course.status}
+                  {cc.status}
                 </span>
               </div>
 
               <div className="mt-4 grid gap-8 lg:grid-cols-[1.45fr_1fr]">
                 <div>
                   <h2 className="text-3xl font-bold sm:text-4xl">{course.title}</h2>
-                  <p className="mt-2 text-sm font-medium text-cyan-400">{course.format}</p>
-                  <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted">
-                    {course.summary}
-                  </p>
+                  <p className="mt-2 text-sm font-medium text-cyan-400">{cc.format}</p>
+                  <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted">{cc.summary}</p>
 
                   <div className="mt-6 flex flex-wrap gap-2">
-                    {course.stack.slice(0, 12).map((t) => (
-                      <span key={t} className="chip font-mono text-[11px]">{t}</span>
+                    {course.stack.slice(0, 12).map((tool) => (
+                      <span key={tool} className="chip font-mono text-[11px]">{tool}</span>
                     ))}
                     <span className="chip font-mono text-[11px] text-cyan-400">
-                      +{course.stack.length - 12} more
+                      +{course.stack.length - 12} {copy.common.more}
                     </span>
                   </div>
 
                   <div className="mt-8 flex flex-wrap gap-3">
-                    <Link href="/courses/mlops-practitioner" className="btn-primary">
-                      Full course details <ArrowRight className="h-4 w-4" />
+                    <Link href={localeHref(lang, '/courses/mlops-practitioner')} className="btn-primary">
+                      {c.fullDetails} <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
                     </Link>
                     <a href={course.enrollUrl} target="_blank" rel="noreferrer" className="btn-ghost">
-                      Enrol on Zomra <ArrowUpRight className="h-4 w-4" />
+                      {c.enrolOnZomra} <ArrowUpRight className="h-4 w-4" />
                     </a>
                   </div>
                 </div>
 
-                <ul className="space-y-3 self-start rounded-2xl border border-line bg-surface p-6">
+                <ul className="space-y-3 self-start rounded-2xl border border-line bg-surface-2 p-6">
                   <li className="flex items-center gap-3 text-sm text-body">
-                    <Radio className="h-4 w-4 shrink-0 text-cyan-400" />5 interactive live lessons
+                    <Radio className="h-4 w-4 shrink-0 text-cyan-400" />{c.facts.lessons}
                   </li>
                   <li className="flex items-center gap-3 text-sm text-body">
-                    <Clock className="h-4 w-4 shrink-0 text-cyan-400" />7 weeks · Aug 15 → Oct 2
+                    <Clock className="h-4 w-4 shrink-0 text-cyan-400" />{c.facts.weeks}
                   </li>
                   <li className="flex items-center gap-3 text-sm text-body">
-                    <Users className="h-4 w-4 shrink-0 text-cyan-400" />4 levelled study groups
+                    <Users className="h-4 w-4 shrink-0 text-cyan-400" />{c.facts.groups}
                   </li>
                   <li className="flex items-center gap-3 text-sm text-body">
-                    <Trophy className="h-4 w-4 shrink-0 text-cyan-400" />Certificate of completion
+                    <Trophy className="h-4 w-4 shrink-0 text-cyan-400" />{c.facts.certificate}
                   </li>
                   <li className="flex items-center gap-3 border-t border-line pt-3 text-sm text-body">
                     <Star className="h-4 w-4 shrink-0 fill-amber-400 text-amber-400" />
-                    {course.rating.score} from {course.rating.count} reviews
+                    {course.rating.score} {c.from} {course.rating.count} {copy.common.reviews}
                   </li>
                 </ul>
               </div>
@@ -140,40 +132,38 @@ export default function CoursesPage() {
         </Reveal>
 
         {/* ---------- Course 02 ---------- */}
-        <Reveal delay={100}>
+        <Reveal delay={100} variant="end">
           <article className="card relative mt-6 overflow-hidden border-dashed p-7 sm:p-10">
             <div className="absolute -left-16 -top-16 h-64 w-64 rounded-full bg-violet/10 blur-3xl" />
             <div className="relative">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="font-mono text-5xl font-bold text-fg/10">{upcomingCourse.number}</span>
                 <span className="chip border-violet/35 text-violet">
-                  <Sparkles className="h-3 w-3" /> {upcomingCourse.status}
+                  <Sparkles className="h-3 w-3" /> {uc.status}
                 </span>
               </div>
 
               <div className="mt-4 grid gap-8 lg:grid-cols-[1.45fr_1fr]">
                 <div>
                   <h2 className="text-3xl font-bold sm:text-4xl">{upcomingCourse.title}</h2>
-                  <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted">
-                    {upcomingCourse.summary}
-                  </p>
+                  <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted">{uc.summary}</p>
 
                   <div className="mt-8 flex flex-wrap gap-3">
                     <a href={channels.whatsapp} target="_blank" rel="noreferrer" className="btn-primary">
-                      Get notified when it opens <ArrowUpRight className="h-4 w-4" />
+                      {c.notifyWhenOpen} <ArrowUpRight className="h-4 w-4" />
                     </a>
                   </div>
                 </div>
 
-                <div className="self-start rounded-2xl border border-line bg-surface p-6">
+                <div className="self-start rounded-2xl border border-line bg-surface-2 p-6">
                   <p className="text-xs font-semibold uppercase tracking-[0.12em] text-faint">
-                    What it will cover
+                    {c.willCover}
                   </p>
                   <ul className="mt-4 space-y-2.5">
-                    {upcomingCourse.topics.map((t) => (
-                      <li key={t} className="flex gap-2.5 text-sm leading-relaxed text-muted">
+                    {uc.topics.map((topic) => (
+                      <li key={topic} className="flex gap-2.5 text-sm leading-relaxed text-muted">
                         <Check className="mt-0.5 h-4 w-4 shrink-0 text-violet" />
-                        {t}
+                        {topic}
                       </li>
                     ))}
                   </ul>
@@ -185,7 +175,7 @@ export default function CoursesPage() {
       </section>
 
       <section className="mx-auto max-w-content px-5 pb-8 sm:px-8">
-        <Reveal><JoinCTA /></Reveal>
+        <Reveal><JoinCTA lang={lang} /></Reveal>
       </section>
     </>
   )

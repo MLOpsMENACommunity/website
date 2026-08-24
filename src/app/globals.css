@@ -109,6 +109,10 @@
   }
   body {
     @apply bg-bg text-body antialiased;
+    /* The reveal variants that slide in from the side sit briefly outside the
+       content box. `clip` (not `hidden`) contains that without turning the body
+       into a scroll container, which would break every `position: sticky`. */
+    overflow-x: clip;
     background-image:
       radial-gradient(ellipse 80% 50% at 15% -10%, var(--glow-1), transparent 60%),
       radial-gradient(ellipse 70% 50% at 90% 5%, var(--glow-2), transparent 60%);
@@ -169,6 +173,21 @@
   .card-hover:hover {
     box-shadow: var(--card-shadow-hover);
   }
+  /* Hairline of brand gradient that draws across the top edge on hover. */
+  .card-hover::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 2px;
+    border-radius: 1rem 1rem 0 0;
+    background-image: linear-gradient(90deg, var(--brand-teal), var(--brand-cyan) 45%, var(--brand-amber));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+  }
+  [dir='rtl'] .card-hover::before { transform-origin: right; }
+  .card-hover:hover::before { transform: scaleX(1); }
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold
            transition duration-200 focus-visible:outline focus-visible:outline-2
@@ -176,7 +195,23 @@
   }
   .btn-primary {
     @apply btn brand-gradient text-ink-950;
+    position: relative;
+    overflow: hidden;
     box-shadow: 0 10px 34px -12px rgba(51, 206, 192, 0.75);
+  }
+  /* Light sweep that crosses the button once on hover. */
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 45%;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+    transform: translateX(-160%) skewX(-18deg);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .btn-primary:hover::after {
+    animation: sweep 0.75s ease-out;
   }
   .btn-primary:hover {
     filter: brightness(1.09);
@@ -203,22 +238,148 @@
   .dark .text-shadow-glow { text-shadow: 0 0 28px rgba(44, 172, 209, 0.45); }
 }
 
-/* ---- Scroll reveal (see components/Reveal.tsx) ---- */
+/* ---- Scroll reveal (see components/Reveal.tsx) ----
+   One transition, several starting positions. `Reveal` adds `.reveal` plus a
+   variant class on mount and `.is-visible` when the element scrolls in. */
 .reveal {
   opacity: 0;
-  transform: translateY(28px);
-  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
+  transition:
+    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
+.reveal-up { transform: translateY(28px); }
+.reveal-fade { transform: none; }
+.reveal-scale { transform: scale(0.94); }
+.reveal-blur { transform: translateY(16px); filter: blur(6px); }
+.reveal-start { transform: translateX(-32px); }
+.reveal-end { transform: translateX(32px); }
+[dir='rtl'] .reveal-start { transform: translateX(32px); }
+[dir='rtl'] .reveal-end { transform: translateX(-32px); }
+
 .reveal.is-visible {
   opacity: 1;
   transform: none;
+  filter: none;
+}
+
+/* ---- Entrance animations: above-the-fold content, no scroll needed ----
+   `--enter-delay` staggers siblings without a class per step. */
+@keyframes enterUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes enterFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sweep {
+  0% { transform: translateX(-160%) skewX(-18deg); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translateX(320%) skewX(-18deg); opacity: 0; }
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+@keyframes drawLine {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.enter {
+  animation: enterUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--enter-delay, 0ms);
+}
+.enter-fade {
+  animation: enterFade 0.6s ease-out both;
+  animation-delay: var(--enter-delay, 0ms);
+}
+
+/* The headline gradient drifts slowly, so the brand sweep reads as alive
+   rather than as a static fill. */
+.brand-text-animated {
+  background-size: 220% 100%;
+  animation: shimmer 9s ease-in-out infinite;
+}
+
+/* Infinite tool ticker. The track holds two copies of the list, so translating
+   it exactly -50% loops seamlessly. */
+.marquee {
+  display: flex;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 42s linear infinite;
+}
+.marquee-group {
+  display: flex;
+  flex: none;
+  gap: 0.5rem;
+  padding-inline-end: 0.5rem;
+  margin: 0;
+  padding-inline-start: 0;
+  list-style: none;
+}
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+/* Decorative SVG nodes in HexField. */
+.twinkle { animation: twinkle 4.5s ease-in-out infinite; transform-origin: center; }
+
+/* Roadmap phase strip: dots pop in, connectors draw between them. */
+.draw-line {
+  transform-origin: left;
+  animation: drawLine 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--enter-delay, 0ms);
+}
+[dir='rtl'] .draw-line { transform-origin: right; }
+
+/* Underline that grows from the centre under an active/hovered nav link. */
+.nav-link::after {
+  content: '';
+  display: block;
+  height: 2px;
+  margin: 0.25rem auto 0;
+  width: 1.25rem;
+  border-radius: 2px;
+  background-image: linear-gradient(90deg, var(--brand-teal), var(--brand-cyan) 45%, var(--brand-amber));
+  transform: scaleX(0);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.nav-link:hover::after,
+.nav-link[data-active='true']::after {
+  transform: scaleX(1);
 }
 
 /* Anyone who asks for less motion gets none of it. */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .reveal { opacity: 1; transform: none; transition: none; }
+  .reveal { opacity: 1; transform: none; filter: none; transition: none; }
+  .enter, .enter-fade { opacity: 1; animation: none; }
+  .draw-line { transform: none; animation: none; }
+  .marquee-group { flex-wrap: wrap; justify-content: center; }
+  .brand-text-animated { animation: none; }
+  .twinkle { animation: none; }
+  .marquee-track { animation: none; }
+  .marquee {
+    overflow-x: auto;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

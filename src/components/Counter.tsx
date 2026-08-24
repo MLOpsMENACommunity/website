@@ -24,6 +24,10 @@ export default function Counter({
 
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
+    // Already on screen at mount — leave the real number in place. Zeroing it
+    // here would blank the figure if the observer never fires.
+    if (el.getBoundingClientRect().top < window.innerHeight - 40) return
+
     setDisplay(0)
 
     const io = new IntersectionObserver(([entry]) => {

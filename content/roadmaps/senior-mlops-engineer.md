@@ -54,7 +54,7 @@ Genuinely underrated channel with insanely deep dives into LLM internals — Fla
 
 ### DeepLearning.AI Short Courses (all free during platform beta)
 
-- [Fast & Efficient LLM Inference with vLLM (June 2026, brand new)](https://www.deeplearning.ai/courses/fast-and-efficient-llm-inference-with-vllm) — — hands-on with LLM Compressor + vLLM + GuideLLM benchmarking
+- [Fast & Efficient LLM Inference with vLLM (June 2026, brand new)](https://www.deeplearning.ai/courses/fast-and-efficient-llm-inference-with-vllm) — hands-on with LLM Compressor + vLLM + GuideLLM benchmarking
 - [Efficiently Serving LLMs](https://www.deeplearning.ai/courses/efficiently-serving-llms)
 - [Retrieval Augmented Generation (RAG) by Zain Hasan](https://www.deeplearning.ai/courses/retrieval-augmented-generation)
 - [Building Agentic RAG with LlamaIndex](https://www.deeplearning.ai/short-courses/building-agentic-rag-with-llamaindex/)
@@ -282,7 +282,7 @@ This is what gets you through senior interviews and what you'll actually do day-
 
 - [Stanford CS329S: ML Systems Design — Lectures on YouTube](https://stanford-cs329s.github.io) — Also taught by Chip Huyen. The content is a distilled version of her book with real case studies.
 
-- [Full Stack Deep Learning](https://fullstackdeeplearning.com) — — free comprehensive course covering the entire ML stack.
+- [Full Stack Deep Learning](https://fullstackdeeplearning.com) — free comprehensive course covering the entire ML stack.
 
 "AI Engineering" by Chip Huyen (2024) — her newer book, focused specifically on production LLM systems. Essential for LLMOps. Info: https://www.oreilly.com/library/view/ai-engineering/9781098166298/
 

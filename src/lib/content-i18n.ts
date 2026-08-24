@@ -68,7 +68,10 @@ export function tStatLabel(lang: Lang, label: string) {
 /* Sessions                                                             */
 /* ------------------------------------------------------------------ */
 
-type SessionCopy = Pick<Session, 'subtitle' | 'speakerRole' | 'dateLabel'> & { note?: string }
+type SessionCopy = Pick<Session, 'subtitle' | 'speakerRole' | 'dateLabel'> & {
+  note?: string
+  topics?: string[]
+}
 
 const sessionsAr: Record<string, SessionCopy> = {
   'docker-deep-dive': {
@@ -76,6 +79,16 @@ const sessionsAr: Record<string, SessionCopy> = {
     speakerRole: 'مدرّب · خبرة أكثر من 3 سنوات',
     dateLabel: 'السبت 22 أغسطس · 8:00 مساءً بتوقيت القاهرة',
     note: 'لا متطلبات سابقة — لا تحتاج خبرة مسبقة بـ Docker أو Kubernetes.',
+    topics: [
+      'المحاكاة الافتراضية مقابل الحاويات',
+      'معمارية Docker',
+      'الصور والحاويات',
+      'الشبكات',
+      'التخزين ووحدات التخزين',
+      'كتابة ملف Dockerfile',
+      'الأمان',
+      'Docker Compose',
+    ],
   },
   'on-prem-mlops-playbook': {
     subtitle: 'الجسر بين DevOps التقليدي وأحمال الذكاء الاصطناعي الخاصة',

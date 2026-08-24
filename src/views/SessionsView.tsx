@@ -1,4 +1,3 @@
-import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowUpRight, CalendarDays, User, PlayCircle, Ticket, ArrowRight } from 'lucide-react'
 import Reveal from '@/components/Reveal'
@@ -8,39 +7,37 @@ import HexField from '@/components/HexField'
 import { upcomingSessions, pastSessions } from '~/data/sessions'
 import { course } from '~/data/mlops-practitioner'
 import { channels } from '~/site.config'
+import { t, localeHref, type Lang } from '@/lib/i18n'
+import { tSession } from '@/lib/content-i18n'
 
-export const metadata: Metadata = {
-  title: 'Sessions',
-  description:
-    'Free live sessions on production machine learning — upcoming sessions with registration, and past sessions with recordings.',
-}
+export default function SessionsView({ lang }: { lang: Lang }) {
+  const copy = t(lang)
+  const c = copy.sessionsPage
+  const upcoming = upcomingSessions.map((s) => tSession(lang, s))
+  const past = pastSessions.map((s) => tSession(lang, s))
 
-export default function SessionsPage() {
   return (
     <>
       <section className="relative overflow-hidden border-b border-line">
         <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-teal/10 blur-[100px]" />
-        <HexField className="pointer-events-none absolute right-6 top-16 hidden h-56 w-80 text-hex lg:block" />
+        <HexField className="pointer-events-none absolute end-6 top-16 hidden h-56 w-80 text-hex lg:block" />
         <div className="relative mx-auto max-w-content px-5 py-20 sm:px-8">
-          <span className="eyebrow">Sessions</span>
+          <span className="eyebrow">{c.eyebrow}</span>
           <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-[1.1] sm:text-5xl">
-            Live sessions, <span className="brand-text">free to attend</span>
+            {c.titleBefore} <span className="brand-text">{c.accent}</span>
           </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
-            Practitioners walking through what they actually run in production. Register on
-            Zomra, attend live, and catch the recording on YouTube afterwards.
-          </p>
+          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">{c.lead}</p>
         </div>
       </section>
 
       {/* ---------- Upcoming ---------- */}
       <section className="mx-auto max-w-content px-5 py-16 sm:px-8">
         <Reveal>
-          <span className="eyebrow">Upcoming</span>
+          <span className="eyebrow">{c.upcoming}</span>
         </Reveal>
 
         <div className="mt-8 space-y-5">
-          {upcomingSessions.map((s, i) => (
+          {upcoming.map((s, i) => (
             <Reveal key={s.slug} delay={i * 80}>
               <article className="card relative overflow-hidden p-7 sm:p-9">
                 <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-amber/10 blur-3xl" />
@@ -52,7 +49,7 @@ export default function SessionsPage() {
                         <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-400" />
                       </span>
                       <span className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-400">
-                        Registration open
+                        {copy.common.registrationOpen}
                       </span>
                     </div>
 
@@ -67,11 +64,11 @@ export default function SessionsPage() {
                     {s.topics.length > 0 && (
                       <>
                         <p className="mt-6 text-xs font-semibold uppercase tracking-[0.12em] text-faint">
-                          What is covered
+                          {c.whatIsCovered}
                         </p>
                         <div className="mt-3 flex flex-wrap gap-1.5">
-                          {s.topics.map((t) => (
-                            <span key={t} className="chip !px-2.5 !py-1 text-[11px]">{t}</span>
+                          {s.topics.map((topic) => (
+                            <span key={topic} className="chip !px-2.5 !py-1 text-[11px]">{topic}</span>
                           ))}
                         </div>
                       </>
@@ -84,18 +81,18 @@ export default function SessionsPage() {
                     )}
                   </div>
 
-                  <div className="self-start rounded-2xl border border-line bg-surface p-5">
+                  <div className="self-start rounded-2xl border border-line bg-surface-2 p-5">
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-faint">
-                      Starts in
+                      {copy.common.startsIn}
                     </p>
-                    <div className="mt-4"><Countdown iso={s.startsAt} /></div>
+                    <div className="mt-4"><Countdown iso={s.startsAt} lang={lang} /></div>
                     {s.registerUrl && (
                       <a href={s.registerUrl} target="_blank" rel="noreferrer" className="btn-primary mt-6 w-full">
-                        <Ticket className="h-4 w-4" /> Register free
+                        <Ticket className="h-4 w-4" /> {copy.common.registerFree}
                       </a>
                     )}
                     <a href={channels.whatsapp} target="_blank" rel="noreferrer" className="btn-ghost mt-2 w-full">
-                      Get reminders
+                      {c.getReminders}
                     </a>
                   </div>
                 </div>
@@ -103,9 +100,9 @@ export default function SessionsPage() {
             </Reveal>
           ))}
 
-          {upcomingSessions.length === 0 && (
+          {upcoming.length === 0 && (
             <div className="card border-dashed p-12 text-center">
-              <p className="text-sm text-faint">No sessions scheduled right now.</p>
+              <p className="text-sm text-faint">{c.noneScheduled}</p>
             </div>
           )}
         </div>
@@ -117,16 +114,14 @@ export default function SessionsPage() {
           <Reveal>
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
-                <span className="eyebrow">Course sessions</span>
+                <span className="eyebrow">{c.courseSessions}</span>
                 <h2 className="mt-4 text-2xl font-bold sm:text-3xl">
-                  The MLOps Practitioner <span className="brand-text">recordings</span>
+                  {c.courseTitleBefore} <span className="brand-text">{c.courseTitleAccent}</span>
                 </h2>
-                <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">
-                  All five lessons of Cohort 1, streamed live on YouTube.
-                </p>
+                <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">{c.courseLead}</p>
               </div>
-              <Link href="/courses/mlops-practitioner" className="btn-ghost shrink-0">
-                Course details <ArrowRight className="h-4 w-4" />
+              <Link href={localeHref(lang, '/courses/mlops-practitioner')} className="btn-ghost shrink-0">
+                {c.courseDetails} <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
               </Link>
             </div>
           </Reveal>
@@ -140,11 +135,9 @@ export default function SessionsPage() {
                     {String(r.n).padStart(2, '0')}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold leading-snug text-fg">
-                      {r.module}
-                    </span>
+                    <span className="block text-sm font-semibold leading-snug text-fg">{r.module}</span>
                     <span className="mt-2 inline-flex items-center gap-1.5 text-xs text-faint transition group-hover:text-cyan-400">
-                      <PlayCircle className="h-3.5 w-3.5" /> Watch on YouTube
+                      <PlayCircle className="h-3.5 w-3.5" /> {c.watchOnYoutube}
                     </span>
                   </span>
                   <ArrowUpRight className="h-4 w-4 shrink-0 text-ghost transition group-hover:text-cyan-400" />
@@ -158,11 +151,11 @@ export default function SessionsPage() {
       {/* ---------- Past ---------- */}
       <section className="mx-auto max-w-content px-5 py-16 sm:px-8">
         <Reveal>
-          <span className="eyebrow">Past sessions</span>
+          <span className="eyebrow">{c.past}</span>
         </Reveal>
 
         <div className="mt-8 grid gap-5 lg:grid-cols-2">
-          {pastSessions.map((s, i) => (
+          {past.map((s, i) => (
             <Reveal key={s.slug} delay={i * 80}>
               <article className="card card-hover flex h-full flex-col p-6">
                 <h3 className="text-xl font-bold leading-snug text-fg">{s.title}</h3>
@@ -178,12 +171,12 @@ export default function SessionsPage() {
                 <div className="mt-5 flex flex-wrap gap-2 border-t border-line pt-4">
                   {s.recordingUrl && (
                     <a href={s.recordingUrl} target="_blank" rel="noreferrer" className="btn-primary !px-4 !py-2">
-                      <PlayCircle className="h-4 w-4" /> Watch recording
+                      <PlayCircle className="h-4 w-4" /> {copy.common.watchRecording}
                     </a>
                   )}
                   {s.sessionPageUrl && (
                     <a href={s.sessionPageUrl} target="_blank" rel="noreferrer" className="btn-ghost !px-4 !py-2">
-                      Session page <ArrowUpRight className="h-3.5 w-3.5" />
+                      {c.sessionPage} <ArrowUpRight className="h-3.5 w-3.5" />
                     </a>
                   )}
                 </div>
@@ -194,7 +187,7 @@ export default function SessionsPage() {
       </section>
 
       <section className="mx-auto max-w-content px-5 pb-8 sm:px-8">
-        <Reveal><JoinCTA /></Reveal>
+        <Reveal><JoinCTA lang={lang} /></Reveal>
       </section>
     </>
   )

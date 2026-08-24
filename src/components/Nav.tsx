@@ -44,12 +44,12 @@ export default function Nav({ lang = 'en' }: { lang?: Lang }) {
               <Link
                 key={item.key}
                 href={href}
-                className={`rounded-full px-3 py-2 text-[13px] font-medium transition ${
+                data-active={active}
+                className={`nav-link rounded-full px-3 py-2 text-[13px] font-medium transition-colors duration-200 ${
                   active ? 'text-fg' : 'text-muted hover:text-fg'
                 }`}
               >
                 {copy.nav.items[item.key]}
-                {active && <span className="mx-auto mt-1 block h-px w-5 brand-gradient" />}
               </Link>
             )
           })}
@@ -60,9 +60,9 @@ export default function Nav({ lang = 'en' }: { lang?: Lang }) {
             href={switchHref}
             hrefLang={lang === 'en' ? 'ar' : 'en'}
             title={copy.switchLangLabel}
-            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-line bg-surface px-3 text-xs font-semibold text-muted transition hover:border-cyan-400/50 hover:text-cyan-400"
+            className="group inline-flex h-9 items-center gap-1.5 rounded-full border border-line bg-surface px-3 text-xs font-semibold text-muted transition duration-300 hover:border-cyan-400/50 hover:text-cyan-400"
           >
-            <Languages className="h-3.5 w-3.5" />
+            <Languages className="h-3.5 w-3.5 transition-transform duration-500 group-hover:rotate-[18deg]" />
             {copy.otherLangName}
           </Link>
           <ThemeToggle label={copy.nav.themeToDark} />
@@ -70,31 +70,50 @@ export default function Nav({ lang = 'en' }: { lang?: Lang }) {
             href={channels[primaryChannel]}
             target="_blank"
             rel="noreferrer"
-            className="btn-primary hidden !px-5 !py-2.5 sm:inline-flex"
+            className="btn-primary group hidden !px-5 !py-2.5 sm:inline-flex"
           >
             {copy.nav.join}
-            <ArrowUpRight className="h-4 w-4" />
+            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:-translate-y-0.5" />
           </a>
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="rounded-lg p-2 text-body hover:bg-surface-hover hover:text-fg lg:hidden"
+            className="rounded-lg p-2 text-body transition-colors duration-200 hover:bg-surface-hover hover:text-fg lg:hidden"
             aria-label={open ? copy.nav.closeMenu : copy.nav.openMenu}
             aria-expanded={open}
           >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            <span className="relative block h-5 w-5">
+              <Menu
+                className={`absolute inset-0 h-5 w-5 transition-all duration-300 ${
+                  open ? 'rotate-90 scale-50 opacity-0' : 'rotate-0 scale-100 opacity-100'
+                }`}
+              />
+              <X
+                className={`absolute inset-0 h-5 w-5 transition-all duration-300 ${
+                  open ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-50 opacity-0'
+                }`}
+              />
+            </span>
           </button>
         </div>
       </nav>
 
-      {open && (
-        <div className="border-t border-line bg-nav backdrop-blur-xl lg:hidden">
+      {/* Height-animated rather than mounted/unmounted, so the panel slides. */}
+      <div
+        className={`grid overflow-hidden border-line bg-nav backdrop-blur-xl transition-all duration-300 ease-out lg:hidden ${
+          open ? 'grid-rows-[1fr] border-t' : 'grid-rows-[0fr] border-t-0'
+        }`}
+      >
+        <div className="min-h-0 overflow-hidden">
           <div className="space-y-1 px-5 py-4">
-            {nav.map((item) => (
+            {nav.map((item, i) => (
               <Link
                 key={item.key}
                 href={localeHref(lang, item.href)}
-                className="block rounded-lg px-3 py-2.5 text-sm font-medium text-body hover:bg-surface-hover hover:text-fg"
+                style={{ transitionDelay: open ? `${60 + i * 35}ms` : '0ms' }}
+                className={`block rounded-lg px-3 py-2.5 text-sm font-medium text-body transition-all duration-300 hover:bg-surface-hover hover:text-fg ${
+                  open ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
+                }`}
               >
                 {copy.nav.items[item.key]}
               </Link>
@@ -109,7 +128,7 @@ export default function Nav({ lang = 'en' }: { lang?: Lang }) {
             </a>
           </div>
         </div>
-      )}
+      </div>
     </header>
   )
 }

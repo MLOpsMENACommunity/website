@@ -23,17 +23,28 @@ export const channels = {
 } as const
 
 export const contacts = {
-  // Corrected from "@gmail.co" in the master reference — Gmail only issues
-  // @gmail.com addresses, so the original was undeliverable.
-  email: 'mlopsmenacommunity@gmail.com',
+  /** Forwards to the community inbox via Cloudflare Email Routing. */
+  email: 'hello@mlopsmena.com',
   founder: {
     name: 'Aya Nasser Salama',
     role: 'Founder · Senior MLOps Engineer',
-    email: 'aya.nasser.mohammed@gmail.com',
+    email: 'aya@mlopsmena.com',
     linkedin: 'https://www.linkedin.com/in/ayanasser',
     purpose: 'Partnerships',
   },
 } as const
+
+/**
+ * Role addresses. These outlive the people holding them — when an axis changes
+ * hands you repoint the Cloudflare routing rule instead of editing the site.
+ * All currently forward to the community inbox.
+ */
+export const roleAddresses = [
+  { address: 'hello@mlopsmena.com', label: 'General enquiries' },
+  { address: 'partnerships@mlopsmena.com', label: 'Partnerships' },
+  { address: 'trainings@mlopsmena.com', label: 'Trainings' },
+  { address: 'research@mlopsmena.com', label: 'Research support' },
+] as const
 
 /** Free-join promo for the Brainsmingle space. */
 export const brainsmingle = {

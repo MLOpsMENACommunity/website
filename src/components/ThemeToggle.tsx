@@ -35,11 +35,23 @@ export default function ThemeToggle({ label }: { label: string }) {
       onClick={toggle}
       title={label}
       aria-label={label}
-      className="grid h-9 w-9 place-items-center rounded-full border border-line bg-surface text-muted transition hover:border-cyan-400/50 hover:text-cyan-400"
+      className="grid h-9 w-9 place-items-center overflow-hidden rounded-full border border-line bg-surface text-muted transition duration-300 hover:border-cyan-400/50 hover:text-cyan-400"
     >
-      {/* Before mount both icons would be a guess, so render the light-mode icon
-          and swap once the real class is known. No layout shift either way. */}
-      {mounted && dark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+      {/* Both icons are always rendered and cross-faded, so the swap animates.
+          Before mount the light-mode icon wins — the class on <html> is the
+          source of truth and the effect syncs to it. No layout shift either way. */}
+      <span className="relative block h-4 w-4">
+        <Sun
+          className={`absolute inset-0 h-4 w-4 transition-all duration-500 ${
+            mounted && dark ? 'rotate-90 scale-0 opacity-0' : 'rotate-0 scale-100 opacity-100'
+          }`}
+        />
+        <Moon
+          className={`absolute inset-0 h-4 w-4 transition-all duration-500 ${
+            mounted && dark ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0'
+          }`}
+        />
+      </span>
     </button>
   )
 }

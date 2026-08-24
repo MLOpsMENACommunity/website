@@ -1,4 +1,3 @@
-import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowRight, Mail, Users } from 'lucide-react'
 import Reveal from '@/components/Reveal'
@@ -6,28 +5,27 @@ import MemberCard from '@/components/MemberCard'
 import JoinCTA from '@/components/JoinCTA'
 import HexField from '@/components/HexField'
 import { founder, directors, leads, teamSummary, teamCount } from '~/data/team'
+import { t, localeHref, type Lang } from '@/lib/i18n'
+import { tMember, teamSummaryAr } from '@/lib/content-i18n'
 
-export const metadata: Metadata = {
-  title: 'Meet the Team',
-  description:
-    'The people who run MLOps MENA Community — one founder, two community directors, and six owned axes covering instruction, content, research, growth, sessions, and platform.',
-}
+export default function TeamView({ lang }: { lang: Lang }) {
+  const copy = t(lang)
+  const c = copy.teamPage
+  const summary = lang === 'ar' ? teamSummaryAr : teamSummary
 
-export default function TeamPage() {
   return (
     <>
       <section className="relative overflow-hidden border-b border-line">
         <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-teal/10 blur-[100px]" />
         <div className="pointer-events-none absolute -right-24 top-0 h-96 w-96 rounded-full bg-amber/10 blur-[100px]" />
-        <HexField className="pointer-events-none absolute right-6 top-16 hidden h-56 w-80 text-hex lg:block" />
+        <HexField className="pointer-events-none absolute end-6 top-16 hidden h-56 w-80 text-hex lg:block" />
         <div className="relative mx-auto max-w-content px-5 py-20 sm:px-8">
-          <span className="eyebrow">Meet the team</span>
+          <span className="eyebrow">{c.eyebrow}</span>
           <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-[1.1] sm:text-5xl">
-            The people who <span className="brand-text">run this community</span>
+            {c.titleBefore} <span className="brand-text">{c.accent}</span>
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
-            {teamSummary} {teamCount} volunteers keeping the sessions, courses, roadmaps, and
-            study groups running — all of it free.
+            {summary} {teamCount} {c.leadAfter}
           </p>
         </div>
       </section>
@@ -35,14 +33,14 @@ export default function TeamPage() {
       {/* ---------- Structure ---------- */}
       <section className="mx-auto max-w-content px-5 py-16 sm:px-8">
         <Reveal>
-          <span className="eyebrow">How the team is structured</span>
+          <span className="eyebrow">{c.structure}</span>
         </Reveal>
 
         {/* Founder */}
-        <Reveal delay={60}>
+        <Reveal delay={60} variant="scale">
           <div className="mt-10 flex justify-center">
             <div className="w-full max-w-md">
-              <MemberCard member={founder} badge="Founder" featured />
+              <MemberCard member={tMember(lang, founder)} badge={copy.home.team.founder} featured lang={lang} />
             </div>
           </div>
         </Reveal>
@@ -58,8 +56,8 @@ export default function TeamPage() {
         {/* Directors */}
         <div className="mx-auto grid max-w-3xl gap-4 sm:grid-cols-2">
           {directors.map((d, i) => (
-            <Reveal key={d.name} delay={i * 80}>
-              <MemberCard member={d} badge="Community Director" />
+            <Reveal key={d.name} delay={i * 80} variant={i === 0 ? 'start' : 'end'}>
+              <MemberCard member={tMember(lang, d)} badge={copy.home.team.director} lang={lang} />
             </Reveal>
           ))}
         </div>
@@ -73,7 +71,7 @@ export default function TeamPage() {
         {/* The six axes */}
         <Reveal>
           <div className="text-center">
-            <span className="eyebrow justify-center">Six owned axes</span>
+            <span className="eyebrow justify-center">{c.sixAxes}</span>
           </div>
         </Reveal>
 
@@ -81,10 +79,10 @@ export default function TeamPage() {
           {leads.map((l, i) => (
             <Reveal key={l.name} delay={i * 70}>
               <div className="relative h-full">
-                <span className="absolute -top-3 left-6 z-10 grid h-7 w-7 place-items-center rounded-full border border-line bg-surface-2 font-mono text-xs font-bold text-cyan-400">
+                <span className="absolute -top-3 start-6 z-10 grid h-7 w-7 place-items-center rounded-full border border-line bg-surface-2 font-mono text-xs font-bold text-cyan-400">
                   {l.axis}
                 </span>
-                <MemberCard member={l} />
+                <MemberCard member={tMember(lang, l)} lang={lang} />
               </div>
             </Reveal>
           ))}
@@ -101,19 +99,16 @@ export default function TeamPage() {
               </span>
               <div className="max-w-xl">
                 <h2 className="text-2xl font-bold sm:text-3xl">
-                  Want to <span className="brand-text">join the core team?</span>
+                  {c.joinTitleBefore} <span className="brand-text">{c.joinAccent}</span>
                 </h2>
-                <p className="mt-3 text-base leading-relaxed text-muted">
-                  We are always looking for practitioners to run sessions, review code, mentor
-                  students, and help keep this free for everyone.
-                </p>
+                <p className="mt-3 text-base leading-relaxed text-muted">{c.joinLead}</p>
               </div>
               <div className="flex flex-wrap justify-center gap-3">
-                <Link href="/#contact" className="btn-primary">
-                  <Mail className="h-4 w-4" /> Contact us
+                <Link href={localeHref(lang, '/#contact')} className="btn-primary">
+                  <Mail className="h-4 w-4" /> {copy.common.contactUs}
                 </Link>
-                <Link href="/mentorship" className="btn-ghost">
-                  Mentorship &amp; consultation <ArrowRight className="h-4 w-4" />
+                <Link href={localeHref(lang, '/mentorship')} className="btn-ghost">
+                  {copy.footer.mentorship} <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
                 </Link>
               </div>
             </div>
@@ -122,7 +117,7 @@ export default function TeamPage() {
       </section>
 
       <section className="mx-auto max-w-content px-5 py-16 sm:px-8">
-        <Reveal><JoinCTA /></Reveal>
+        <Reveal><JoinCTA lang={lang} /></Reveal>
       </section>
     </>
   )

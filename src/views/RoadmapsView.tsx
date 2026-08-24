@@ -1,19 +1,16 @@
-import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowRight, Clock, BookOpen, Signal } from 'lucide-react'
 import Reveal from '@/components/Reveal'
 import JoinCTA from '@/components/JoinCTA'
 import HexField from '@/components/HexField'
 import { getRoadmaps, accentClasses } from '@/lib/roadmaps'
+import { t, localeHref, type Lang } from '@/lib/i18n'
+import { tRoadmap } from '@/lib/content-i18n'
 
-export const metadata: Metadata = {
-  title: 'Learning Roadmaps',
-  description:
-    'Three structured MLOps learning paths built entirely on free and open-source resources — from zero to job-ready, from DevOps to MLOps, and from mid-level to Senior.',
-}
-
-export default function RoadmapsPage() {
-  const roadmaps = getRoadmaps()
+export default function RoadmapsView({ lang }: { lang: Lang }) {
+  const copy = t(lang)
+  const c = copy.roadmapsPage
+  const roadmaps = getRoadmaps().map((r) => tRoadmap(lang, r))
   const totalResources = roadmaps.reduce((n, r) => n + r.resourceCount, 0)
 
   return (
@@ -21,18 +18,16 @@ export default function RoadmapsPage() {
       <section className="relative overflow-hidden border-b border-line">
         <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-teal/10 blur-[100px]" />
         <div className="pointer-events-none absolute -right-24 top-0 h-96 w-96 rounded-full bg-amber/10 blur-[100px]" />
-        <HexField className="pointer-events-none absolute right-6 top-16 hidden h-56 w-80 text-hex lg:block" />
+        <HexField className="pointer-events-none absolute end-6 top-16 hidden h-56 w-80 text-hex lg:block" />
 
         <div className="relative mx-auto max-w-content px-5 py-20 sm:px-8">
-          <span className="eyebrow">Learning roadmaps</span>
+          <span className="eyebrow">{c.eyebrow}</span>
           <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-[1.1] sm:text-5xl">
-            Pick the path that matches{' '}
-            <span className="brand-text">where you actually are</span>
+            {c.titleBefore} <span className="brand-text">{c.accent}</span>
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
-            Every roadmap below is built on free and open-source resources, because the real
-            knowledge in this field lives on GitHub and YouTube — not behind paywalls.
-            <span className="text-fg"> {totalResources} curated links</span> in total.
+            {c.leadBefore}{' '}
+            <span className="text-fg">{totalResources} {c.leadLinks}</span> {c.leadAfter}
           </p>
         </div>
       </section>
@@ -42,12 +37,12 @@ export default function RoadmapsPage() {
           {roadmaps.map((r, i) => {
             const a = accentClasses[r.accent]
             return (
-              <Reveal key={r.slug} delay={i * 90}>
+              <Reveal key={r.slug} delay={i * 90} variant={i % 2 === 0 ? 'start' : 'end'}>
                 <Link
-                  href={`/roadmaps/${r.slug}`}
+                  href={localeHref(lang, `/roadmaps/${r.slug}`)}
                   className={`card card-hover group relative block overflow-hidden p-7 sm:p-9 ${a.border}`}
                 >
-                  <div className={`absolute inset-y-0 left-0 w-1 ${a.dot} opacity-70`} />
+                  <div className={`absolute inset-y-0 start-0 w-1 ${a.dot} opacity-70 transition-opacity duration-300 group-hover:opacity-100`} />
 
                   <div className="grid gap-8 lg:grid-cols-[1.3fr_1fr]">
                     <div>
@@ -61,18 +56,16 @@ export default function RoadmapsPage() {
                         {r.title}
                       </h2>
                       <p className={`mt-2 text-base font-medium ${a.text}`}>{r.tagline}</p>
-                      <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted">
-                        {r.audience}
-                      </p>
+                      <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted">{r.audience}</p>
 
                       <div className="mt-7 flex items-center gap-4">
                         <span className={`inline-flex items-center gap-2 text-sm font-semibold ${a.text}`}>
-                          Open the roadmap
-                          <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+                          {c.openRoadmap}
+                          <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1 rtl:-scale-x-100 rtl:group-hover:-translate-x-1" />
                         </span>
                         <span className="flex items-center gap-1.5 text-xs text-faint">
                           <BookOpen className="h-3.5 w-3.5" />
-                          {r.resourceCount} free resources
+                          {r.resourceCount} {copy.common.freeResources}
                         </span>
                       </div>
                     </div>
@@ -84,13 +77,13 @@ export default function RoadmapsPage() {
                           <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${a.dot}`} />
                           <div className="min-w-0">
                             <span className="text-sm font-medium text-body">{p.title}</span>
-                            {p.when && <span className="ml-2 text-xs text-ghost">{p.when}</span>}
+                            {p.when && <span className="ms-2 text-xs text-ghost">{p.when}</span>}
                           </div>
                         </li>
                       ))}
                       {r.phases.length > 5 && (
-                        <li className="pl-[18px] text-xs text-ghost">
-                          + {r.phases.length - 5} more
+                        <li className="ps-[18px] text-xs text-ghost">
+                          + {r.phases.length - 5} {copy.common.more}
                         </li>
                       )}
                     </ol>
@@ -103,7 +96,7 @@ export default function RoadmapsPage() {
       </section>
 
       <section className="mx-auto max-w-content px-5 pb-8 sm:px-8">
-        <Reveal><JoinCTA /></Reveal>
+        <Reveal><JoinCTA lang={lang} /></Reveal>
       </section>
     </>
   )

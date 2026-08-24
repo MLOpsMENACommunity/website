@@ -56,9 +56,9 @@ You don't need to master Python from scratch. You need to master the specific Py
 
 Resources:
 
-- [Real Python](https://realpython.com) — — best focused articles on specific Python topics
+- [Real Python](https://realpython.com) — best focused articles on specific Python topics
 - [freeCodeCamp's "Python for Data Science"](https://www.youtube.com/watch?v=LHBE6Q9XlzI)
-- [Kaggle Learn Python](https://www.kaggle.com/learn/python) — — short, hands-on
+- [Kaggle Learn Python](https://www.kaggle.com/learn/python) — short, hands-on
 
 **Machine Learning Fundamentals (concepts, not code)**
 
@@ -66,9 +66,9 @@ You're not becoming a data scientist. You just need to understand what your data
 
 Resources:
 
-- [StatQuest with Josh Starmer](https://www.youtube.com/@statquest) — — best ML intuition on YouTube
+- [StatQuest with Josh Starmer](https://www.youtube.com/@statquest) — best ML intuition on YouTube
 - [Andrew Ng's "Machine Learning Specialization" on Coursera (audit for free)](https://www.coursera.org/specializations/machine-learning-introduction)
-- [Google's Machine Learning Crash Course](https://developers.google.com/machine-learning/crash-course) — — 15 hours, focused and free
+- [Google's Machine Learning Crash Course](https://developers.google.com/machine-learning/crash-course) — 15 hours, focused and free
 
 > **Phase 1 Project** — Take a public dataset (Kaggle has thousands), train a simple scikit-learn model, evaluate it, and put the whole thing in a GitHub repo. Doesn't need to be sophisticated — needs to exist.
 
@@ -93,7 +93,7 @@ Think of MLflow as a "logging + database" system for ML experiments. If you've w
 
 You already know orchestration from your DevOps background. Airflow is orchestration for data pipelines. The concepts are identical to what you know; the vocabulary is different.
 
-- [Marc Lamberti's YouTube](https://www.youtube.com/@MarcLamberti) — — the Airflow expert
+- [Marc Lamberti's YouTube](https://www.youtube.com/@MarcLamberti) — the Airflow expert
 - [Astronomer Academy (free with certification)](https://academy.astronomer.io)
 - [Airflow official docs](https://airflow.apache.org/docs/)
 
@@ -120,9 +120,9 @@ This is the phase where you'll suddenly realize: "I already know how to do most 
 
 You already know Kubernetes. Now learn the ML-specific extensions.
 
-- [KServe](https://kserve.github.io/website/) — — model serving on Kubernetes
+- [KServe](https://kserve.github.io/website/) — model serving on Kubernetes
 - [Seldon Core](https://github.com/SeldonIO/seldon-core)
-- [Kubeflow](https://www.kubeflow.org) — — full ML platform on K8s
+- [Kubeflow](https://www.kubeflow.org) — full ML platform on K8s
 
 Read their docs. You'll be surprised how much of it is Kubernetes concepts you already know, just wrapped in ML terminology.
 
@@ -141,7 +141,7 @@ Node autoscaling with GPU nodes (Karpenter is amazing here)
 You know CI/CD. The new concept is CT — Continuous Training. Models need to be retrained automatically when data drifts or performance degrades. This is the piece that makes ML pipelines different from regular software pipelines.
 
 GitHub Actions for ML workflows — you already use GitHub Actions, just apply it to ML
-- [CML (Continuous Machine Learning) by Iterative](https://cml.dev) — — CI/CD extensions specifically for ML
+- [CML (Continuous Machine Learning) by Iterative](https://cml.dev) — CI/CD extensions specifically for ML
 
 ## Phase 4 — MLOps-Specific Concepts You Won't Know (Month 4)
 This is the phase that separates a "DevOps engineer who deployed a model" from a real MLOps engineer. These concepts don't exist in traditional DevOps.
@@ -167,7 +167,7 @@ Prediction drift — output distribution has shifted (early warning sign)
 
 ### Tools
 
-- [Evidently AI](https://github.com/evidentlyai/evidently) — — open-source, has excellent tutorials
+- [Evidently AI](https://github.com/evidentlyai/evidently) — open-source, has excellent tutorials
 - [Evidently YouTube channel](https://www.youtube.com/@evidentlyai)
 
 **Model Registry**
@@ -182,7 +182,7 @@ Different from container registries. A model registry tracks model versions, the
 
 You'll hear this term a lot. A feature store is essentially a database + API for ML features that ensures training-serving consistency. It's mostly relevant if you work at a company with dozens of ML models sharing features.
 
-- [Feast](https://feast.dev) — — open-source, most popular
+- [Feast](https://feast.dev) — open-source, most popular
 
 **Don't overinvest here unless you actually need it**
 
@@ -195,15 +195,15 @@ If you want to stay maximally relevant in 2026, add LLMOps to your DevOps + MLOp
 
 Your Kubernetes and containerization skills are directly applicable here. You just need to learn the ML-specific serving frameworks.
 
-- [vLLM documentation](https://docs.vllm.ai) — — the default LLM serving solution
+- [vLLM documentation](https://docs.vllm.ai) — the default LLM serving solution
 - [Fast & Efficient LLM Inference with vLLM (June 2026, free course)](https://www.deeplearning.ai/courses/fast-and-efficient-llm-inference-with-vllm)
 
 **LLM Observability**
 
 Think of this as observability for LLMs — traces, spans, costs, and quality metrics.
 
-- [Langfuse](https://langfuse.com) — — open-source, self-hostable (I use this in production at Unifonic)
-- [LangSmith](https://www.langchain.com/langsmith) — — commercial alternative
+- [Langfuse](https://langfuse.com) — open-source, self-hostable (I use this in production at Unifonic)
+- [LangSmith](https://www.langchain.com/langsmith) — commercial alternative
 
 **Basic Understanding of LLM Concepts**
 
@@ -228,7 +228,13 @@ Observability discipline — you already know that if it's not monitored, it doe
 
 **Your Suggested 4-Month Learning Plan**
 
-MonthFocusHours/week1Python + ML fundamentals10-152ML tooling (DVC, MLflow, Airflow, FastAPI)10-153Kubernetes for ML (KServe, GPU scheduling) + CI/CD/CT10-154Monitoring, drift detection, MLOps mindset10-155+LLMOps specialization (optional but recommended)10-15
+| Month | Focus | Hours/week |
+|---|---|---|
+| 1 | Python + ML fundamentals | 10-15 |
+| 2 | ML tooling (DVC, MLflow, Airflow, FastAPI) | 10-15 |
+| 3 | Kubernetes for ML (KServe, GPU scheduling) + CI/CD/CT | 10-15 |
+| 4 | Monitoring, drift detection, MLOps mindset | 10-15 |
+| 5+ | LLMOps specialization (optional but recommended) | 10-15 |
 
 If you're consistent, you'll be MLOps-ready in 4 months and LLMOps-ready in 5-6 months. Way faster than any other transition path.
 
@@ -260,5 +266,3 @@ What's Next?
 If this roadmap helped you, share it with a DevOps friend who's been thinking about this transition. The community grows when we help each other level up.
 
 Drop your questions or your current DevOps → MLOps transition story in the comments. I read every one.
-
-#MLOps #DevOps #CareerTransition #MLEngineering #MENA #DataScience #AI #Kubernetes #Roadmap

@@ -4,21 +4,29 @@ import { site } from '~/site.config'
 
 export const dynamic = 'force-static'
 
+const staticPages = [
+  '', '/roadmaps', '/courses', '/courses/mlops-practitioner',
+  '/sessions', '/team', '/articles', '/mentorship', '/faq',
+]
+
 export default function sitemap(): MetadataRoute.Sitemap {
-  const staticPages = [
-    '', '/roadmaps', '/courses', '/courses/mlops-practitioner',
-    '/sessions', '/team', '/articles', '/mentorship', '/faq',
-  ]
-  return [
-    ...staticPages.map((p) => ({
-      url: `${site.url}${p}/`.replace(/\/\/$/, '/'),
-      changeFrequency: 'weekly' as const,
-      priority: p === '' ? 1 : 0.8,
-    })),
+  const paths = [
+    ...staticPages.map((p) => ({ path: p, priority: p === '' ? 1 : 0.8, freq: 'weekly' as const })),
     ...getRoadmaps().map((r) => ({
-      url: `${site.url}/roadmaps/${r.slug}/`,
-      changeFrequency: 'monthly' as const,
+      path: `/roadmaps/${r.slug}`,
       priority: 0.7,
+      freq: 'monthly' as const,
     })),
   ]
+
+  const url = (path: string) => `${site.url}${path}/`.replace(/\/\/$/, '/')
+
+  // Every page is listed once per edition, each pointing at both via hreflang.
+  return paths.flatMap(({ path, priority, freq }) => {
+    const languages = { en: url(path), ar: url(`/ar${path}`) }
+    return [
+      { url: languages.en, changeFrequency: freq, priority, alternates: { languages } },
+      { url: languages.ar, changeFrequency: freq, priority, alternates: { languages } },
+    ]
+  })
 }

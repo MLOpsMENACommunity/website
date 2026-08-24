@@ -21,7 +21,7 @@ export default function FaqAccordion({
                 type="button"
                 onClick={() => setOpen(isOpen ? null : i)}
                 aria-expanded={isOpen}
-                className="flex w-full items-start justify-between gap-4 px-5 py-5 text-left transition hover:bg-surface sm:px-6"
+                className="flex w-full items-start justify-between gap-4 px-5 py-5 text-start transition hover:bg-surface-hover sm:px-6"
               >
                 <span className="text-sm font-semibold text-fg sm:text-base">{item.q}</span>
                 <Plus

@@ -13,7 +13,7 @@ export default function StatsSection({ lang = 'en' }: { lang?: Lang }) {
   return (
     <section className="border-b border-line bg-alt">
       <div className="mx-auto max-w-content px-5 py-16 sm:px-8 sm:py-20">
-        <Reveal>
+        <Reveal variant="blur">
           <SectionHeading eyebrow={c.eyebrow} title={c.title} accent={c.accent} align="center">
             {c.lead}
           </SectionHeading>
@@ -21,7 +21,7 @@ export default function StatsSection({ lang = 'en' }: { lang?: Lang }) {
 
         <dl className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {stats.map((s, i) => (
-            <Reveal key={s.label} delay={i * 60}>
+            <Reveal key={s.label} delay={i * 70} variant="scale">
               <a
                 href={s.href}
                 target="_blank"
@@ -29,13 +29,13 @@ export default function StatsSection({ lang = 'en' }: { lang?: Lang }) {
                 className="card card-hover group flex h-full flex-col items-center justify-center p-5 text-center"
               >
                 <dt className="sr-only">{tStatLabel(lang, s.label)}</dt>
-                <dd className="text-3xl font-bold brand-text sm:text-4xl">
+                <dd className="text-3xl font-bold brand-text transition-transform duration-300 group-hover:scale-110 sm:text-4xl">
                   <Counter value={s.value} suffix={s.suffix} />
                 </dd>
                 <p className="mt-2 text-[11px] font-medium uppercase leading-tight tracking-[0.08em] text-faint">
                   {tStatLabel(lang, s.label)}
                 </p>
-                <ArrowUpRight className="mt-2 h-3.5 w-3.5 text-ghost transition group-hover:text-cyan-400" />
+                <ArrowUpRight className="mt-2 h-3.5 w-3.5 text-ghost transition duration-300 group-hover:-translate-y-0.5 group-hover:text-cyan-400" />
               </a>
             </Reveal>
           ))}

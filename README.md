@@ -4,6 +4,7 @@ Website for the [MLOps MENA Community](https://www.linkedin.com/company/mlops-me
 free MLOps and AI learning for engineers across the Middle East and North Africa.
 
 Next.js 14 (App Router) + Tailwind, exported to static HTML and served from GitHub Pages.
+Two language editions (English at the root, Arabic under `/ar`) and a light/dark theme.
 
 ## Run it
 
@@ -16,9 +17,11 @@ npm run serve    # preview the exported ./out
 
 ## Pages
 
+Every page exists twice — English at the root and Arabic under `/ar`.
+
 | Page | Route |
 |---|---|
-| Home | `/` |
+| Home | `/` · `/ar` |
 | Roadmaps | `/roadmaps` + one page per roadmap |
 | Courses | `/courses` |
 | The MLOps Practitioner | `/courses/mlops-practitioner` |
@@ -27,6 +30,50 @@ npm run serve    # preview the exported ./out
 | Mentorship & Consultation | `/mentorship` |
 | Articles | `/articles` |
 | FAQ | `/faq` |
+
+## How the two editions fit together
+
+```
+src/
+  views/          one component per page, takes `lang` — rendered by both editions
+  app/(en)/…      English routes  ->  /roadmaps
+  app/(ar)/ar/…   Arabic routes   ->  /ar/roadmaps
+  app/not-found   /404.html
+  lib/i18n.ts         UI strings (`ar` is typed as `typeof en`, so a missing
+                      translation is a build error)
+  lib/content-i18n.ts Arabic overlays for data/*.ts — sessions, team bios, FAQ,
+                      pillars, roadmap metadata, the course
+```
+
+Each edition has its own root layout (`app/(en)/layout.tsx`, `app/(ar)/layout.tsx`)
+because that is the only way to put `lang` and `dir` on `<html>` in a static export.
+`app/layout.tsx` is a pass-through that exists only so `app/not-found.tsx` has a root.
+
+**Adding a page:** write `src/views/XView.tsx` taking `{ lang }`, add its strings to
+both dictionaries in `src/lib/i18n.ts`, then add a three-line `page.tsx` under
+`app/(en)/…` and `app/(ar)/ar/…`. Add the path to `src/app/sitemap.ts`.
+
+The three roadmap markdown documents stay in English in both editions — their
+metadata, phases, and the UI around them are translated; the body is not. The
+Arabic pages say so in a notice above the article.
+
+## Theme
+
+Light is the default; the nav toggle switches to dark and remembers the choice in
+`localStorage`. Nothing hard-codes a colour: every surface, text and accent shade is
+a CSS variable in `src/app/globals.css` (`:root` for light, `.dark` for dark) exposed
+to Tailwind as a semantic name.
+
+| Use it for | Class |
+|---|---|
+| Page background / alternating band | `bg-bg` · `bg-alt` |
+| Cards and inset panels | `bg-surface` · `bg-surface-2` · `bg-surface-hover` |
+| Headings / body / secondary / meta / decorative | `text-fg` · `text-body` · `text-muted` · `text-faint` · `text-ghost` |
+| Hairlines | `border-line` · `bg-line-strong` |
+| Brand accents (auto-darkened in light mode) | `text-cyan-400` · `text-teal` · `text-amber-400` · `text-violet` |
+
+Never write `text-white`, `text-slate-*`, `border-white/10` or `bg-ink-*` in a
+component — they only work in one theme.
 
 ## Where the content lives
 
@@ -45,6 +92,8 @@ Everything editable is plain data — no CMS, no database.
 | Repos and homepage pillars | `data/community.ts` |
 | Key free resources | `data/resources.ts` |
 | Roadmaps (full text) | `content/roadmaps/*.md` |
+| UI strings, both languages | `src/lib/i18n.ts` |
+| Arabic translations of the data above | `src/lib/content-i18n.ts` |
 
 ### Adding a roadmap
 
@@ -72,6 +121,11 @@ Ordering comes from the `ORDER` array in `src/lib/roadmaps.ts`.
 Add an entry to `upcomingSessions` in `data/sessions.ts`. Put a 1200px cover image at
 `public/sessions/<slug>.jpg` — the filename must match the entry's `slug`. When the session
 is over, move it to `pastSessions` and add `recordingUrl`.
+
+`upcomingSessions` drives the homepage's "This week at MLOps MENA" band, so a session
+left there after it has aired keeps advertising itself with a live register button.
+Move it the day after. Add the Arabic title/date/topics to `sessionsAr` in
+`src/lib/content-i18n.ts`.
 
 ### Adding team photos and bios
 
@@ -110,15 +164,21 @@ Search the repo for `TODO:`.
 - Google Drive link for the mini/final projects PDF (`data/mlops-practitioner.ts`)
 - Team photos, bios, and LinkedIn URLs (`data/team.ts`)
 - Docker Deep Dive start time — the date is confirmed, the time is assumed (`data/sessions.ts`)
-- Confirm the community email: `mlopsmenacommunity@gmail.co` (Gmail is normally `.com`)
+- Docker Deep Dive has already aired — move it to `pastSessions` with its recording URL
+- Send a test message to `hello@mlopsmena.com` and to one team address. The domain's
+  MX records point at Cloudflare Email Routing, but routing only delivers for addresses
+  that have a rule *and* a verified destination inbox — an address in `site.config.ts`
+  or `data/team.ts` without one silently bounces.
 
 ## Design
 
-Colours are sampled directly from the community logo.
+Colours are sampled directly from the community logo. The brand hues below are the
+gradient stops and stay fixed in both themes; the light theme darkens the *text* shades
+of teal/cyan/amber so they pass contrast on white (see the theme table above).
 
 | Token | Hex |
 |---|---|
-| Background navy | `#08142E` |
+| Background navy (dark theme) | `#08142E` |
 | Teal | `#33CEC0` |
 | Cyan | `#2CACD1` |
 | Amber | `#EC9723` |
