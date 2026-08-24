@@ -23,15 +23,15 @@ export default function CoursesPage() {
 
   return (
     <>
-      <section className="relative overflow-hidden border-b border-white/10">
+      <section className="relative overflow-hidden border-b border-line">
         <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-teal/10 blur-[100px]" />
-        <HexField className="pointer-events-none absolute right-6 top-16 hidden h-56 w-80 text-white/[0.055] lg:block" />
+        <HexField className="pointer-events-none absolute right-6 top-16 hidden h-56 w-80 text-hex lg:block" />
         <div className="relative mx-auto max-w-content px-5 py-20 sm:px-8">
           <span className="eyebrow">Courses</span>
           <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-[1.1] sm:text-5xl">
             Cohort-based, live, and <span className="brand-text">free to join</span>
           </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-slate-400">
+          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
             Real projects, live lessons, and a certificate at the end — delivered together with
             our educational platform partner {zomra?.name}.
           </p>
@@ -51,7 +51,7 @@ export default function CoursesPage() {
                   <span className="brand-text">1,200+ students</span> registered for
                   The MLOps Practitioner
                 </h2>
-                <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-400">
+                <p className="mt-4 max-w-xl text-base leading-relaxed text-muted">
                   Cohort 1 is running now with a 4.9 rating from its first reviews. Cohort 2 and
                   our second course are already in preparation.
                 </p>
@@ -65,7 +65,7 @@ export default function CoursesPage() {
                   className="object-cover"
                 />
                 {/* Fade the image into the card on wide screens */}
-                <div className="absolute inset-0 bg-gradient-to-r from-ink-900 via-ink-900/30 to-transparent sm:bg-gradient-to-r" />
+                <div className="absolute inset-0 bg-gradient-to-r from-bg via-bg/30 to-transparent sm:bg-gradient-to-r" />
               </div>
             </div>
           </div>
@@ -79,7 +79,7 @@ export default function CoursesPage() {
             <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-teal/10 blur-3xl" />
             <div className="relative">
               <div className="flex flex-wrap items-center gap-3">
-                <span className="font-mono text-5xl font-bold text-white/10">01</span>
+                <span className="font-mono text-5xl font-bold text-fg/10">01</span>
                 <span className="chip border-teal/35 text-teal">
                   <span className="relative flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal opacity-70" />
@@ -93,7 +93,7 @@ export default function CoursesPage() {
                 <div>
                   <h2 className="text-3xl font-bold sm:text-4xl">{course.title}</h2>
                   <p className="mt-2 text-sm font-medium text-cyan-400">{course.format}</p>
-                  <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-400">
+                  <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted">
                     {course.summary}
                   </p>
 
@@ -116,20 +116,20 @@ export default function CoursesPage() {
                   </div>
                 </div>
 
-                <ul className="space-y-3 self-start rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-                  <li className="flex items-center gap-3 text-sm text-slate-300">
+                <ul className="space-y-3 self-start rounded-2xl border border-line bg-surface p-6">
+                  <li className="flex items-center gap-3 text-sm text-body">
                     <Radio className="h-4 w-4 shrink-0 text-cyan-400" />5 interactive live lessons
                   </li>
-                  <li className="flex items-center gap-3 text-sm text-slate-300">
+                  <li className="flex items-center gap-3 text-sm text-body">
                     <Clock className="h-4 w-4 shrink-0 text-cyan-400" />7 weeks · Aug 15 → Oct 2
                   </li>
-                  <li className="flex items-center gap-3 text-sm text-slate-300">
+                  <li className="flex items-center gap-3 text-sm text-body">
                     <Users className="h-4 w-4 shrink-0 text-cyan-400" />4 levelled study groups
                   </li>
-                  <li className="flex items-center gap-3 text-sm text-slate-300">
+                  <li className="flex items-center gap-3 text-sm text-body">
                     <Trophy className="h-4 w-4 shrink-0 text-cyan-400" />Certificate of completion
                   </li>
-                  <li className="flex items-center gap-3 border-t border-white/10 pt-3 text-sm text-slate-300">
+                  <li className="flex items-center gap-3 border-t border-line pt-3 text-sm text-body">
                     <Star className="h-4 w-4 shrink-0 fill-amber-400 text-amber-400" />
                     {course.rating.score} from {course.rating.count} reviews
                   </li>
@@ -145,7 +145,7 @@ export default function CoursesPage() {
             <div className="absolute -left-16 -top-16 h-64 w-64 rounded-full bg-violet/10 blur-3xl" />
             <div className="relative">
               <div className="flex flex-wrap items-center gap-3">
-                <span className="font-mono text-5xl font-bold text-white/10">{upcomingCourse.number}</span>
+                <span className="font-mono text-5xl font-bold text-fg/10">{upcomingCourse.number}</span>
                 <span className="chip border-violet/35 text-violet">
                   <Sparkles className="h-3 w-3" /> {upcomingCourse.status}
                 </span>
@@ -154,7 +154,7 @@ export default function CoursesPage() {
               <div className="mt-4 grid gap-8 lg:grid-cols-[1.45fr_1fr]">
                 <div>
                   <h2 className="text-3xl font-bold sm:text-4xl">{upcomingCourse.title}</h2>
-                  <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-400">
+                  <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted">
                     {upcomingCourse.summary}
                   </p>
 
@@ -165,13 +165,13 @@ export default function CoursesPage() {
                   </div>
                 </div>
 
-                <div className="self-start rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                <div className="self-start rounded-2xl border border-line bg-surface p-6">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-faint">
                     What it will cover
                   </p>
                   <ul className="mt-4 space-y-2.5">
                     {upcomingCourse.topics.map((t) => (
-                      <li key={t} className="flex gap-2.5 text-sm leading-relaxed text-slate-400">
+                      <li key={t} className="flex gap-2.5 text-sm leading-relaxed text-muted">
                         <Check className="mt-0.5 h-4 w-4 shrink-0 text-violet" />
                         {t}
                       </li>

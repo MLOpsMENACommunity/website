@@ -87,7 +87,7 @@ export const leads: (Member & { axis: number })[] = [
     photo: '/team/adham-abdelazeem.jpg',
     bio: 'Research Associate at the Institute of Sport and Sport Science, TU Dortmund, working on applied machine learning in Python. Previously a year at MARS GmbH on computer vision for product imagery and ML for manufacturing process improvement. Started in Biomedical Engineering in Egypt before a Master\'s in Germany.',
     linkedin: 'https://www.linkedin.com/in/adham-abdelazeem/',
-    email: '',
+    email: 'm.adham.bio@gmail.com',
   },
   {
     axis: 4,

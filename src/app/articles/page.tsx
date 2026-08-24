@@ -23,15 +23,15 @@ export default function ArticlesPage() {
 
   return (
     <>
-      <section className="relative overflow-hidden border-b border-white/10">
+      <section className="relative overflow-hidden border-b border-line">
         <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-teal/10 blur-[100px]" />
-        <HexField className="pointer-events-none absolute right-6 top-16 hidden h-56 w-80 text-white/[0.055] lg:block" />
+        <HexField className="pointer-events-none absolute right-6 top-16 hidden h-56 w-80 text-hex lg:block" />
         <div className="relative mx-auto max-w-content px-5 py-20 sm:px-8">
           <span className="eyebrow">Articles</span>
           <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-[1.1] sm:text-5xl">
             Published on <span className="brand-text">LinkedIn and Medium</span>
           </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-slate-400">
+          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
             Everything the community writes, in one place. Follow us on LinkedIn to catch new
             posts as they go up.
           </p>
@@ -46,7 +46,7 @@ export default function ArticlesPage() {
       <section className="mx-auto max-w-content px-5 py-16 sm:px-8">
         {articles.length === 0 ? (
           <div className="card border-dashed p-12 text-center">
-            <p className="text-sm text-slate-500">No articles published yet.</p>
+            <p className="text-sm text-faint">No articles published yet.</p>
           </div>
         ) : (
           <>
@@ -63,10 +63,10 @@ export default function ArticlesPage() {
                     ))}
                   </div>
 
-                  <h2 className="mt-5 max-w-3xl text-2xl font-bold leading-snug text-white sm:text-3xl">
+                  <h2 className="mt-5 max-w-3xl text-2xl font-bold leading-snug text-fg sm:text-3xl">
                     {lead.title}
                   </h2>
-                  <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-400">
+                  <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted">
                     {lead.description}
                   </p>
 
@@ -79,7 +79,7 @@ export default function ArticlesPage() {
                         Read it here <ArrowRight className="h-4 w-4" />
                       </Link>
                     )}
-                    <span className="flex items-center gap-1.5 text-xs text-slate-500">
+                    <span className="flex items-center gap-1.5 text-xs text-faint">
                       <CalendarDays className="h-3.5 w-3.5" />{fmt(lead.date)}
                     </span>
                   </div>
@@ -100,23 +100,23 @@ export default function ArticlesPage() {
                       ))}
                     </div>
 
-                    <h3 className="mt-4 text-lg font-semibold leading-snug text-white">{a.title}</h3>
-                    <p className="mt-2.5 flex-1 text-sm leading-relaxed text-slate-400">
+                    <h3 className="mt-4 text-lg font-semibold leading-snug text-fg">{a.title}</h3>
+                    <p className="mt-2.5 flex-1 text-sm leading-relaxed text-muted">
                       {a.description}
                     </p>
 
-                    <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-white/10 pt-4">
+                    <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-line pt-4">
                       <a href={a.href} target="_blank" rel="noreferrer"
                          className="inline-flex items-center gap-1.5 text-sm font-semibold text-cyan-400 hover:underline">
                         Read on {a.platform} <ArrowUpRight className="h-3.5 w-3.5" />
                       </a>
                       {a.internalHref && (
                         <Link href={a.internalHref}
-                              className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white">
+                              className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg">
                           <BookOpen className="h-3.5 w-3.5" /> Full version here
                         </Link>
                       )}
-                      <span className="ml-auto text-xs text-slate-500">{fmt(a.date)}</span>
+                      <span className="ml-auto text-xs text-faint">{fmt(a.date)}</span>
                     </div>
                   </article>
                 </Reveal>
@@ -127,8 +127,8 @@ export default function ArticlesPage() {
 
         <Reveal delay={120}>
           <div className="mt-6 card border-dashed p-8 text-center">
-            <p className="text-sm font-semibold text-white">More articles on the way</p>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-500">
+            <p className="text-sm font-semibold text-fg">More articles on the way</p>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-faint">
               We publish regularly on LinkedIn and Medium. Follow the page so you do not miss them.
             </p>
           </div>

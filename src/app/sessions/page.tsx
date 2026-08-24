@@ -18,15 +18,15 @@ export const metadata: Metadata = {
 export default function SessionsPage() {
   return (
     <>
-      <section className="relative overflow-hidden border-b border-white/10">
+      <section className="relative overflow-hidden border-b border-line">
         <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-teal/10 blur-[100px]" />
-        <HexField className="pointer-events-none absolute right-6 top-16 hidden h-56 w-80 text-white/[0.055] lg:block" />
+        <HexField className="pointer-events-none absolute right-6 top-16 hidden h-56 w-80 text-hex lg:block" />
         <div className="relative mx-auto max-w-content px-5 py-20 sm:px-8">
           <span className="eyebrow">Sessions</span>
           <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-[1.1] sm:text-5xl">
             Live sessions, <span className="brand-text">free to attend</span>
           </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-slate-400">
+          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
             Practitioners walking through what they actually run in production. Register on
             Zomra, attend live, and catch the recording on YouTube afterwards.
           </p>
@@ -57,7 +57,7 @@ export default function SessionsPage() {
                     </div>
 
                     <h2 className="mt-4 text-2xl font-bold leading-snug sm:text-3xl">{s.title}</h2>
-                    <p className="mt-2 text-base text-slate-400">{s.subtitle}</p>
+                    <p className="mt-2 text-base text-muted">{s.subtitle}</p>
 
                     <div className="mt-5 flex flex-wrap gap-2">
                       <span className="chip"><CalendarDays className="h-3 w-3" />{s.dateLabel}</span>
@@ -66,7 +66,7 @@ export default function SessionsPage() {
 
                     {s.topics.length > 0 && (
                       <>
-                        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.12em] text-faint">
                           What is covered
                         </p>
                         <div className="mt-3 flex flex-wrap gap-1.5">
@@ -78,14 +78,14 @@ export default function SessionsPage() {
                     )}
 
                     {s.note && (
-                      <p className="mt-5 rounded-xl border border-teal/25 bg-teal/[0.06] p-4 text-sm text-slate-300">
+                      <p className="mt-5 rounded-xl border border-teal/25 bg-teal/[0.06] p-4 text-sm text-body">
                         {s.note}
                       </p>
                     )}
                   </div>
 
-                  <div className="self-start rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  <div className="self-start rounded-2xl border border-line bg-surface p-5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-faint">
                       Starts in
                     </p>
                     <div className="mt-4"><Countdown iso={s.startsAt} /></div>
@@ -105,14 +105,14 @@ export default function SessionsPage() {
 
           {upcomingSessions.length === 0 && (
             <div className="card border-dashed p-12 text-center">
-              <p className="text-sm text-slate-500">No sessions scheduled right now.</p>
+              <p className="text-sm text-faint">No sessions scheduled right now.</p>
             </div>
           )}
         </div>
       </section>
 
       {/* ---------- Course sessions ---------- */}
-      <section className="border-y border-white/10 bg-ink-950/40">
+      <section className="border-y border-line bg-alt">
         <div className="mx-auto max-w-content px-5 py-16 sm:px-8">
           <Reveal>
             <div className="flex flex-wrap items-end justify-between gap-4">
@@ -121,7 +121,7 @@ export default function SessionsPage() {
                 <h2 className="mt-4 text-2xl font-bold sm:text-3xl">
                   The MLOps Practitioner <span className="brand-text">recordings</span>
                 </h2>
-                <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-400">
+                <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">
                   All five lessons of Cohort 1, streamed live on YouTube.
                 </p>
               </div>
@@ -140,14 +140,14 @@ export default function SessionsPage() {
                     {String(r.n).padStart(2, '0')}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold leading-snug text-white">
+                    <span className="block text-sm font-semibold leading-snug text-fg">
                       {r.module}
                     </span>
-                    <span className="mt-2 inline-flex items-center gap-1.5 text-xs text-slate-500 transition group-hover:text-cyan-400">
+                    <span className="mt-2 inline-flex items-center gap-1.5 text-xs text-faint transition group-hover:text-cyan-400">
                       <PlayCircle className="h-3.5 w-3.5" /> Watch on YouTube
                     </span>
                   </span>
-                  <ArrowUpRight className="h-4 w-4 shrink-0 text-slate-600 transition group-hover:text-cyan-400" />
+                  <ArrowUpRight className="h-4 w-4 shrink-0 text-ghost transition group-hover:text-cyan-400" />
                 </a>
               </Reveal>
             ))}
@@ -165,17 +165,17 @@ export default function SessionsPage() {
           {pastSessions.map((s, i) => (
             <Reveal key={s.slug} delay={i * 80}>
               <article className="card card-hover flex h-full flex-col p-6">
-                <h3 className="text-xl font-bold leading-snug text-white">{s.title}</h3>
-                <p className="mt-2 text-sm text-slate-400">{s.subtitle}</p>
+                <h3 className="text-xl font-bold leading-snug text-fg">{s.title}</h3>
+                <p className="mt-2 text-sm text-muted">{s.subtitle}</p>
 
                 <div className="mt-4 flex flex-wrap gap-2">
                   <span className="chip"><CalendarDays className="h-3 w-3" />{s.dateLabel}</span>
                 </div>
-                <p className="mt-3 flex-1 text-sm text-slate-400">
-                  <span className="text-slate-300">{s.speaker}</span> · {s.speakerRole}
+                <p className="mt-3 flex-1 text-sm text-muted">
+                  <span className="text-body">{s.speaker}</span> · {s.speakerRole}
                 </p>
 
-                <div className="mt-5 flex flex-wrap gap-2 border-t border-white/10 pt-4">
+                <div className="mt-5 flex flex-wrap gap-2 border-t border-line pt-4">
                   {s.recordingUrl && (
                     <a href={s.recordingUrl} target="_blank" rel="noreferrer" className="btn-primary !px-4 !py-2">
                       <PlayCircle className="h-4 w-4" /> Watch recording

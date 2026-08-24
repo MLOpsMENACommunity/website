@@ -2,12 +2,103 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Light is the default. `.dark` on <html> flips every token below; the inline
+ * script in layout.tsx sets that class before first paint so the theme never
+ * flashes.
+ */
 :root {
+  color-scheme: light;
+
+  /* Fixed brand hues — the logo's infinity loop. Used for gradients and the
+     decorative SVG nodes, which stay vivid in both themes. */
   --brand-teal: #33cec0;
   --brand-cyan: #2cacd1;
   --brand-cyan-bright: #22c3e6;
   --brand-amber: #ec9723;
   --brand-amber-light: #f5a623;
+
+  /* Gradient stops for text set on the page background. Darkened in light mode
+     so a headline on white still reads. */
+  --brandtext-1: #0d9c90;
+  --brandtext-2: #0e7c99;
+  --brandtext-3: #bf7407;
+
+  /* Surfaces */
+  --bg: 250 251 253;
+  --bg-alt: 243 246 251;
+  --surface: #ffffff;
+  --surface-hover: #ffffff;
+  --surface-2: 241 245 250;
+  --nav-bg: rgba(255, 255, 255, 0.88);
+  --line: rgba(15, 33, 64, 0.11);
+  --line-strong: rgba(15, 33, 64, 0.18);
+  --hex: rgba(15, 33, 64, 0.07);
+
+  /* Text */
+  --fg: 8 20 46;
+  --body: 51 65 90;
+  --muted: 88 102 128;
+  --faint: 110 124 150;
+  --ghost: 154 166 186;
+
+  /* Accents, darkened for AA contrast on a near-white page */
+  --c-teal: 11 122 113;
+  --c-teal-500: 9 105 97;
+  --c-cyan: 14 124 153;
+  --c-cyan-400: 14 124 153;
+  --c-cyan-600: 9 87 105;
+  --c-amber: 169 98 8;
+  --c-amber-400: 169 98 8;
+  --c-amber-600: 138 79 6;
+  --c-coral: 214 45 62;
+  --c-violet: 91 55 212;
+
+  /* Depth. Light mode leans on shadow where dark mode leans on a lighter fill. */
+  --card-shadow: 0 1px 2px rgba(15, 33, 64, 0.05), 0 10px 28px -18px rgba(15, 33, 64, 0.18);
+  --card-shadow-hover: 0 2px 4px rgba(15, 33, 64, 0.06), 0 22px 48px -24px rgba(15, 33, 64, 0.3);
+  --glow-1: rgba(51, 206, 192, 0.16);
+  --glow-2: rgba(236, 151, 35, 0.14);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --brandtext-1: #33cec0;
+  --brandtext-2: #22c3e6;
+  --brandtext-3: #f5a623;
+
+  --bg: 8 20 46;
+  --bg-alt: 5 13 31;
+  --surface: rgba(255, 255, 255, 0.03);
+  --surface-hover: rgba(255, 255, 255, 0.055);
+  --surface-2: 11 25 52;
+  --nav-bg: rgba(8, 20, 46, 0.85);
+  --line: rgba(255, 255, 255, 0.1);
+  --line-strong: rgba(255, 255, 255, 0.15);
+  --hex: rgba(255, 255, 255, 0.055);
+
+  --fg: 255 255 255;
+  --body: 203 213 225;
+  --muted: 148 163 184;
+  --faint: 122 138 160;
+  --ghost: 100 116 139;
+
+  --c-teal: 51 206 192;
+  --c-teal-500: 34 181 170;
+  --c-cyan: 44 172 209;
+  --c-cyan-400: 34 195 230;
+  --c-cyan-600: 30 140 174;
+  --c-amber: 236 151 35;
+  --c-amber-400: 245 166 35;
+  --c-amber-600: 208 126 18;
+  --c-coral: 255 107 122;
+  --c-violet: 167 139 250;
+
+  --card-shadow: none;
+  --card-shadow-hover: 0 18px 50px -22px rgba(44, 172, 209, 0.55);
+  --glow-1: rgba(51, 206, 192, 0.13);
+  --glow-2: rgba(236, 151, 35, 0.11);
 }
 
 @layer base {
@@ -17,19 +108,34 @@
     scroll-padding-top: 6rem;
   }
   body {
-    @apply bg-ink-900 text-slate-300 antialiased;
+    @apply bg-bg text-body antialiased;
     background-image:
-      radial-gradient(ellipse 80% 50% at 15% -10%, rgba(51, 206, 192, 0.13), transparent 60%),
-      radial-gradient(ellipse 70% 50% at 90% 5%, rgba(236, 151, 35, 0.11), transparent 60%);
+      radial-gradient(ellipse 80% 50% at 15% -10%, var(--glow-1), transparent 60%),
+      radial-gradient(ellipse 70% 50% at 90% 5%, var(--glow-2), transparent 60%);
     background-attachment: fixed;
   }
   h1, h2, h3, h4 {
-    @apply text-white font-semibold tracking-tight;
+    @apply text-fg font-semibold tracking-tight;
     text-wrap: balance;
   }
   ::selection {
+    background: rgba(44, 172, 209, 0.25);
+  }
+  .dark ::selection {
     background: rgba(51, 206, 192, 0.3);
     color: #fff;
+  }
+  /* Arabic pages: switch the display face and relax the tracking that Latin
+     display type wants but Arabic script does not. */
+  [lang='ar'] body {
+    @apply font-arabic;
+  }
+  [lang='ar'] h1,
+  [lang='ar'] h2,
+  [lang='ar'] h3,
+  [lang='ar'] h4 {
+    @apply tracking-normal;
+    line-height: 1.35;
   }
 }
 
@@ -40,7 +146,7 @@
   }
   .brand-text {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(100deg, var(--brand-teal), var(--brand-cyan-bright) 45%, var(--brand-amber-light));
+    background-image: linear-gradient(100deg, var(--brandtext-1), var(--brandtext-2) 45%, var(--brandtext-3));
   }
   .eyebrow {
     @apply inline-flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-400;
@@ -50,15 +156,18 @@
     content: '';
     @apply block h-4 w-[3px] rounded-full brand-gradient;
   }
+  [lang='ar'] .eyebrow {
+    @apply tracking-normal;
+  }
   .card {
-    @apply relative rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm transition duration-300;
+    @apply relative rounded-2xl border border-line bg-surface backdrop-blur-sm transition duration-300;
+    box-shadow: var(--card-shadow);
   }
   .card-hover {
-    @apply hover:border-cyan-400/40 hover:bg-white/[0.055] hover:-translate-y-1;
-    box-shadow: 0 0 0 0 rgba(44, 172, 209, 0);
+    @apply hover:border-cyan-400/40 hover:bg-surface-hover hover:-translate-y-1;
   }
   .card-hover:hover {
-    box-shadow: 0 18px 50px -22px rgba(44, 172, 209, 0.55);
+    box-shadow: var(--card-shadow-hover);
   }
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold
@@ -74,23 +183,24 @@
     transform: translateY(-1px);
   }
   .btn-ghost {
-    @apply btn border border-white/15 text-white hover:border-cyan-400/50 hover:bg-white/5;
+    @apply btn border border-line bg-surface text-fg hover:border-cyan-400/50 hover:bg-surface-hover;
   }
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-white/5
-           px-3 py-1 text-xs font-medium text-slate-300;
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-2
+           px-3 py-1 text-xs font-medium text-body;
   }
   /* Hairline divider that fades at both ends. */
   .rule {
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+    background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
   }
 }
 
 @layer utilities {
   .glow-teal { box-shadow: 0 0 60px -12px rgba(51, 206, 192, 0.55); }
   .glow-amber { box-shadow: 0 0 60px -12px rgba(236, 151, 35, 0.5); }
-  .text-shadow-glow { text-shadow: 0 0 28px rgba(44, 172, 209, 0.45); }
+  .text-shadow-glow { text-shadow: 0 0 28px rgba(44, 172, 209, 0.2); }
+  .dark .text-shadow-glow { text-shadow: 0 0 28px rgba(44, 172, 209, 0.45); }
 }
 
 /* ---- Scroll reveal (see components/Reveal.tsx) ---- */
@@ -118,22 +228,40 @@
 
 /* ---- Article prose ---- */
 .prose-brand {
-  @apply prose prose-invert max-w-none
-         prose-headings:tracking-tight prose-headings:text-white
+  @apply prose dark:prose-invert max-w-none
+         prose-headings:tracking-tight prose-headings:text-fg
+         prose-p:text-body prose-li:text-body
          prose-a:text-cyan-400 prose-a:no-underline hover:prose-a:underline
-         prose-strong:text-white
-         prose-code:rounded prose-code:bg-white/10 prose-code:px-1.5 prose-code:py-0.5
+         prose-strong:text-fg
+         prose-code:rounded prose-code:bg-surface-2 prose-code:px-1.5 prose-code:py-0.5
          prose-code:text-cyan-400 prose-code:before:content-none prose-code:after:content-none
-         prose-pre:border prose-pre:border-white/10 prose-pre:bg-ink-950
-         prose-blockquote:border-l-cyan-400 prose-blockquote:text-slate-300
+         prose-pre:border prose-pre:border-line prose-pre:bg-ink-950 prose-pre:text-slate-200
+         prose-blockquote:border-l-cyan-400 prose-blockquote:text-body
          prose-blockquote:before:content-none prose-blockquote:after:content-none
          [&_blockquote_p:first-of-type::before]:content-none
          [&_blockquote_p:last-of-type::after]:content-none
-         prose-li:marker:text-cyan-400;
+         prose-li:marker:text-cyan-400
+         prose-th:text-fg prose-td:text-body;
 }
 
 /* Bare URLs in the markdown have no break opportunity and would otherwise
    push the page wider than a phone screen. */
 .prose-brand :where(p, li, a, td, th, h1, h2, h3, h4) {
   overflow-wrap: anywhere;
+}
+
+/* Wide markdown tables scroll inside themselves rather than widening the page. */
+.prose-brand :where(table) {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+}
+
+/* RTL: the blockquote rail and list markers belong on the reading-start edge. */
+[dir='rtl'] .prose-brand :where(blockquote) {
+  border-left-width: 0;
+  border-right-width: 2px;
+  border-right-color: rgb(var(--c-cyan-400));
+  padding-left: 0;
+  padding-right: 1rem;
 }

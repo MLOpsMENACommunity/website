@@ -18,10 +18,10 @@ export default function RoadmapsPage() {
 
   return (
     <>
-      <section className="relative overflow-hidden border-b border-white/10">
+      <section className="relative overflow-hidden border-b border-line">
         <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-teal/10 blur-[100px]" />
         <div className="pointer-events-none absolute -right-24 top-0 h-96 w-96 rounded-full bg-amber/10 blur-[100px]" />
-        <HexField className="pointer-events-none absolute right-6 top-16 hidden h-56 w-80 text-white/[0.055] lg:block" />
+        <HexField className="pointer-events-none absolute right-6 top-16 hidden h-56 w-80 text-hex lg:block" />
 
         <div className="relative mx-auto max-w-content px-5 py-20 sm:px-8">
           <span className="eyebrow">Learning roadmaps</span>
@@ -29,10 +29,10 @@ export default function RoadmapsPage() {
             Pick the path that matches{' '}
             <span className="brand-text">where you actually are</span>
           </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-slate-400">
+          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
             Every roadmap below is built on free and open-source resources, because the real
             knowledge in this field lives on GitHub and YouTube — not behind paywalls.
-            <span className="text-white"> {totalResources} curated links</span> in total.
+            <span className="text-fg"> {totalResources} curated links</span> in total.
           </p>
         </div>
       </section>
@@ -57,11 +57,11 @@ export default function RoadmapsPage() {
                         <span className="chip"><Signal className="h-3 w-3" />{r.commitment}</span>
                       </div>
 
-                      <h2 className="mt-5 text-2xl font-bold leading-snug text-white sm:text-3xl">
+                      <h2 className="mt-5 text-2xl font-bold leading-snug text-fg sm:text-3xl">
                         {r.title}
                       </h2>
                       <p className={`mt-2 text-base font-medium ${a.text}`}>{r.tagline}</p>
-                      <p className="mt-4 max-w-xl text-sm leading-relaxed text-slate-400">
+                      <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted">
                         {r.audience}
                       </p>
 
@@ -70,7 +70,7 @@ export default function RoadmapsPage() {
                           Open the roadmap
                           <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
                         </span>
-                        <span className="flex items-center gap-1.5 text-xs text-slate-500">
+                        <span className="flex items-center gap-1.5 text-xs text-faint">
                           <BookOpen className="h-3.5 w-3.5" />
                           {r.resourceCount} free resources
                         </span>
@@ -83,13 +83,13 @@ export default function RoadmapsPage() {
                         <li key={p.label} className="flex items-start gap-3">
                           <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${a.dot}`} />
                           <div className="min-w-0">
-                            <span className="text-sm font-medium text-slate-300">{p.title}</span>
-                            {p.when && <span className="ml-2 text-xs text-slate-600">{p.when}</span>}
+                            <span className="text-sm font-medium text-body">{p.title}</span>
+                            {p.when && <span className="ml-2 text-xs text-ghost">{p.when}</span>}
                           </div>
                         </li>
                       ))}
                       {r.phases.length > 5 && (
-                        <li className="pl-[18px] text-xs text-slate-600">
+                        <li className="pl-[18px] text-xs text-ghost">
                           + {r.phases.length - 5} more
                         </li>
                       )}

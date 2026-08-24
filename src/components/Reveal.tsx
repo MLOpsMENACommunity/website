@@ -33,13 +33,20 @@ export default function Reveal({
     if (el.getBoundingClientRect().top < window.innerHeight - 60) return
 
     el.classList.add('reveal')
+
+    // A ratio threshold is unreachable for anything much taller than the
+    // viewport — a 9,000px roadmap article in a 720px window tops out around
+    // 8%, so a 0.12 threshold would never fire and the content would stay
+    // invisible forever. Fall back to "any part of it is on screen".
+    const threshold = el.getBoundingClientRect().height > window.innerHeight * 0.8 ? 0 : 0.12
+
     const io = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return
         el.classList.add('is-visible')
         io.disconnect() // reveal once, never re-hide
       },
-      { threshold: 0.12, rootMargin: '0px 0px -60px 0px' },
+      { threshold, rootMargin: '0px 0px -60px 0px' },
     )
     io.observe(el)
     return () => io.disconnect()

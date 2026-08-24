@@ -74,12 +74,13 @@ export const partners = [
   },
 ] as const
 
+/** `key` resolves to a translated label in src/lib/i18n.ts (nav.items). */
 export const nav = [
-  { label: 'Roadmaps', href: '/roadmaps' },
-  { label: 'Courses', href: '/courses' },
-  { label: 'Sessions', href: '/sessions' },
-  { label: 'Team', href: '/team' },
-  { label: 'Mentorship', href: '/mentorship' },
-  { label: 'Articles', href: '/articles' },
-  { label: 'FAQ', href: '/faq' },
+  { key: 'roadmaps', href: '/roadmaps' },
+  { key: 'courses', href: '/courses' },
+  { key: 'sessions', href: '/sessions' },
+  { key: 'team', href: '/team' },
+  { key: 'mentorship', href: '/mentorship' },
+  { key: 'articles', href: '/articles' },
+  { key: 'faq', href: '/faq' },
 ] as const

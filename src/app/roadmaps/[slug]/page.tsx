@@ -33,14 +33,14 @@ export default async function RoadmapPage({ params }: Props) {
   return (
     <>
       {/* ---------- Cover ---------- */}
-      <section className="relative overflow-hidden border-b border-white/10">
+      <section className="relative overflow-hidden border-b border-line">
         <div className={`pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full ${a.bg} blur-[100px]`} />
-        <HexField className="pointer-events-none absolute right-6 top-14 hidden h-56 w-80 text-white/[0.055] lg:block" />
+        <HexField className="pointer-events-none absolute right-6 top-14 hidden h-56 w-80 text-hex lg:block" />
 
         <div className="relative mx-auto max-w-content px-5 py-16 sm:px-8">
           <div>
             <Link href="/roadmaps"
-                  className="inline-flex items-center gap-2 text-sm text-slate-500 transition hover:text-white">
+                  className="inline-flex items-center gap-2 text-sm text-faint transition hover:text-fg">
               <ArrowLeft className="h-4 w-4" /> All roadmaps
             </Link>
           </div>
@@ -58,8 +58,8 @@ export default async function RoadmapPage({ params }: Props) {
             <span className="chip"><BookOpen className="h-3 w-3" />{roadmap.resourceCount} free resources</span>
           </div>
 
-          <p className="mt-6 flex max-w-2xl items-start gap-2.5 text-sm leading-relaxed text-slate-400">
-            <Users className="mt-0.5 h-4 w-4 shrink-0 text-slate-600" />
+          <p className="mt-6 flex max-w-2xl items-start gap-2.5 text-sm leading-relaxed text-muted">
+            <Users className="mt-0.5 h-4 w-4 shrink-0 text-ghost" />
             {roadmap.audience}
           </p>
 
@@ -75,15 +75,15 @@ export default async function RoadmapPage({ params }: Props) {
                         roadmap.accent === 'cyan' ? 'ring-cyan-400/15'
                         : roadmap.accent === 'amber' ? 'ring-amber-400/15' : 'ring-violet/15'
                       } transition group-hover:scale-125`} />
-                      <span className="mt-3 block text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 transition group-hover:text-white">
+                      <span className="mt-3 block text-[11px] font-semibold uppercase tracking-[0.1em] text-muted transition group-hover:text-fg">
                         {p.label}
                       </span>
-                      <span className="mt-1 block px-2 text-[11px] leading-tight text-slate-600">
+                      <span className="mt-1 block px-2 text-[11px] leading-tight text-ghost">
                         {p.when || p.title}
                       </span>
                     </a>
                     {i < roadmap.phases.length - 1 && (
-                      <span className="mt-1.5 h-px w-6 bg-white/15 sm:w-10" />
+                      <span className="mt-1.5 h-px w-6 bg-line-strong sm:w-10" />
                     )}
                   </li>
                 ))}
@@ -99,10 +99,10 @@ export default async function RoadmapPage({ params }: Props) {
           <Reveal>
             <article
               className="prose-brand prose-h2:mt-14 prose-h2:scroll-mt-28 prose-h2:border-t
-                         prose-h2:border-white/10 prose-h2:pt-10 prose-h2:text-2xl
+                         prose-h2:border-line prose-h2:pt-10 prose-h2:text-2xl
                          prose-h3:text-lg prose-h3:text-cyan-400
                          prose-blockquote:rounded-r-xl prose-blockquote:border-l-2
-                         prose-blockquote:bg-white/[0.03] prose-blockquote:py-3 prose-blockquote:pr-4
+                         prose-blockquote:bg-surface prose-blockquote:py-3 prose-blockquote:pr-4
                          prose-blockquote:not-italic"
               dangerouslySetInnerHTML={{ __html: roadmap.html }}
             />
@@ -111,17 +111,17 @@ export default async function RoadmapPage({ params }: Props) {
           {/* Sticky phase navigation */}
           <aside className="hidden lg:block">
             <div className="sticky top-24">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-faint">
                 On this page
               </p>
-              <nav className="mt-4 space-y-1.5 border-l border-white/10 pl-4">
+              <nav className="mt-4 space-y-1.5 border-l border-line pl-4">
                 {roadmap.phases.map((p) => (
                   <a
                     key={p.label}
                     href={`#${slugify(`${p.label} — ${p.title}${p.when ? ` (${p.when})` : ''}`)}`}
-                    className="block text-sm leading-snug text-slate-500 transition hover:text-cyan-400"
+                    className="block text-sm leading-snug text-faint transition hover:text-cyan-400"
                   >
-                    <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-600">
+                    <span className="block text-[11px] font-medium uppercase tracking-wider text-ghost">
                       {p.label}
                     </span>
                     {p.title}
@@ -131,7 +131,7 @@ export default async function RoadmapPage({ params }: Props) {
 
               {roadmap.sourceUrl && (
                 <a href={roadmap.sourceUrl} target="_blank" rel="noreferrer"
-                   className="mt-8 flex items-center gap-2 text-xs text-slate-500 transition hover:text-cyan-400">
+                   className="mt-8 flex items-center gap-2 text-xs text-faint transition hover:text-cyan-400">
                   Read the original on LinkedIn
                   <ArrowUpRight className="h-3.5 w-3.5" />
                 </a>
@@ -152,9 +152,9 @@ export default async function RoadmapPage({ params }: Props) {
               <Link key={r.slug} href={`/roadmaps/${r.slug}`}
                     className={`card card-hover group p-6 ${oa.border}`}>
                 <span className={`chip ${oa.text} ${oa.border}`}>{r.level}</span>
-                <h3 className="mt-4 text-lg font-semibold text-white">{r.title}</h3>
+                <h3 className="mt-4 text-lg font-semibold text-fg">{r.title}</h3>
                 <p className={`mt-1 text-sm ${oa.text}`}>{r.tagline}</p>
-                <span className="mt-4 inline-flex items-center gap-1.5 text-sm text-slate-500 transition group-hover:text-white">
+                <span className="mt-4 inline-flex items-center gap-1.5 text-sm text-faint transition group-hover:text-fg">
                   {r.phases.length} phases · {r.duration}
                 </span>
               </Link>

@@ -2,6 +2,7 @@ import Image from 'next/image'
 import { Linkedin, ArrowUpRight, Mail } from 'lucide-react'
 import { asset } from '@/lib/asset'
 import { SHOW_TEAM_EMAILS, type Member } from '~/data/team'
+import { t, type Lang } from '@/lib/i18n'
 
 /**
  * Renders a team member. Falls back to an initials avatar when no photo is set
@@ -14,11 +15,14 @@ export default function MemberCard({
   member,
   badge,
   featured = false,
+  lang = 'en',
 }: {
   member: Member
   badge?: string
   featured?: boolean
+  lang?: Lang
 }) {
+  const copy = t(lang)
   return (
     <div className={`card flex h-full flex-col p-6 ${featured ? 'border-cyan-400/30 bg-cyan-400/[0.04]' : ''}`}>
       <div className="flex items-start gap-4">
@@ -28,12 +32,12 @@ export default function MemberCard({
             alt={member.name}
             width={72}
             height={72}
-            className="h-[72px] w-[72px] shrink-0 rounded-full object-cover ring-1 ring-white/15"
+            className="h-[72px] w-[72px] shrink-0 rounded-full object-cover ring-1 ring-line"
           />
         ) : (
           <span
             className={`grid h-[72px] w-[72px] shrink-0 place-items-center rounded-full text-xl font-bold ${
-              featured ? 'brand-gradient text-ink-950' : 'border border-white/12 bg-white/5 text-slate-300'
+              featured ? 'brand-gradient text-ink-950' : 'border border-line bg-surface-hover text-body'
             }`}
             aria-hidden
           >
@@ -43,11 +47,11 @@ export default function MemberCard({
 
         <div className="min-w-0 flex-1">
           {badge && (
-            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-faint">
               {badge}
             </span>
           )}
-          <h3 className="mt-0.5 text-base font-semibold leading-snug text-white">{member.name}</h3>
+          <h3 className="mt-0.5 text-base font-semibold leading-snug text-fg">{member.name}</h3>
           {/* Skip the role when the badge above already says the same thing. */}
           {badge !== member.role && (
             <p className="mt-1 text-xs font-medium leading-snug text-cyan-400">{member.role}</p>
@@ -55,29 +59,29 @@ export default function MemberCard({
         </div>
       </div>
 
-      <p className="mt-4 flex-1 text-sm leading-relaxed text-slate-400">{member.bio}</p>
+      <p className="mt-4 flex-1 text-sm leading-relaxed text-muted">{member.bio}</p>
 
-      <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-white/10 pt-4">
+      <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line pt-4">
         {member.linkedin ? (
           <a
             href={member.linkedin}
             target="_blank"
             rel="noreferrer"
-            className="group inline-flex items-center gap-1.5 text-sm font-medium text-slate-400 transition hover:text-cyan-400"
+            className="group inline-flex items-center gap-1.5 text-sm font-medium text-muted transition hover:text-cyan-400"
           >
             <Linkedin className="h-4 w-4" /> LinkedIn
             <ArrowUpRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </a>
         ) : (
-          <span className="text-xs text-slate-600">LinkedIn coming soon</span>
+          <span className="text-xs text-ghost">{copy.teamPage.linkedinSoon}</span>
         )}
 
         {SHOW_TEAM_EMAILS && member.email && (
           <a
             href={`mailto:${member.email}`}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-400 transition hover:text-cyan-400"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-muted transition hover:text-cyan-400"
           >
-            <Mail className="h-4 w-4" /> Email
+            <Mail className="h-4 w-4" /> {copy.teamPage.email}
           </a>
         )}
       </div>

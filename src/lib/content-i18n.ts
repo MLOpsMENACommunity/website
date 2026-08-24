@@ -1,0 +1,575 @@
+/**
+ * Arabic overlays for everything that lives in `data/*.ts` and `site.config.ts`.
+ *
+ * The English data files stay the single source of truth for structure, links,
+ * dates and ordering — this module only swaps the human-readable strings when
+ * the Arabic edition renders. Anything with no entry here falls back to English,
+ * which is deliberate for tool names ("Docker", "MLflow", "vLLM") and for the
+ * course/session titles students search for.
+ */
+
+import type { Lang } from './i18n'
+import type { Member } from '~/data/team'
+import type { Session } from '~/data/sessions'
+import type { RoadmapMeta } from './roadmaps'
+
+/* ------------------------------------------------------------------ */
+/* Homepage pillars                                                     */
+/* ------------------------------------------------------------------ */
+
+const pillarsAr: Record<string, { title: string; desc: string }> = {
+  'Live sessions': {
+    title: 'جلسات مباشرة',
+    desc: 'جلسات منتظمة عن تشغيل التعلّم الآلي في الإنتاج، يقدّمها مهندسون يعملون به فعلًا. تُسجَّل وتُنشر مجانًا.',
+  },
+  'Learning roadmaps': {
+    title: 'خرائط تعلّم',
+    desc: 'ثلاثة مسارات منظّمة من الصفر إلى الجاهزية للعمل، مبنية بالكامل على مصادر مجانية ومفتوحة المصدر.',
+  },
+  'Open courses': {
+    title: 'دورات مفتوحة',
+    desc: 'دورات بنظام الدفعات مع دروس مباشرة ومشاريع حقيقية وشهادة — نقدّمها بالتعاون مع Zomra.',
+  },
+  'Research support': {
+    title: 'دعم البحث العلمي',
+    desc: 'مساعدة الباحثين في قابلية إعادة إنتاج النتائج والأدوات والجانب الهندسي من العمل القابل للنشر.',
+  },
+  Internships: {
+    title: 'فرص تدريب',
+    desc: 'مسارات للدخول إلى فرق حقيقية عبر شركائنا، ليتخرّج الطالب ومعه خبرة إنتاج فعلية.',
+  },
+  'A community that answers': {
+    title: 'مجتمع يردّ عليك',
+    desc: 'آلاف المهندسين في المنطقة يراجعون كودك، ويساعدونك على تخطّي العقبات، ويشاركون الفرص المتاحة.',
+  },
+}
+
+export function tPillar(lang: Lang, p: { title: string; desc: string }) {
+  return (lang === 'ar' && pillarsAr[p.title]) || p
+}
+
+/* ------------------------------------------------------------------ */
+/* Stats                                                                */
+/* ------------------------------------------------------------------ */
+
+const statLabelsAr: Record<string, string> = {
+  'WhatsApp members': 'عضو على واتساب',
+  'LinkedIn followers': 'متابع على لينكدإن',
+  'Course students': 'دارس في الدورات',
+  'YouTube views': 'مشاهدة على يوتيوب',
+  'YouTube subscribers': 'مشترك على يوتيوب',
+}
+
+export function tStatLabel(lang: Lang, label: string) {
+  return (lang === 'ar' && statLabelsAr[label]) || label
+}
+
+/* ------------------------------------------------------------------ */
+/* Sessions                                                             */
+/* ------------------------------------------------------------------ */
+
+type SessionCopy = Pick<Session, 'subtitle' | 'speakerRole' | 'dateLabel'> & { note?: string }
+
+const sessionsAr: Record<string, SessionCopy> = {
+  'docker-deep-dive': {
+    subtitle: 'Docker: أساس البناء لـ MLOps — اليوم الأول',
+    speakerRole: 'مدرّب · خبرة أكثر من 3 سنوات',
+    dateLabel: 'السبت 22 أغسطس · 8:00 مساءً بتوقيت القاهرة',
+    note: 'لا متطلبات سابقة — لا تحتاج خبرة مسبقة بـ Docker أو Kubernetes.',
+  },
+  'on-prem-mlops-playbook': {
+    subtitle: 'الجسر بين DevOps التقليدي وأحمال الذكاء الاصطناعي الخاصة',
+    speakerRole: 'شريك مؤسس ومدير تقني، DevisionX',
+    dateLabel: 'الخميس 6 أغسطس · 8:00 مساءً بتوقيت القاهرة',
+  },
+}
+
+export function tSession(lang: Lang, s: Session): Session {
+  if (lang !== 'ar') return s
+  const o = sessionsAr[s.slug]
+  return o ? { ...s, ...o } : s
+}
+
+/* ------------------------------------------------------------------ */
+/* Study groups                                                         */
+/* ------------------------------------------------------------------ */
+
+const studyGroupsAr: Record<number, { name: string; joinIf: string[] }> = {
+  1: {
+    name: 'مبتدئ في MLOps',
+    joinIf: [
+      'مبتدئ في التعلّم الآلي أو علم البيانات',
+      'مرتاح مع Python وأساسيات التعلّم الآلي',
+      'ما زلت جديدًا على Linux وGit وDocker',
+      'ليست لديك خبرة نشر أو سحابة بعد',
+      'تريد بدء MLOps من الصفر',
+    ],
+  },
+  2: {
+    name: 'متوسط في MLOps',
+    joinIf: [
+      'لديك خبرة في الواجهات الخلفية أو هندسة البرمجيات',
+      'تعمل مع واجهات APIs أو FastAPI أو Flask',
+      'متمكّن من Git وDocker',
+      'لديك أساسيات النشر وCI/CD',
+      'بدأت مع نماذج التعلّم الآلي وتريد تشغيلها في الإنتاج',
+    ],
+  },
+  3: {
+    name: 'MLOps متقدّم / سحابة',
+    joinIf: [
+      'خبرة عملية حقيقية بالسحابة — AWS أو GCP أو Azure',
+      'قوي في Docker وCI/CD',
+      'خبرة أو معرفة عملية بـ Kubernetes',
+      'عملت مع البنية التحتية وTerraform والمراقبة',
+      'تريد التعمّق في منصّات MLOps وأنظمة التعلّم الآلي القابلة للتوسّع',
+    ],
+  },
+  4: {
+    name: 'من DevOps إلى MLOps',
+    joinIf: [
+      'تعمل حاليًا في DevOps أو Platform أو Cloud أو SRE',
+      'قوي في Linux وDocker وKubernetes وCI/CD والسحابة',
+      'الفجوة ليست في Ops — بل في نصف التعلّم الآلي',
+      'تريد الانتقال من DevOps إلى MLOps',
+    ],
+  },
+}
+
+export function tStudyGroup<T extends { n: number; name: string; joinIf: readonly string[] }>(
+  lang: Lang,
+  g: T,
+) {
+  if (lang !== 'ar') return g
+  const o = studyGroupsAr[g.n]
+  return o ? { ...g, ...o } : g
+}
+
+const groupRuleAr: Record<string, { you: string; group: string }> = {
+  'ML Junior': { you: 'مبتدئ في التعلّم الآلي', group: 'مجموعة 1' },
+  'Backend / Software Engineer': { you: 'مهندس برمجيات / واجهات خلفية', group: 'مجموعة 2' },
+  'Cloud + Kubernetes + MLOps': { you: 'سحابة + Kubernetes + MLOps', group: 'مجموعة 3' },
+  'DevOps / Platform Engineer': { you: 'مهندس DevOps / منصّات', group: 'مجموعة 4' },
+}
+
+export function tGroupRule(lang: Lang, r: { you: string; group: string }) {
+  return (lang === 'ar' && groupRuleAr[r.you]) || r
+}
+
+export const groupRuleNoteAr =
+  'الأهم من ذلك كله: اختر مجموعتك بناءً على خبرتك العملية الفعلية، لا على مسمّاك الوظيفي.'
+
+/* ------------------------------------------------------------------ */
+/* FAQ                                                                  */
+/* ------------------------------------------------------------------ */
+
+const faqsAr: Record<string, { q: string; a: string }> = {
+  'Is it normal to feel lost as a junior or a student, and hear a lot of unfamiliar terms?': {
+    q: 'هل من الطبيعي أن أشعر بالتيه كمبتدئ أو طالب، وأسمع مصطلحات كثيرة غير مألوفة؟',
+    a: 'طبيعي تمامًا — وهذا يعني أن الجلسة أدّت دورها. لو بدا لك كل شيء مألوفًا في النهاية، لكان ذلك يعني أننا نكرّر أشياء سمعتها كثيرًا من قبل. الشعور بالإغراق هو أثر جانبي للخروج من الـ notebook واكتشاف كم أن هذا المجال أوسع مما تصوّرت. مبروك: هذا الشعور تقدّم.',
+  },
+  'How do I deal with all the new terminology?': {
+    q: 'كيف أتعامل مع كل هذه المصطلحات الجديدة؟',
+    a: 'دوّن كل مصطلح جديد تقابله. ثم اختر طريقك: ابحث عنه على يوتيوب — غالبًا ستجد شرحًا مكثّفًا جيدًا؛ واقرأ الدليل أو التوثيق الرسمي لتلك الأداة أو المفهوم؛ واطرح ما بقي غامضًا على المجتمع. ونحن نقدّم أيضًا جلسات مخصّصة للمشكلات التي تواجهكم، وسنشرح عددًا من هذه المصطلحات بالتفصيل في جلسة قادمة.',
+  },
+  'Will the course recordings stay available?': {
+    q: 'هل تبقى تسجيلات الدورة متاحة؟',
+    a: 'الجلسة الأولى تبقى بشكل دائم على قناتنا على يوتيوب. أما بقية الجلسات فتُزال بعد 48 ساعة من كل جلسة، لذا احرص على الحضور المباشر ما استطعت.',
+  },
+  'How long does the attendance form stay open?': {
+    q: 'كم تبقى استمارة الحضور مفتوحة؟',
+    a: 'حتى انتهاء الدورة بالكامل. ومادة الدورة تبقى متاحة أيضًا، ونعيد إرسالها حتى تتمكّن من المذاكرة ومراجعة ما تم شرحه.',
+  },
+  'Is the community really free?': {
+    q: 'هل المجتمع مجاني فعلًا؟',
+    a: 'نعم. الجلسات وخرائط التعلّم والمقالات ومجموعات المذاكرة ودعم المجتمع لا تكلّف شيئًا، وستبقى كذلك. أما دوراتنا فنقدّمها بالتعاون مع شريكنا التعليمي Zomra.',
+  },
+  'Do I need a machine learning background to join?': {
+    q: 'هل أحتاج خلفية في التعلّم الآلي للانضمام؟',
+    a: 'لا تحتاجها للمجتمع ولا لخرائط التعلّم — خريطة «Basic MLOps Engineer» تبدأ من أساسيات البرمجة. أما دورة The MLOps Practitioner فتتوقّع منك أساسيات Python ونموذجًا واحدًا على الأقل سبق أن درّبته.',
+  },
+  'Which roadmap should I start with?': {
+    q: 'بأي خريطة أبدأ؟',
+    a: 'إن كنت جديدًا على المجال، ابدأ بخريطة Basic MLOps Engineer. وإن كنت تعمل بالفعل في DevOps أو SRE أو هندسة المنصّات، فاذهب مباشرة إلى خريطة الانتقال من DevOps إلى MLOps — يمكنك تخطّي معظم الأساسيات. وإن كنت تعمل في MLOps فعلًا، فخريطة الخبراء تساعدك على اختيار تخصّص.',
+  },
+  'I am a researcher — can the community help with my paper?': {
+    q: 'أنا باحث — هل يستطيع المجتمع مساعدتي في بحثي؟',
+    a: 'نعم. نساعد الباحثين في قابلية إعادة إنتاج النتائج والأدوات والجانب الهندسي من العمل القابل للنشر. اطرح مشكلتك في قنوات المجتمع.',
+  },
+}
+
+export function tFaq<T extends { q: string; a: string }>(lang: Lang, f: T) {
+  if (lang !== 'ar') return f
+  const o = faqsAr[f.q]
+  return o ? { ...f, ...o } : f
+}
+
+/* ------------------------------------------------------------------ */
+/* Offerings & the upcoming course                                      */
+/* ------------------------------------------------------------------ */
+
+const offeringsAr: Record<string, { title: string; blurb: string; items: string[] }> = {
+  mentorship: {
+    title: 'إرشاد للأعضاء',
+    blurb: 'مساعدة فردية من مهندسين يمارسون هذا العمل، مجانًا لأعضاء المجتمع.',
+    items: [
+      'التوجيه المهني',
+      'مراجعة الأعمال والمستودعات',
+      'التحضير للمقابلات',
+      'تخطّي مشكلة تقنية بعينها',
+      'دعم بحثي للأوراق العلمية',
+    ],
+  },
+  consultation: {
+    title: 'استشارات للشركات',
+    blurb: 'مساعدة عملية للفرق التي تنقل التعلّم الآلي إلى الإنتاج.',
+    items: [
+      'تقييم نضج ممارسات MLOps',
+      'استشارات معمارية',
+      'مراجعة التكلفة والأداء',
+      'تدريب الفريق على منظومتكم التقنية',
+      'دعم التوظيف',
+    ],
+  },
+  internships: {
+    title: 'تدريب مع الشركاء',
+    blurb: 'توجيه الطلاب إلى الفرص المتاحة لدى الشركات التي نعمل معها.',
+    items: [
+      'التعريف بالشركات الشريكة',
+      'مراجعة أعمالك قبل التقديم',
+      'خبرة إنتاج حقيقية، لا مشاريع تدريبية شكلية',
+    ],
+  },
+}
+
+export function tOffering<T extends { id: string; title: string; blurb: string; items: readonly string[] }>(
+  lang: Lang,
+  o: T,
+) {
+  if (lang !== 'ar') return o
+  const x = offeringsAr[o.id]
+  return x ? { ...o, ...x } : o
+}
+
+export const upcomingCourseAr = {
+  status: 'قريبًا',
+  summary:
+    'تشغيل أنظمة النماذج اللغوية الكبيرة وتقييمها وخدمتها في الإنتاج — النصف التشغيلي من الذكاء الاصطناعي التوليدي الذي لا يكاد أحد يعلّمه.',
+  topics: [
+    'خدمة النماذج بإنتاجية عالية عبر vLLM',
+    'معمارية RAG وجودة الاسترجاع',
+    'التقييم من دون بيانات مرجعية',
+    'التتبّع والمراقبة عبر Langfuse',
+    'ميزانيات التكلفة والزمن (Tokens & Latency)',
+    'حواجز الأمان وتصفية المخرجات',
+  ],
+}
+
+/* ------------------------------------------------------------------ */
+/* Team                                                                 */
+/* ------------------------------------------------------------------ */
+
+const teamAr: Record<string, { role: string; bio: string }> = {
+  'Aya Nasser Salama': {
+    role: 'المؤسِّسة',
+    bio: 'مهندسة MLOps وLLMOps أولى بخبرة تتجاوز 6 سنوات في الذكاء الاصطناعي. في Unifonic هي المرجع المركزي لدعم MLOps/LLMOps عبر فرق الذكاء الاصطناعي — منتجات وكيلة باستخدام LangGraph وMCP، وتقييم ومراقبة النماذج اللغوية، وخدمة نماذج تتجاوز 30 مليار معامل على Kubernetes. صمّمت وتدرّس مادة «Production ML Engineering» في ITI، وبنت أول نظام RAG إنتاجي في Valeo.',
+  },
+  'Basem Abusaif': {
+    role: 'مدير المجتمع',
+    bio: 'مهندس ذكاء اصطناعي يعمل على الإدراك ثلاثي الأبعاد والذكاء الاصطناعي التوليدي، بخبرة تتجاوز 5 سنوات في بناء مسارات التعلّم العميق للأنظمة ذاتية القيادة. يقود منظومة الإدراك ثلاثي الأبعاد في Wakeb Data، وسبق أن نقل نماذج محاكاة LiDAR إلى الإنتاج في Valeo. يُنهي حاليًا الماجستير في المعلوماتية بجامعة النيل.',
+  },
+  'Omar Salah': {
+    role: 'مدير المجتمع',
+    bio: 'يشارك في إدارة المجتمع يومًا بيوم — الجلسات ومجموعات المذاكرة وإبقاء البرنامج ماضيًا في طريقه.',
+  },
+  'Mohamed Samy Mansour': {
+    role: 'مسؤول محور التدريس',
+    bio: 'مهندس ذكاء اصطناعي وعلم بيانات بخلفية هندسة حاسبات من جامعة المنصورة. عالم بيانات بمستوى متوسط في مجموعة الأندلسية الطبية، وسبق أن عمل مهندس ذكاء اصطناعي وعلم بيانات في اتصالات مصر، عبر مسارات التعلّم الآلي وخدمة النماذج وتطبيقات LLM/RAG.',
+  },
+  'Zakaria Ahmed': {
+    role: 'مسؤول محور المحتوى',
+    bio: 'يتولّى المحتوى المكتوب للمجتمع — خرائط التعلّم والمقالات والمادة التي تصاحب كل جلسة.',
+  },
+  'Adham AbdelAzeem': {
+    role: 'مسؤول محور البحث',
+    bio: 'باحث مساعد في معهد الرياضة وعلوم الرياضة بجامعة TU Dortmund، يعمل على تطبيقات التعلّم الآلي بلغة Python. قضى قبلها عامًا في MARS GmbH في الرؤية الحاسوبية لصور المنتجات وتحسين عمليات التصنيع بالتعلّم الآلي. بدأ بالهندسة الطبية الحيوية في مصر قبل الماجستير في ألمانيا.',
+  },
+  'Radwa Khattab': {
+    role: 'مسؤولة محور نمو المجتمع والشراكات',
+    bio: 'مهندسة ذكاء اصطناعي أولى بخبرة تتجاوز 6 سنوات، منها عامان في مايكروسوفت كعالمة بيانات وتطبيقات، في بناء أنظمة ذكاء اصطناعي إنتاجية تشمل النماذج اللغوية والذكاء الوكيل والبنية السحابية. تدرس الماجستير في الذكاء الاصطناعي بجامعة القاهرة، ودرّست الذكاء الاصطناعي والتعلّم الآلي في جامعتين وفي Udacity.',
+  },
+  'Mariam Qotob': {
+    role: 'مسؤولة محور الجلسات والإرشاد',
+    bio: 'مهندسة ذكاء اصطناعي وتعلّم آلي حاصلة على ماجستير مهني في الذكاء الاصطناعي من جامعة Queen’s، تعمل عبر مسار التعلّم الآلي كاملًا بخبرة تطبيقية في النماذج اللغوية وRAG. تعمل حاليًا معيدة في مبادرة Digilians.',
+  },
+  'Mahmoud Abu Al-Nour': {
+    role: 'مسؤول محور المنصّة ووسائل التواصل',
+    bio: 'طالب علوم حاسب مهتم بالذكاء الاصطناعي والتعلّم الآلي وعلم البيانات. يبني حلولًا عملية باستخدام Python وSQL وFastAPI وDocker وأدوات MLOps، ويحوّل الأفكار إلى مشاريع حقيقية.',
+  },
+}
+
+export function tMember<T extends Member>(lang: Lang, m: T): T {
+  if (lang !== 'ar') return m
+  const o = teamAr[m.name]
+  return o ? { ...m, ...o } : m
+}
+
+export const teamSummaryAr = 'مؤسِّسة، ومديران للمجتمع، وستة محاور.'
+
+/* ------------------------------------------------------------------ */
+/* Articles                                                             */
+/* ------------------------------------------------------------------ */
+
+const articlesAr: Record<string, { title: string; description: string }> = {
+  'MLOps Roadmap for Seniors': {
+    title: 'خريطة MLOps للخبراء',
+    description:
+      'سبعة تخصّصات — LLMOps، وتحسين النماذج، وKubernetes في الإنتاج، والمراقبة المتقدّمة، واختبار الأداء والحِمل، وتصميم أنظمة التعلّم الآلي، والمهارات الشخصية. اختر اثنين أو ثلاثة وتعمّق فيها.',
+  },
+  'The DevOps to MLOps Transition Roadmap': {
+    title: 'خريطة الانتقال من DevOps إلى MLOps',
+    description:
+      'أنت تملك بالفعل 60–70% من المهارات المطلوبة. هذه الخريطة تضيف طبقة التعلّم الآلي فوقها فقط — أسرع تحوّل مهني في مجال التقنية، في خمس مراحل خلال ثلاثة إلى خمسة أشهر.',
+  },
+  'Basic MLOps Engineer Roadmap': {
+    title: 'خريطة مهندس MLOps المبتدئ',
+    description:
+      'الخريطة التي كنت سأعطيها لنفسي في البداية — خمس مراحل على مدى ستة إلى تسعة أشهر، مبنية بالكامل على مصادر مجانية ومفتوحة المصدر، لأن المعرفة الحقيقية في هذا المجال موجودة على GitHub ويوتيوب.',
+  },
+}
+
+export function tArticle<T extends { title: string; description: string }>(lang: Lang, a: T) {
+  if (lang !== 'ar') return a
+  const o = articlesAr[a.title]
+  return o ? { ...a, ...o } : a
+}
+
+/* ------------------------------------------------------------------ */
+/* Repositories                                                         */
+/* ------------------------------------------------------------------ */
+
+const reposAr: Record<string, string> = {
+  'mlops-zoomcamp': 'دورة MLOps مجانية تغطّي دورة الحياة كاملة — نقطة انطلاق أساسية.',
+  'awesome-mlops': 'القائمة المرجعية لأوراق وأدوات ومقالات MLOps.',
+  mlflow: 'تتبّع التجارب وسجلّ النماذج وإدارة دورة حياتها.',
+  dvc: 'Git للبيانات — أصدِر نسخًا من مجموعات البيانات والنماذج جنبًا إلى جنب مع الكود.',
+  BentoML: 'ابنِ خدمة النماذج وانشرها ووسّعها من دون كتابة بنية تحتية.',
+  evidently: 'رصد انحراف البيانات والنماذج بتقارير يمكن قراءتها فعلًا.',
+}
+
+export function tRepo<T extends { name: string; desc: string }>(lang: Lang, r: T) {
+  if (lang !== 'ar') return r
+  const o = reposAr[r.name]
+  return o ? { ...r, desc: o } : r
+}
+
+/* ------------------------------------------------------------------ */
+/* Partners                                                             */
+/* ------------------------------------------------------------------ */
+
+const partnersAr: Record<string, { role: string; blurb: string }> = {
+  Zomra: {
+    role: 'شريك المنصّة التعليمية',
+    blurb:
+      'دوراتنا وجلساتنا المجانية تُستضاف وتُقدَّم على Zomra، ما يمنح كل دارس في المنطقة مكانًا منظّمًا للتسجيل والمتابعة وقياس تقدّمه.',
+  },
+}
+
+export function tPartner<T extends { name: string; role: string | null; blurb: string | null }>(
+  lang: Lang,
+  p: T,
+) {
+  if (lang !== 'ar') return p
+  const o = partnersAr[p.name]
+  return o ? { ...p, ...o } : p
+}
+
+/* ------------------------------------------------------------------ */
+/* Roadmap metadata                                                     */
+/* ------------------------------------------------------------------ */
+
+type RoadmapCopy = {
+  title: string
+  tagline: string
+  level: string
+  duration: string
+  commitment: string
+  audience: string
+  phases: string[]
+}
+
+const roadmapsAr: Record<string, RoadmapCopy> = {
+  'basic-mlops-engineer': {
+    title: 'خريطة مهندس MLOps المبتدئ',
+    tagline: 'من الصفر إلى الجاهزية للعمل',
+    level: 'مبتدئ ← جاهز للعمل',
+    duration: '6–9 أشهر',
+    commitment: '10–15 ساعة أسبوعيًا',
+    audience: 'للطلاب ومهندسي التعلّم الآلي ومهندسي البرمجيات وعلماء البيانات الداخلين إلى مجال MLOps.',
+    phases: [
+      'الأساسيات',
+      'هندسة البرمجيات للتعلّم الآلي',
+      'جوهر MLOps',
+      'أساسيات السحابة',
+      'المراقبة الأساسية',
+    ],
+  },
+  'devops-to-mlops': {
+    title: 'خريطة الانتقال من DevOps إلى MLOps',
+    tagline: 'أسرع تحوّل مهني في مجال التقنية',
+    level: 'DevOps ← MLOps',
+    duration: '3–5 أشهر',
+    commitment: '10–15 ساعة أسبوعيًا',
+    audience: 'لمهندسي DevOps وSRE والمنصّات والبنية التحتية المنتقلين إلى التعلّم الآلي.',
+    phases: [
+      'سدّ فجوة Python والتعلّم الآلي',
+      'تعلّم أدوات التعلّم الآلي',
+      'حيث تتألّق مهاراتك في DevOps',
+      'مفاهيم MLOps التي لن تعرفها',
+      'تخصّص اختياري: LLMOps',
+    ],
+  },
+  'senior-mlops-engineer': {
+    title: 'خريطة MLOps للخبراء',
+    tagline: 'العمق وتفكير الأنظمة ومقياس الإنتاج',
+    level: 'متوسط ← خبير',
+    duration: 'مستمرة',
+    commitment: 'اختر 2–3 تخصّصات',
+    audience: 'لمهندسي MLOps في المستويين المبتدئ والمتوسط الراغبين في الوصول إلى مستوى الخبير.',
+    phases: [
+      'LLMOps',
+      'تحسين النماذج',
+      'Kubernetes في الإنتاج والأنظمة الموزّعة',
+      'المراقبة المتقدّمة',
+      'اختبار الأداء والحِمل',
+      'تصميم أنظمة التعلّم الآلي',
+      'المهارات الشخصية',
+    ],
+  },
+}
+
+export function tRoadmap(lang: Lang, r: RoadmapMeta): RoadmapMeta {
+  if (lang !== 'ar') return r
+  const o = roadmapsAr[r.slug]
+  if (!o) return r
+  return {
+    ...r,
+    title: o.title,
+    tagline: o.tagline,
+    level: o.level,
+    duration: o.duration,
+    commitment: o.commitment,
+    audience: o.audience,
+    // Keep the original `when` and the anchor-generating English label; only the
+    // human-readable phase name is translated.
+    phases: r.phases.map((p, i) => ({ ...p, title: o.phases[i] ?? p.title })),
+  }
+}
+
+/** Arabic label for a "Phase 1" / "Specialization 3" heading. */
+export function tPhaseLabel(lang: Lang, label: string) {
+  if (lang !== 'ar') return label
+  const m = label.match(/^(Phase|Specialization)\s+(\d+)$/)
+  if (!m) return label
+  return `${m[1] === 'Phase' ? 'المرحلة' : 'التخصّص'} ${m[2]}`
+}
+
+/* ------------------------------------------------------------------ */
+/* The MLOps Practitioner course                                        */
+/* ------------------------------------------------------------------ */
+
+export const courseAr = {
+  status: 'الدفعة الأولى · جارية الآن',
+  format: '5 دروس مباشرة تفاعلية · 7 أسابيع · 15 أغسطس ← 2 أكتوبر · مجانًا',
+  summary:
+    'بنهاية هذه الدورة سينقل الدارس نموذج تعلّم آلي من الـ notebook إلى الإنتاج — ببناء مسارات CI/CD آلية، وتتبّع للتجارب، وإعادة تدريب مجدولة. وسيقدّم التنبؤات على نطاق واسع باستخدام FastAPI وBentoML وTriton وvLLM، ويرصد الانحراف قبل أن يلاحظه المستخدمون، ويحسّن النماذج لوحدات GPU وCPU والأجهزة الطرفية. وسيفكّر ويعمل كمهندس تعلّم آلي إنتاجي.',
+  facts: [
+    { label: 'دروس مباشرة', value: '5' },
+    { label: 'المدة', value: '7 أسابيع' },
+    { label: 'تُقام', value: '15 أغسطس ← 2 أكتوبر' },
+    { label: 'السعر', value: 'مجانًا' },
+  ],
+  instructorRole: 'مؤسِّسة مجتمع MLOps MENA ومهندسة MLOps أولى',
+  nextLessonDateLabel: 'الأحد 23 أغسطس · 7:00 مساءً بتوقيت القاهرة',
+  objectives: [
+    'هيكلة مشاريع التعلّم الآلي باحتراف باستخدام حزم Python والبرمجة الكائنية وتلميحات الأنواع، وبناء واجهات REST بمستوى إنتاجي عبر FastAPI أو Litestar — داخل حاويات Docker ومختبرة بـ pytest',
+    'تتبّع التجارب وإصدار نسخ البيانات وإدارة دورة حياة النموذج عبر MLflow وDVC — وأتمتة مسار التدريب ← الاختبار ← البناء ← الرفع بالكامل عبر GitHub Actions وTerraform',
+    'بناء مسارات تدريب مستمر تعيد التدريب والتقييم وترقّي النماذج إلى الإنتاج تلقائيًا عند انحراف البيانات أو تراجع الأداء — من دون تدخّل بشري',
+    'اختيار نمط الاستدلال المناسب وخدمة النماذج في الإنتاج عبر المنظومة الكاملة: FastAPI ← BentoML ← TensorRT/Triton لوحدات GPU ← ONNX Runtime/OpenVINO لوحدات CPU ← vLLM للنماذج اللغوية',
+    'إطلاق النماذج بأمان عبر النشر التدريجي واختبار A/B والنشر الأزرق/الأخضر ووضع الظل — مع تراجع تلقائي عند تدهور المؤشرات',
+    'رصد انحراف البيانات والمفهوم والتسميات والتضمينات عبر PSI واختبار KS وPage-Hinkley وMMD — ومراقبة أنظمة الإنتاج بـ Prometheus وGrafana وLangfuse وRAGAS',
+    'تحسين النماذج المدرَّبة عبر التقليم والتكميم (PTQ وQAT) وتقطير المعرفة وTensorRT وOpenVINO وTFLite — مع قياس المفاضلة بين الدقة والزمن والحجم في كل خطوة',
+  ],
+  includes: [
+    '5 دروس مباشرة تفاعلية',
+    'وصول دائم إلى كل مواد الدورة',
+    'مجتمع من الزملاء',
+    'شهادة إتمام',
+  ],
+  requirements: [
+    'معرفة أساسية ببرمجة Python — أن تكون مرتاحًا في كتابة الدوال والأصناف والعمل مع مكتبات مثل pandas وscikit-learn',
+    'إلمام بمفاهيم التعلّم الآلي — أن تكون قد درّبت نموذجًا واحدًا على الأقل من قبل (انحدار خطي، تصنيف، إلخ)',
+    'حاسوب محمول عليه Docker وذاكرة 8 جيجابايت على الأقل — وكل الأدوات المستخدمة مجانية ومفتوحة المصدر',
+  ],
+  audience: [
+    'مهندسو التعلّم الآلي وعلماء البيانات القادرون على تدريب النماذج لكنهم يتعثّرون في نشرها وصيانتها في الإنتاج',
+    'مهندسو البرمجيات ومهندسو DevOps المنتقلون إلى MLOps أو أدوار بنية الذكاء الاصطناعي، الباحثون عن مسار منظّم وعملي',
+    'القادة التقنيون والمعماريون الذين يحتاجون فهم منظومة الإنتاج كاملة لاتخاذ قرارات أفضل بشأن الأدوات والبنية التحتية',
+  ],
+  description: {
+    hook: 'معظم مهندسي التعلّم الآلي يعرفون كيف يدرّبون نموذجًا. وقليلون جدًا يعرفون كيف يشغّلونه في الإنتاج.',
+    body: [
+      'تسدّ هذه الدورة الفجوة بين علم البيانات وهندسة الإنتاج. ستأخذ نموذج تعلّم آلي من دفتر بحثي وصولًا إلى نظام إنتاجي حيّ ومراقَب ويعيد تدريب نفسه تلقائيًا — خطوة بخطوة، بكود حقيقي وأدوات حقيقية تستخدمها شركات مثل Uber وSpotify وMeta وNetflix.',
+    ],
+    learnIntro: 'عبر 5 جلسات ستتعلّم كيف:',
+    learn: [
+      'تحزّم كود التعلّم الآلي باحتراف وتبني واجهات REST بـ FastAPI وLitestar — داخل حاويات Docker ومختبرة بـ pytest',
+      'تتبّع التجارب بـ MLflow، وتصدر نسخ البيانات بـ DVC، وتؤتمت مسارك بالكامل عبر GitHub Actions وTerraform',
+      'تنسّق إعادة التدريب بـ Apache Airflow، وتخدم النماذج على نطاق واسع عبر BentoML وTriton وvLLM، وتطلقها بأمان عبر النشر التدريجي ووضع الظل',
+      'تراقب نماذج الإنتاج بحثًا عن انحراف البيانات والمفهوم والتضمينات عبر Evidently AI وPrometheus وGrafana وLangfuse',
+      'تحسّن النماذج سرعةً وحجمًا عبر التقليم والتكميم وتقطير المعرفة وTensorRT وOpenVINO — وتقيس كل مفاضلة',
+    ],
+    outro:
+      'كل جلسة تنتهي بمشروع قابل للنشر يبني على ما قبله. وبنهاية الدورة سيكون لديك ملف أعمال MLOps كامل يثبت مهارات هندسة إنتاج حقيقية.',
+  },
+  resources: {
+    'Course repository': { label: 'مستودع الدورة', desc: 'كل الأكواد والدفاتر ومشاريع الوحدات.' },
+    'All session slides': {
+      label: 'شرائح كل الجلسات',
+      desc: 'مجلد Google Drive يحوي شرائح الجلسات الخمس.',
+    },
+    'Session 1 slides': { label: 'شرائح الجلسة الأولى', desc: 'رابط مباشر إلى عرض الجلسة الأولى.' },
+    'Mini projects & final project': {
+      label: 'المشاريع المصغّرة والمشروع النهائي',
+      desc: 'كتيّب PDF يغطّي كل مشاريع الوحدات والمشروع النهائي.',
+    },
+    'Session recordings': { label: 'تسجيلات الجلسات', desc: 'الدروس المباشرة الخمسة على يوتيوب.' },
+  } as Record<string, { label: string; desc: string }>,
+  /** Week notes and module projects. Keyed by week number. */
+  outline: {
+    1: {
+      project: 'واجهة API لنموذج تعلّم آلي داخل حاوية بالكامل، مع مجموعة اختبارات وسجلّات منظّمة وملف README من ثلاثة أوامر.',
+    },
+    2: {
+      project:
+        'مسار مؤتمت بالكامل تُطلقه GitHub Actions — يدرّب ويقيّم مقابل نسخة الإنتاج ولا يرقّي إلا إذا تحسّنت المؤشرات، ثم يبني صورة Docker. كل تشغيل في MLflow، وكل إصدار بيانات في DVC.',
+    },
+    3: {
+      title: 'النصف الأول من المشروع (تنفيذ ومراجعة)',
+      note: 'لا محاضرة. ابدأ العمل على مشروعك المختار وطبّق المبادئ من المحاضرتين الأوليين.',
+    },
+    4: {
+      project:
+        'قدّم نموذج مدة الرحلة بثلاث طرق، واختبر الحِمل حتى 100 مستخدم متزامن، ووثّق عنق الزجاجة، ثم انشر إصدارًا جديدًا عبر نشر تدريجي مع تراجع تلقائي.',
+    },
+    7: {
+      title: 'المشروع النهائي',
+      note: 'أنجز المشروع من طرفه إلى طرفه، واعرضه على المجتمع، واحصل على مراجعة للمستودع.',
+    },
+  } as Record<number, { title?: string; project?: string; note?: string }>,
+}
+
+export function tCourseResource(lang: Lang, r: { label: string; desc: string }) {
+  if (lang !== 'ar') return r
+  return courseAr.resources[r.label] ?? r
+}

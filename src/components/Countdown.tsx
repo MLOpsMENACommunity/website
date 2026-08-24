@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { t, type Lang } from '@/lib/i18n'
 
 type Parts = { days: number; hours: number; minutes: number; seconds: number }
 
@@ -19,7 +20,8 @@ function diff(target: number): Parts | null {
  * Live countdown to the next session. Renders nothing until mounted so the
  * static export and the first client render agree (no hydration mismatch).
  */
-export default function Countdown({ iso }: { iso: string }) {
+export default function Countdown({ iso, lang = 'en' }: { iso: string; lang?: Lang }) {
+  const copy = t(lang)
   const target = new Date(iso).getTime()
   const [parts, setParts] = useState<Parts | null>(null)
   const [mounted, setMounted] = useState(false)
@@ -42,16 +44,16 @@ export default function Countdown({ iso }: { iso: string }) {
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
           <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-400" />
         </span>
-        This session has started — join us live
+        {copy.common.sessionStarted}
       </div>
     )
   }
 
   const cells: [string, number][] = [
-    ['Days', parts.days],
-    ['Hours', parts.hours],
-    ['Minutes', parts.minutes],
-    ['Seconds', parts.seconds],
+    [copy.common.days, parts.days],
+    [copy.common.hours, parts.hours],
+    [copy.common.minutes, parts.minutes],
+    [copy.common.seconds, parts.seconds],
   ]
 
   return (
@@ -59,12 +61,12 @@ export default function Countdown({ iso }: { iso: string }) {
       {cells.map(([label, value]) => (
         <div
           key={label}
-          className="min-w-0 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-center"
+          className="min-w-0 rounded-xl border border-line bg-surface px-3 py-2.5 text-center"
         >
-          <div className="font-mono text-2xl font-bold tabular-nums text-white">
+          <div className="font-mono text-2xl font-bold tabular-nums text-fg">
             {String(value).padStart(2, '0')}
           </div>
-          <div className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500">
+          <div className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-faint">
             {label}
           </div>
         </div>

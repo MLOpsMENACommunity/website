@@ -4,6 +4,8 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import { site } from '~/site.config'
 import { asset } from '@/lib/asset'
+import { themeScript } from '@/lib/theme'
+import { t } from '@/lib/i18n'
 import './globals.css'
 
 const inter = Inter({
@@ -25,6 +27,10 @@ export const metadata: Metadata = {
   },
   description: site.description,
   keywords: ['MLOps', 'MENA', 'machine learning', 'AI', 'free course', 'roadmap', 'Egypt', 'production ML'],
+  alternates: {
+    canonical: '/',
+    languages: { en: '/', ar: '/ar/' },
+  },
   openGraph: {
     type: 'website',
     siteName: site.name,
@@ -42,18 +48,22 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const copy = t('en')
   return (
-    <html lang="en" className={`${inter.variable} ${mono.variable}`}>
+    <html lang="en" dir="ltr" className={`${inter.variable} ${mono.variable}`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="min-h-screen">
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-cyan-400 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-ink-950"
         >
-          Skip to content
+          {copy.nav.skipToContent}
         </a>
-        <Nav />
+        <Nav lang="en" />
         <main id="main" className="pt-16">{children}</main>
-        <Footer />
+        <Footer lang="en" />
       </body>
     </html>
   )

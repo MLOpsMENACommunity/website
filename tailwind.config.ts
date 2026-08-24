@@ -1,11 +1,38 @@
 import type { Config } from 'tailwindcss'
 
+/**
+ * Every colour that changes between light and dark is a CSS variable defined in
+ * globals.css. Channel-triplet variables (`8 20 46`) keep Tailwind's `/opacity`
+ * modifiers working; the surface tokens are whole colours because their dark
+ * values are translucent overlays rather than solid fills.
+ */
+const channel = (v: string) => `rgb(var(${v}) / <alpha-value>)`
+
 const config: Config = {
-  content: ['./src/**/*.{ts,tsx}', './site.config.ts'],
+  darkMode: 'class',
+  content: ['./src/**/*.{ts,tsx}', './site.config.ts', './data/**/*.ts'],
   theme: {
     extend: {
       colors: {
-        // Deep navy field — sampled from the logo canvas (#08142E).
+        // ---- Semantic surfaces & text ----
+        bg: channel('--bg'),
+        alt: channel('--bg-alt'),
+        fg: channel('--fg'),
+        body: channel('--body'),
+        muted: channel('--muted'),
+        faint: channel('--faint'),
+        ghost: channel('--ghost'),
+        line: 'var(--line)',
+        'line-strong': 'var(--line-strong)',
+        surface: 'var(--surface)',
+        'surface-hover': 'var(--surface-hover)',
+        'surface-2': 'var(--surface-2)',
+        nav: 'var(--nav-bg)',
+        hex: 'var(--hex)',
+
+        // Deep navy field — sampled from the logo canvas (#08142E). Fixed values,
+        // used where a dark surface is wanted in both themes (code blocks, the
+        // text sitting on a brand-gradient button).
         ink: {
           950: '#050D1F',
           900: '#08142E',
@@ -14,18 +41,32 @@ const config: Config = {
           700: '#16294D',
           600: '#1F3760',
         },
-        // Left loop of the mark: teal → cyan-blue.
-        teal: { DEFAULT: '#33CEC0', 400: '#33CEC0', 500: '#22B5AA' },
-        cyan: { DEFAULT: '#2CACD1', 400: '#22C3E6', 500: '#2CACD1', 600: '#1E8CAE' },
-        // Right loop of the mark.
-        amber: { DEFAULT: '#EC9723', 400: '#F5A623', 500: '#EC9723', 600: '#D07E12' },
-        // Secondary accents borrowed from the DevOps→MLOps roadmap cover.
-        coral: '#FF6B7A',
-        violet: '#A78BFA',
+
+        // ---- Brand accents. Light mode darkens them for contrast on white. ----
+        teal: {
+          DEFAULT: channel('--c-teal'),
+          400: channel('--c-teal'),
+          500: channel('--c-teal-500'),
+        },
+        cyan: {
+          DEFAULT: channel('--c-cyan'),
+          400: channel('--c-cyan-400'),
+          500: channel('--c-cyan'),
+          600: channel('--c-cyan-600'),
+        },
+        amber: {
+          DEFAULT: channel('--c-amber'),
+          400: channel('--c-amber-400'),
+          500: channel('--c-amber'),
+          600: channel('--c-amber-600'),
+        },
+        coral: channel('--c-coral'),
+        violet: channel('--c-violet'),
       },
       fontFamily: {
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
         mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
+        arabic: ['var(--font-arabic)', 'var(--font-sans)', 'system-ui', 'sans-serif'],
       },
       maxWidth: { content: '72rem' },
       // Tailwind's default opacity scale skips these steps; the design uses them

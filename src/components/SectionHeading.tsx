@@ -15,7 +15,7 @@ export default function SectionHeading({
       <h2 className="mt-4 text-3xl font-bold sm:text-4xl">
         {title} {accent && <span className="brand-text">{accent}</span>}
       </h2>
-      {children && <p className="mt-4 text-base leading-relaxed text-slate-400">{children}</p>}
+      {children && <p className="mt-4 text-base leading-relaxed text-muted">{children}</p>}
     </div>
   )
 }
