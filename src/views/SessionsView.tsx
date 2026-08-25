@@ -4,17 +4,32 @@ import Reveal from '@/components/Reveal'
 import Countdown from '@/components/Countdown'
 import JoinCTA from '@/components/JoinCTA'
 import HexField from '@/components/HexField'
-import { upcomingSessions, pastSessions } from '~/data/sessions'
+import { SessionBadge, RegisterGate } from '@/components/SessionStatus'
+import { sessions } from '~/data/sessions'
 import { course } from '~/data/mlops-practitioner'
 import { channels } from '~/site.config'
 import { t, localeHref, type Lang } from '@/lib/i18n'
+import {
+  buildNow, formatSessionDate, partitionSessions, recordingUrl, sessionEndsAt, sessionState,
+  type SessionState,
+} from '@/lib/sessions'
 import { tSession } from '@/lib/content-i18n'
 
 export default function SessionsView({ lang }: { lang: Lang }) {
   const copy = t(lang)
   const c = copy.sessionsPage
-  const upcoming = upcomingSessions.map((s) => tSession(lang, s))
-  const past = pastSessions.map((s) => tSession(lang, s))
+  const now = buildNow()
+  const partitioned = partitionSessions(sessions, now)
+  // A live session belongs at the top of "Upcoming", not buried in the archive.
+  const upcoming = [...partitioned.live, ...partitioned.upcoming].map((s) => tSession(lang, s))
+  const past = partitioned.past.map((s) => tSession(lang, s))
+
+  const labels: Record<SessionState, string> = {
+    upcoming: copy.common.registrationOpen,
+    live: copy.common.liveNow,
+    ended: copy.common.recordingSoon,
+    archived: copy.common.recordingAvailable,
+  }
 
   return (
     <>
@@ -48,16 +63,23 @@ export default function SessionsView({ lang }: { lang: Lang }) {
                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-70" />
                         <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-400" />
                       </span>
-                      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-400">
-                        {copy.common.registrationOpen}
-                      </span>
+                      <SessionBadge
+                        startsAt={s.startsAt}
+                        endsAt={new Date(sessionEndsAt(s)).toISOString()}
+                        hasRecording={Boolean(recordingUrl(s))}
+                        buildState={sessionState(s, now)}
+                        labels={labels}
+                        className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-400"
+                      />
                     </div>
 
                     <h2 className="mt-4 text-2xl font-bold leading-snug sm:text-3xl">{s.title}</h2>
                     <p className="mt-2 text-base text-muted">{s.subtitle}</p>
 
                     <div className="mt-5 flex flex-wrap gap-2">
-                      <span className="chip"><CalendarDays className="h-3 w-3" />{s.dateLabel}</span>
+                      <span className="chip">
+                        <CalendarDays className="h-3 w-3" />{formatSessionDate(s, lang)}
+                      </span>
                       <span className="chip"><User className="h-3 w-3" />{s.speaker} · {s.speakerRole}</span>
                     </div>
 
@@ -85,11 +107,24 @@ export default function SessionsView({ lang }: { lang: Lang }) {
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-faint">
                       {copy.common.startsIn}
                     </p>
-                    <div className="mt-4"><Countdown iso={s.startsAt} lang={lang} /></div>
+                    <div className="mt-4">
+                      <Countdown
+                        iso={s.startsAt}
+                        endsAt={new Date(sessionEndsAt(s)).toISOString()}
+                        lang={lang}
+                      />
+                    </div>
                     {s.registerUrl && (
-                      <a href={s.registerUrl} target="_blank" rel="noreferrer" className="btn-primary mt-6 w-full">
-                        <Ticket className="h-4 w-4" /> {copy.common.registerFree}
-                      </a>
+                      <RegisterGate
+                        startsAt={s.startsAt}
+                        endsAt={new Date(sessionEndsAt(s)).toISOString()}
+                        hasRecording={Boolean(recordingUrl(s))}
+                        buildState={sessionState(s, now)}
+                      >
+                        <a href={s.registerUrl} target="_blank" rel="noreferrer" className="btn-primary mt-6 w-full">
+                          <Ticket className="h-4 w-4" /> {copy.common.registerFree}
+                        </a>
+                      </RegisterGate>
                     )}
                     <a href={channels.whatsapp} target="_blank" rel="noreferrer" className="btn-ghost mt-2 w-full">
                       {c.getReminders}
@@ -162,17 +197,21 @@ export default function SessionsView({ lang }: { lang: Lang }) {
                 <p className="mt-2 text-sm text-muted">{s.subtitle}</p>
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <span className="chip"><CalendarDays className="h-3 w-3" />{s.dateLabel}</span>
+                  <span className="chip">
+                    <CalendarDays className="h-3 w-3" />{formatSessionDate(s, lang)}
+                  </span>
                 </div>
                 <p className="mt-3 flex-1 text-sm text-muted">
                   <span className="text-body">{s.speaker}</span> · {s.speakerRole}
                 </p>
 
-                <div className="mt-5 flex flex-wrap gap-2 border-t border-line pt-4">
-                  {s.recordingUrl && (
-                    <a href={s.recordingUrl} target="_blank" rel="noreferrer" className="btn-primary !px-4 !py-2">
+                <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-4">
+                  {recordingUrl(s) ? (
+                    <a href={recordingUrl(s)} target="_blank" rel="noreferrer" className="btn-primary !px-4 !py-2">
                       <PlayCircle className="h-4 w-4" /> {copy.common.watchRecording}
                     </a>
+                  ) : (
+                    <span className="chip text-faint">{copy.common.recordingSoon}</span>
                   )}
                   {s.sessionPageUrl && (
                     <a href={s.sessionPageUrl} target="_blank" rel="noreferrer" className="btn-ghost !px-4 !py-2">

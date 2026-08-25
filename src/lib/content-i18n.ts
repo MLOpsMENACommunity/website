@@ -68,7 +68,7 @@ export function tStatLabel(lang: Lang, label: string) {
 /* Sessions                                                             */
 /* ------------------------------------------------------------------ */
 
-type SessionCopy = Pick<Session, 'subtitle' | 'speakerRole' | 'dateLabel'> & {
+type SessionCopy = Pick<Session, 'subtitle' | 'speakerRole'> & {
   note?: string
   topics?: string[]
 }
@@ -77,7 +77,6 @@ const sessionsAr: Record<string, SessionCopy> = {
   'docker-deep-dive': {
     subtitle: 'Docker: أساس البناء لـ MLOps — اليوم الأول',
     speakerRole: 'مدرّب · خبرة أكثر من 3 سنوات',
-    dateLabel: 'السبت 22 أغسطس · 8:00 مساءً بتوقيت القاهرة',
     note: 'لا متطلبات سابقة — لا تحتاج خبرة مسبقة بـ Docker أو Kubernetes.',
     topics: [
       'المحاكاة الافتراضية مقابل الحاويات',
@@ -93,7 +92,6 @@ const sessionsAr: Record<string, SessionCopy> = {
   'on-prem-mlops-playbook': {
     subtitle: 'الجسر بين DevOps التقليدي وأحمال الذكاء الاصطناعي الخاصة',
     speakerRole: 'شريك مؤسس ومدير تقني، DevisionX',
-    dateLabel: 'الخميس 6 أغسطس · 8:00 مساءً بتوقيت القاهرة',
   },
 }
 

@@ -16,6 +16,8 @@ import MemberCard from '@/components/MemberCard'
 import { asset } from '@/lib/asset'
 import { getRoadmaps, accentClasses } from '@/lib/roadmaps'
 import { t, localeHref, type Lang } from '@/lib/i18n'
+import { buildNow, formatSessionDate, partitionSessions, recordingUrl } from '@/lib/sessions'
+import { sessionPoster } from '@/lib/sessions.server'
 import {
   tPillar, tRoadmap, tSession, tStudyGroup, tFaq, tMember, tArticle, tRepo, tPartner,
   courseAr, upcomingCourseAr,
@@ -24,7 +26,7 @@ import { course } from '~/data/mlops-practitioner'
 import { upcomingCourse } from '~/data/offerings'
 import { studyGroups } from '~/data/study-groups'
 import { externalArticles } from '~/data/articles'
-import { pastSessions } from '~/data/sessions'
+import { sessions } from '~/data/sessions'
 import { faqs } from '~/data/faq'
 import { repos, pillars } from '~/data/community'
 import { founder, directors, leads, teamCount } from '~/data/team'
@@ -32,9 +34,15 @@ import { partners, channels, contacts, brainsmingle } from '~/site.config'
 
 const icons = { Radio, Map, GraduationCap, FlaskConical, Briefcase, Users } as const
 
+/**
+ * Without an explicit timeZone this inherits the machine's — UTC on the CI
+ * runner, Cairo on a laptop — so an article published at 01:00 Cairo renders a
+ * day early in production. `-u-nu-latn` pins Latin digits so Arabic dates match
+ * the Latin figures used everywhere else on the page.
+ */
 function fmt(iso: string, lang: Lang) {
-  return new Date(iso).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', {
-    day: 'numeric', month: 'short', year: 'numeric',
+  return new Date(iso).toLocaleDateString(lang === 'ar' ? 'ar-EG-u-nu-latn' : 'en-GB', {
+    day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Africa/Cairo',
   })
 }
 
@@ -48,7 +56,12 @@ export default function HomeView({ lang }: { lang: Lang }) {
     .sort((a, b) => (a.date < b.date ? 1 : -1))
     .slice(0, 3)
   const totalResources = roadmaps.reduce((n, r) => n + r.resourceCount, 0)
-  const recent = pastSessions.slice(0, 2).map((s) => tSession(lang, s))
+  // Only sessions that actually have something to watch — the card's whole
+  // purpose is the recording link, and an <a> with no href is not a link.
+  const recent = partitionSessions(sessions, buildNow())
+    .past.filter((s) => recordingUrl(s))
+    .slice(0, 2)
+    .map((s) => tSession(lang, s))
   const courseCopy = lang === 'ar' ? courseAr : course
   const upcomingCourseCopy = lang === 'ar' ? upcomingCourseAr : upcomingCourse
 
@@ -236,7 +249,7 @@ export default function HomeView({ lang }: { lang: Lang }) {
                   <article className="card card-hover group flex h-full flex-col overflow-hidden">
                     <div className="relative h-48 w-full overflow-hidden bg-surface-2">
                       <Image
-                        src={asset(`/sessions/${s.slug}.jpg`)}
+                        src={sessionPoster(s)}
                         alt={s.title}
                         fill
                         sizes="(max-width: 768px) 100vw, 36rem"
@@ -250,14 +263,14 @@ export default function HomeView({ lang }: { lang: Lang }) {
                       <p className="mt-1.5 flex-1 text-sm leading-relaxed text-muted">{s.subtitle}</p>
 
                       <p className="mt-4 flex items-center gap-2 text-xs text-faint">
-                        <CalendarDays className="h-3.5 w-3.5" />{s.dateLabel}
+                        <CalendarDays className="h-3.5 w-3.5" />{formatSessionDate(s, lang)}
                       </p>
                       <p className="mt-1.5 text-xs text-faint">
                         <span className="text-muted">{s.speaker}</span> · {s.speakerRole}
                       </p>
 
                       <div className="mt-5 border-t border-line pt-4">
-                        <a href={s.recordingUrl} target="_blank" rel="noreferrer"
+                        <a href={recordingUrl(s)} target="_blank" rel="noreferrer"
                            className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-400 hover:underline">
                           <PlayCircle className="h-4 w-4" /> {copy.common.watchRecording}
                         </a>

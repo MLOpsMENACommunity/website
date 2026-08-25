@@ -1,4 +1,13 @@
-/** Free community sessions. Source: master reference §4. */
+/**
+ * Free community sessions — ONE list, any order.
+ *
+ * Whether a session is upcoming, live, ended or archived is derived from
+ * `startsAt` + `durationMinutes` at render time (see `src/lib/sessions.ts`), so
+ * there is nothing to move when a session airs. Add it once and forget it.
+ *
+ * After a session airs, the only edit worth making is pasting its `youtubeId`,
+ * which flips it from "recording coming soon" to a watch link.
+ */
 
 export type Session = {
   slug: string
@@ -8,25 +17,28 @@ export type Session = {
   speakerRole: string
   /** ISO-8601 WITH offset. Cairo is +03:00 in summer, +02:00 in winter. */
   startsAt: string
-  dateLabel: string
+  /** Defaults to DEFAULT_DURATION_MINUTES (120) in src/lib/sessions.ts. */
+  durationMinutes?: number
   topics: string[]
   registerUrl?: string
   sessionPageUrl?: string
+  /** The 11-character YouTube id. The watch URL is derived from it. */
+  youtubeId?: string
+  /** Only for recordings that are not on YouTube. */
   recordingUrl?: string
+  /** Escape hatch for dates the formatter cannot express, e.g. a two-day workshop. */
+  dateLabelOverride?: string
   note?: string
 }
 
-export const upcomingSessions: Session[] = [
+export const sessions: Session[] = [
   {
     slug: 'docker-deep-dive',
     title: 'Docker Deep Dive',
     subtitle: 'Docker: Building the Foundation for MLOps — Day 1',
     speaker: 'Mahmoud Sharif',
     speakerRole: 'Instructor · 3+ years experience',
-    // TODO: confirm the start time — the master reference gives the date only.
-    // 8:00 PM Cairo assumed, matching the previous session's slot.
     startsAt: '2026-08-22T20:00:00+03:00',
-    dateLabel: 'Saturday, 22 Aug · 8:00 PM Cairo',
     topics: [
       'Virtualization vs containerization',
       'Docker architecture',
@@ -39,10 +51,8 @@ export const upcomingSessions: Session[] = [
     ],
     registerUrl: 'https://zomra.io/free-sessions/75841596-2358-4ec5-b6e7-ee3fbc45bb63',
     note: 'No prerequisites — no prior Docker or Kubernetes required.',
+    // TODO: paste the youtubeId once the recording is published.
   },
-]
-
-export const pastSessions: Session[] = [
   {
     slug: 'on-prem-mlops-playbook',
     title: 'The On-Prem MLOps Playbook',
@@ -50,15 +60,8 @@ export const pastSessions: Session[] = [
     speaker: 'Mohamed Rashad',
     speakerRole: 'Co-Founder & CTO, DevisionX',
     startsAt: '2026-08-06T20:00:00+03:00',
-    dateLabel: 'Thursday, 6 Aug · 8:00 PM Cairo',
     topics: [],
-    recordingUrl: 'https://www.youtube.com/watch?v=0ta-roIGJWc',
+    youtubeId: '0ta-roIGJWc',
     sessionPageUrl: 'https://zomra.io/free-sessions/9d02ae3d-0598-4d41-9596-9d5c57db6362',
   },
 ]
-
-/**
- * The homepage "This week at MLOps MENA" band renders `upcomingSessions`
- * directly, newest first — move a session to `pastSessions` once it has aired
- * so the band never advertises a session that already happened.
- */

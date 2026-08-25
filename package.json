@@ -2,13 +2,14 @@
   "name": "mlops-mena-community",
   "version": "1.0.0",
   "private": true,
-  "description": "MLOps MENA Community — free AI & MLOps education for the MENA region",
+  "description": "MLOps MENA Community \u2014 free AI & MLOps education for the MENA region",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "serve": "npx serve out"
+    "serve": "npx serve out",
+    "test": "node --test \"scripts/**/*.test.mjs\""
   },
   "dependencies": {
     "next": "14.2.15",

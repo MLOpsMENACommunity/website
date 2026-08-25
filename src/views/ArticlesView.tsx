@@ -8,9 +8,15 @@ import { channels } from '~/site.config'
 import { t, localeHref, type Lang } from '@/lib/i18n'
 import { tArticle } from '@/lib/content-i18n'
 
+/**
+ * Without an explicit timeZone this inherits the machine's — UTC on the CI
+ * runner, Cairo on a laptop — so an article published at 01:00 Cairo renders a
+ * day early in production. `-u-nu-latn` pins Latin digits so Arabic dates match
+ * the Latin figures used everywhere else on the page.
+ */
 function fmt(iso: string, lang: Lang) {
-  return new Date(iso).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', {
-    day: 'numeric', month: 'short', year: 'numeric',
+  return new Date(iso).toLocaleDateString(lang === 'ar' ? 'ar-EG-u-nu-latn' : 'en-GB', {
+    day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Africa/Cairo',
   })
 }
 

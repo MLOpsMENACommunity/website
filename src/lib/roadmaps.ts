@@ -64,13 +64,20 @@ function read(fileName: string) {
 /** Ordered deliberately: beginner → transition → senior. */
 const ORDER = ['basic-mlops-engineer', 'devops-to-mlops', 'senior-mlops-engineer']
 
+/** A slug missing from ORDER sorts to the END. `indexOf` returns -1, which would
+ *  otherwise put a brand-new roadmap ahead of the beginner path. */
+function rank(slug: string) {
+  const i = ORDER.indexOf(slug)
+  return i === -1 ? Number.MAX_SAFE_INTEGER : i
+}
+
 export function getRoadmaps(): RoadmapMeta[] {
   if (!fs.existsSync(DIR)) return []
   return fs
     .readdirSync(DIR)
     .filter((f) => f.endsWith('.md'))
     .map((f) => read(f).meta)
-    .sort((a, b) => ORDER.indexOf(a.slug) - ORDER.indexOf(b.slug))
+    .sort((a, b) => rank(a.slug) - rank(b.slug))
 }
 
 export async function getRoadmap(slug: string): Promise<Roadmap | null> {

@@ -7,7 +7,7 @@ const copy = t('en').articlesPage
 export const metadata: Metadata = {
   title: copy.metaTitle,
   description: copy.metaDesc,
-  alternates: { canonical: '/articles/', languages: { en: 'ticles/', ar: '/articles/' } },
+  alternates: { canonical: '/articles/', languages: { en: '/articles/', ar: '/ar/articles/' } },
 }
 
 export default function EnArticlesPage() {

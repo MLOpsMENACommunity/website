@@ -3,9 +3,14 @@ import Image from 'next/image'
 import { ArrowRight, ArrowUpRight, CalendarDays, Mic, Ticket } from 'lucide-react'
 import Countdown from './Countdown'
 import Reveal from './Reveal'
-import { upcomingSessions } from '~/data/sessions'
+import { SessionBadge, RegisterGate } from './SessionStatus'
+import { sessions } from '~/data/sessions'
 import { channels, primaryChannel } from '~/site.config'
-import { asset } from '@/lib/asset'
+import {
+  buildNow, formatSessionDate, partitionSessions, sessionEndsAt, sessionState,
+  type SessionState,
+} from '@/lib/sessions'
+import { sessionPoster } from '@/lib/sessions.server'
 import { t, localeHref, type Lang } from '@/lib/i18n'
 import { tSession } from '@/lib/content-i18n'
 
@@ -17,7 +22,20 @@ import { tSession } from '@/lib/content-i18n'
 export default function ThisWeek({ lang = 'en' }: { lang?: Lang }) {
   const copy = t(lang)
   const c = copy.home.thisWeek
-  const [featured, ...rest] = upcomingSessions.map((s) => tSession(lang, s))
+  const now = buildNow()
+
+  // A live session outranks a merely scheduled one. Both lists are sorted by
+  // start time, so "featured" is correct by construction rather than by
+  // whatever order someone happened to type the entries in.
+  const { live, upcoming } = partitionSessions(sessions, now)
+  const [featured, ...rest] = [...live, ...upcoming].map((s) => tSession(lang, s))
+
+  const labels: Record<SessionState, string> = {
+    upcoming: copy.common.registrationOpen,
+    live: copy.common.liveNow,
+    ended: copy.common.recordingSoon,
+    archived: copy.common.recordingAvailable,
+  }
 
   return (
     <section className="relative overflow-hidden border-y border-cyan-400/25">
@@ -58,7 +76,7 @@ export default function ThisWeek({ lang = 'en' }: { lang?: Lang }) {
               {/* Poster */}
               <div className="relative h-56 w-full overflow-hidden bg-surface-2 sm:h-72 lg:h-full lg:min-h-[22rem]">
                 <Image
-                  src={asset(`/sessions/${featured.slug}.jpg`)}
+                  src={sessionPoster(featured)}
                   alt={featured.title}
                   fill
                   sizes="(max-width: 1024px) 100vw, 34rem"
@@ -69,9 +87,18 @@ export default function ThisWeek({ lang = 'en' }: { lang?: Lang }) {
 
               {/* Details */}
               <div className="flex flex-col p-6 sm:p-8">
-                <span className="chip w-fit border-amber-400/35 text-amber-400">
-                  {c.nextSession}
-                </span>
+                <SessionBadge
+                  startsAt={featured.startsAt}
+                  endsAt={new Date(sessionEndsAt(featured)).toISOString()}
+                  hasRecording={Boolean(featured.youtubeId ?? featured.recordingUrl)}
+                  buildState={sessionState(featured, now)}
+                  labels={{ ...labels, upcoming: c.nextSession }}
+                  className="chip w-fit"
+                  classNames={{
+                    upcoming: 'chip w-fit border-amber-400/35 text-amber-400',
+                    live: 'chip w-fit border-coral/40 text-coral',
+                  }}
+                />
 
                 <h3 className="mt-4 text-2xl font-bold leading-snug text-fg sm:text-3xl">
                   {featured.title}
@@ -81,7 +108,7 @@ export default function ThisWeek({ lang = 'en' }: { lang?: Lang }) {
                 <div className="mt-5 space-y-2 text-sm text-muted">
                   <p className="flex items-center gap-2">
                     <CalendarDays className="h-4 w-4 shrink-0 text-cyan-400" />
-                    {featured.dateLabel}
+                    {formatSessionDate(featured, lang)}
                   </p>
                   <p className="flex items-center gap-2">
                     <Mic className="h-4 w-4 shrink-0 text-cyan-400" />
@@ -98,17 +125,28 @@ export default function ThisWeek({ lang = 'en' }: { lang?: Lang }) {
                 )}
 
                 <div className="mt-6">
-                  <Countdown iso={featured.startsAt} lang={lang} />
+                  <Countdown
+                    iso={featured.startsAt}
+                    endsAt={new Date(sessionEndsAt(featured)).toISOString()}
+                    lang={lang}
+                  />
                 </div>
 
                 <div className="mt-6 flex flex-wrap gap-2">
                   {featured.registerUrl && (
-                    <a href={featured.registerUrl} target="_blank" rel="noreferrer"
-                       className="btn-primary flex-1 !px-4 !py-2.5">
-                      <Ticket className="h-4 w-4" />
-                      {copy.common.registerFree}
-                      <ArrowUpRight className="h-4 w-4" />
-                    </a>
+                    <RegisterGate
+                      startsAt={featured.startsAt}
+                      endsAt={new Date(sessionEndsAt(featured)).toISOString()}
+                      hasRecording={Boolean(featured.youtubeId ?? featured.recordingUrl)}
+                      buildState={sessionState(featured, now)}
+                    >
+                      <a href={featured.registerUrl} target="_blank" rel="noreferrer"
+                         className="btn-primary flex-1 !px-4 !py-2.5">
+                        <Ticket className="h-4 w-4" />
+                        {copy.common.registerFree}
+                        <ArrowUpRight className="h-4 w-4" />
+                      </a>
+                    </RegisterGate>
                   )}
                   <a href={channels[primaryChannel]} target="_blank" rel="noreferrer"
                      className="btn-ghost !px-4 !py-2.5">
@@ -139,13 +177,18 @@ export default function ThisWeek({ lang = 'en' }: { lang?: Lang }) {
             {rest.map((s, i) => (
               <Reveal key={s.slug} delay={i * 80}>
               <article className="card card-hover flex h-full flex-col p-5">
-                <span className="chip w-fit border-amber-400/30 text-amber-400">
-                  {copy.common.registrationOpen}
-                </span>
+                <SessionBadge
+                  startsAt={s.startsAt}
+                  endsAt={new Date(sessionEndsAt(s)).toISOString()}
+                  hasRecording={Boolean(s.youtubeId ?? s.recordingUrl)}
+                  buildState={sessionState(s, now)}
+                  labels={labels}
+                  className="chip w-fit border-amber-400/30 text-amber-400"
+                />
                 <h3 className="mt-3 text-base font-semibold leading-snug text-fg">{s.title}</h3>
                 <p className="mt-1.5 flex-1 text-sm leading-relaxed text-muted">{s.subtitle}</p>
                 <p className="mt-3 flex items-center gap-2 text-xs text-faint">
-                  <CalendarDays className="h-3.5 w-3.5" />{s.dateLabel}
+                  <CalendarDays className="h-3.5 w-3.5" />{formatSessionDate(s, lang)}
                 </p>
                 {s.registerUrl && (
                   <a href={s.registerUrl} target="_blank" rel="noreferrer"

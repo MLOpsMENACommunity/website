@@ -79,6 +79,15 @@ export default function RoadmapDetailView({
             {localized.audience}
           </p>
 
+          {/* Provenance. Also in the sticky sidebar, which phones never see. */}
+          {roadmap.sourceUrl && (
+            <a href={roadmap.sourceUrl} target="_blank" rel="noreferrer"
+               className={`mt-5 inline-flex items-center gap-1.5 text-sm font-medium ${a.text} transition hover:underline`}>
+              {c.readOriginal}
+              <ArrowUpRight className="h-4 w-4 rtl:-scale-x-100" />
+            </a>
+          )}
+
           {/* Phase timeline strip, as on the published covers */}
           {roadmap.phases.length > 0 && (
             <div className="mt-10 overflow-x-auto pb-2">

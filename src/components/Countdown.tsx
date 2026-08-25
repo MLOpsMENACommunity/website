@@ -20,21 +20,45 @@ function diff(target: number): Parts | null {
  * Live countdown to the next session. Renders nothing until mounted so the
  * static export and the first client render agree (no hydration mismatch).
  */
-export default function Countdown({ iso, lang = 'en' }: { iso: string; lang?: Lang }) {
+export default function Countdown({
+  iso,
+  endsAt,
+  lang = 'en',
+}: {
+  iso: string
+  /** When the session window closes. Past this, "join us live" is a lie. */
+  endsAt?: string
+  lang?: Lang
+}) {
   const copy = t(lang)
   const target = new Date(iso).getTime()
+  const end = endsAt ? new Date(endsAt).getTime() : Infinity
   const [parts, setParts] = useState<Parts | null>(null)
+  const [over, setOver] = useState(false)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
-    setParts(diff(target))
-    const id = setInterval(() => setParts(diff(target)), 1000)
+    const tick = () => {
+      setParts(diff(target))
+      setOver(Date.now() >= end)
+    }
+    tick()
+    const id = setInterval(tick, 1000)
     return () => clearInterval(id)
-  }, [target])
+  }, [target, end])
 
   if (!mounted) {
     return <div className="h-[86px]" aria-hidden />
+  }
+
+  if (over) {
+    return (
+      <div className="flex items-center gap-2.5 text-sm font-semibold text-faint">
+        <span className="h-2.5 w-2.5 rounded-full bg-ghost" />
+        {copy.common.sessionEnded}
+      </div>
+    )
   }
 
   if (!parts) {
