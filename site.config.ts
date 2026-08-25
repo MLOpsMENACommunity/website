@@ -55,14 +55,29 @@ export const brainsmingle = {
 
 export const primaryChannel: keyof typeof channels = 'whatsapp'
 
-/** Community at a glance. Rendered as animated counters. */
-export const stats = [
-  { label: 'WhatsApp members', value: 3000, suffix: '+', href: channels.whatsapp },
-  { label: 'LinkedIn followers', value: 3000, suffix: '+', href: channels.linkedin },
-  { label: 'Course students', value: 1200, suffix: '+', href: channels.zomra },
-  { label: 'YouTube views', value: 4000, suffix: '+', href: channels.youtube },
-  { label: 'YouTube subscribers', value: 1000, suffix: '', href: channels.youtube },
-] as const
+/**
+ * Community at a glance. Rendered as animated counters.
+ *
+ * `value` is the floor — the number shown when nothing better is available.
+ * The two YouTube tiles are overwritten from the real channel figures by
+ * `src/lib/stats.ts`; the other three have no public API and are edited here.
+ * Read them through `getStats()`, not directly.
+ */
+export type StatId = 'whatsapp' | 'linkedin' | 'students' | 'yt-views' | 'yt-subs'
+
+export const stats: {
+  id: StatId
+  label: string
+  value: number
+  suffix: string
+  href: string
+}[] = [
+  { id: 'whatsapp', label: 'WhatsApp members', value: 3000, suffix: '+', href: channels.whatsapp },
+  { id: 'linkedin', label: 'LinkedIn followers', value: 3000, suffix: '+', href: channels.linkedin },
+  { id: 'students', label: 'Course students', value: 1200, suffix: '+', href: channels.zomra },
+  { id: 'yt-views', label: 'YouTube views', value: 4000, suffix: '+', href: channels.youtube },
+  { id: 'yt-subs', label: 'YouTube subscribers', value: 1000, suffix: '', href: channels.youtube },
+]
 
 export const partners = [
   {

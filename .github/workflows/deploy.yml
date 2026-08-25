@@ -3,10 +3,27 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  # Rebuilds the frozen HTML so time-derived content stays honest: a session
+  # that has aired moves itself into "Past" within six hours, and the YouTube
+  # figures refresh. Sessions air around 20:00 Cairo, so a daily run would
+  # strand a Saturday-night session for most of Sunday.
+  #
+  # Minute 17 rather than 00 — GitHub's scheduler is heavily oversubscribed on
+  # the hour and delays runs accordingly.
+  #
+  # NOTE: GitHub disables scheduled workflows in public repos after 60 days
+  # without repository activity. The refresh commits below count as activity,
+  # so this is self-sustaining — but if it ever goes quiet for two months the
+  # cron stops silently.
+  schedule:
+    - cron: '17 */6 * * *'
   workflow_dispatch:
 
 permissions:
-  contents: read
+  # `write` so the scheduled run can commit refreshed data back. Pushes made
+  # with the default GITHUB_TOKEN do not trigger workflows, so this cannot loop.
+  # Do not swap in a PAT — that reintroduces the loop.
+  contents: write
   pages: write
   id-token: write
 
@@ -25,6 +42,30 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - run: npm test
+
+      # Ordinary pushes stay offline and fast; only the cron and manual runs
+      # touch the network.
+      - name: Refresh external data
+        if: github.event_name != 'push'
+        run: npm run refresh
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+
+      # Durability and audit trail only — the artifact below is built from the
+      # freshly fetched files either way, so losing a race to a human push must
+      # never cost a deploy.
+      - name: Commit refreshed data
+        if: github.event_name != 'push'
+        continue-on-error: true
+        run: |
+          git diff --quiet -- data/generated && exit 0
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: refresh external data" -- data/generated
+          git pull --rebase --autostash origin main
+          git push
+
       - run: npm run build
       - uses: actions/configure-pages@v5
         with:

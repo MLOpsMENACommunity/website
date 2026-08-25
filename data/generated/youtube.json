@@ -1,0 +1,45 @@
+{
+  "channelId": "UCKX8X4NwhP9Qb4g13SCa84Q",
+  "stats": {
+    "subscriberCount": 1000,
+    "viewCount": 4000,
+    "videoCount": 7
+  },
+  "videos": [
+    {
+      "id": "AFcoKDtyhec",
+      "title": "handson docker mlops mena community",
+      "published": "2026-08-24T12:34:27.000Z"
+    },
+    {
+      "id": "slxkWpCAqI8",
+      "title": "The MLOps Practitioner - Session2",
+      "published": "2026-08-24T07:08:57.000Z"
+    },
+    {
+      "id": "rJFIn83w0Dc",
+      "title": "The MLOps Practitioner - Session1",
+      "published": "2026-08-17T07:19:50.000Z"
+    },
+    {
+      "id": "_rfZUcMQFeg",
+      "title": "The MLOps Practitioner - Session 5",
+      "published": "2026-08-12T22:36:33.000Z"
+    },
+    {
+      "id": "i7jT4Dr6qgE",
+      "title": "The MLOps Practitioner - Session4",
+      "published": "2026-08-12T22:32:38.000Z"
+    },
+    {
+      "id": "N3v8va_P0DE",
+      "title": "The MLOps Practitioner - Session3",
+      "published": "2026-08-12T22:30:16.000Z"
+    },
+    {
+      "id": "n0dv6KZHq9M",
+      "title": "MLOps Course Guide",
+      "published": "2026-08-09T22:39:13.000Z"
+    }
+  ]
+}

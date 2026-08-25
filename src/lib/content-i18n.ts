@@ -9,6 +9,7 @@
  */
 
 import type { Lang } from './i18n'
+import { stats, type StatId } from '~/site.config'
 import type { Member } from '~/data/team'
 import type { Session } from '~/data/sessions'
 import type { RoadmapMeta } from './roadmaps'
@@ -52,16 +53,21 @@ export function tPillar(lang: Lang, p: { title: string; desc: string }) {
 /* Stats                                                                */
 /* ------------------------------------------------------------------ */
 
-const statLabelsAr: Record<string, string> = {
-  'WhatsApp members': 'عضو على واتساب',
-  'LinkedIn followers': 'متابع على لينكدإن',
-  'Course students': 'دارس في الدورات',
-  'YouTube views': 'مشاهدة على يوتيوب',
-  'YouTube subscribers': 'مشترك على يوتيوب',
+/** Keyed by the stable stat id, so renaming an English label cannot orphan it. */
+const statLabelsAr: Record<StatId, string> = {
+  whatsapp: 'عضو على واتساب',
+  linkedin: 'متابع على لينكدإن',
+  students: 'دارس في الدورات',
+  'yt-views': 'مشاهدة على يوتيوب',
+  'yt-subs': 'مشترك على يوتيوب',
 }
 
-export function tStatLabel(lang: Lang, label: string) {
-  return (lang === 'ar' && statLabelsAr[label]) || label
+export function tStatLabel(lang: Lang, id: StatId) {
+  return (lang === 'ar' && statLabelsAr[id]) || englishStatLabel(id)
+}
+
+function englishStatLabel(id: StatId) {
+  return stats.find((s) => s.id === id)?.label ?? id
 }
 
 /* ------------------------------------------------------------------ */
