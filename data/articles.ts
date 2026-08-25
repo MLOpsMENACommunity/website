@@ -22,7 +22,13 @@ export type ExternalArticle = {
   internalHref?: string
 }
 
-export const externalArticles: ExternalArticle[] = [
+import generated from './generated/articles.json'
+
+/**
+ * Hand-curated entries. These win over anything `npm run add:article` writes,
+ * so a curated description is never overwritten by an og:description blurb.
+ */
+const curated: ExternalArticle[] = [
   {
     id: 'mlops-roadmap-seniors',
     title: 'MLOps Roadmap for Seniors',
@@ -56,4 +62,16 @@ export const externalArticles: ExternalArticle[] = [
     tags: ['roadmap', 'beginner'],
     internalHref: '/roadmaps/basic-mlops-engineer',
   },
+]
+
+/**
+ * Curated entries plus whatever `npm run add:article` has collected, de-duped
+ * by id and by URL. The machine owns data/generated/articles.json; this file
+ * stays hand-edited.
+ */
+export const externalArticles: ExternalArticle[] = [
+  ...curated,
+  ...(generated as ExternalArticle[]).filter(
+    (g) => !curated.some((c) => c.id === g.id || c.href === g.href),
+  ),
 ]

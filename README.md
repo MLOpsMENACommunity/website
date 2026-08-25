@@ -10,10 +10,16 @@ Two language editions (English at the root, Arabic under `/ar`) and a light/dark
 
 ```bash
 npm install
-npm run dev      # http://localhost:3000
-npm run build    # static export into ./out
-npm run serve    # preview the exported ./out
+npm run dev          # http://localhost:3000
+npm run build        # static export into ./out
+npm run serve        # preview the exported ./out
+npm test             # session state machine
+npm run check:i18n   # what is missing an Arabic translation
+npm run refresh      # pull fresh YouTube data (the only script that uses the network)
 ```
+
+`next build` never touches the network. `npm run refresh` is separate and
+failure-tolerant, so a clone with no connection still builds.
 
 ## Pages
 
@@ -118,14 +124,49 @@ Ordering comes from the `ORDER` array in `src/lib/roadmaps.ts`.
 
 ### Adding a session
 
-Add an entry to `upcomingSessions` in `data/sessions.ts`. Put a 1200px cover image at
-`public/sessions/<slug>.jpg` — the filename must match the entry's `slug`. When the session
-is over, move it to `pastSessions` and add `recordingUrl`.
+Add it to the single `sessions` array in `data/sessions.ts` and put a 1200px cover at
+`public/sessions/<slug>.jpg`. **There is nothing to move when it airs** — upcoming, live,
+ended and archived are derived from `startsAt` + `durationMinutes` (default 120).
 
-`upcomingSessions` drives the homepage's "This week at MLOps MENA" band, so a session
-left there after it has aired keeps advertising itself with a live register button.
-Move it the day after. Add the Arabic title/date/topics to `sessionsAr` in
-`src/lib/content-i18n.ts`.
+After it airs, paste its `youtubeId` to turn "Ended — recording coming soon" into a watch
+link. Add the Arabic subtitle/topics to `sessionsAr` in `src/lib/content-i18n.ts`; the
+date needs no translation, it is formatted from `startsAt` in both languages.
+
+Render any point in time without touching the system clock:
+
+```bash
+SESSION_NOW=2026-09-01T12:00:00Z npm run build
+```
+
+### Adding an article
+
+```bash
+npm run add:article -- <url> --tags roadmap,career --internal /roadmaps/foo
+```
+
+Fetches that one page's Open Graph tags and appends to `data/generated/articles.json`,
+which `data/articles.ts` spreads in. Hand-written entries in `data/articles.ts` always win.
+
+LinkedIn's API cannot return long-form Articles (the `/pulse/` URLs) at any access tier and
+there is no RSS, so this is the automated path — one fetch of a URL you supply, not
+ingestion. If LinkedIn ever stops serving those tags the script writes a stub with `TODO`
+fields instead of failing.
+
+### How the site stays current
+
+`.github/workflows/deploy.yml` rebuilds every six hours as well as on push. That is what
+moves an aired session into "Past" and refreshes the YouTube figures. Between rebuilds the
+browser corrects each session's badge and hides its register button, so a stale page is
+never actively wrong.
+
+`data/generated/` is written by `npm run refresh` and committed on purpose — a fresh clone
+with no network still builds, and the git history is an audit trail. Fetchers never fail
+the build and never write an empty payload over a good one.
+
+To get real subscriber/view counts, add a `YOUTUBE_API_KEY` repo secret (Google Cloud →
+YouTube Data API v3, restricted to that API). Without it the video list still refreshes and
+the two YouTube tiles keep their hand-set floors. The key is read only inside
+`scripts/fetch-youtube.mjs` — never at render time, where a static export would publish it.
 
 ### Adding team photos and bios
 
@@ -164,7 +205,8 @@ Search the repo for `TODO:`.
 - Google Drive link for the mini/final projects PDF (`data/mlops-practitioner.ts`)
 - Team photos, bios, and LinkedIn URLs (`data/team.ts`)
 - Docker Deep Dive start time — the date is confirmed, the time is assumed (`data/sessions.ts`)
-- Docker Deep Dive has already aired — move it to `pastSessions` with its recording URL
+- Paste the Docker Deep Dive `youtubeId` (`AFcoKDtyhec` looks like it) into
+  `data/sessions.ts` so the card links its recording
 - Send a test message to `hello@mlopsmena.com` and to one team address. The domain's
   MX records point at Cloudflare Email Routing, but routing only delivers for addresses
   that have a rule *and* a verified destination inbox — an address in `site.config.ts`
