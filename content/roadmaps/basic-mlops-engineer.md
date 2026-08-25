@@ -99,7 +99,7 @@ Within Phase 2, you'll cover the following.
 Git for large datasets and models. Start with DVC's official YouTube channel and the interactive tutorials on dvc.org.
 
 - [DVC official site](https://dvc.org/)
-- [DVC YouTube channel](https://www.youtube.com/@dvcorg9684)
+- [DVC YouTube channel](https://www.youtube.com/channel/UC37rp97Go-xIX3aNFVHhXfQ)
 
 ### Experiment tracking — MLflow
 
@@ -184,7 +184,7 @@ The standard for infrastructure monitoring. TechWorld with Nana has great tutori
 ### MLOps & ML engineering
 
 - [DataTalks.Club](https://www.youtube.com/@DataTalksClub)
-- [MLOps Community](https://www.youtube.com/@MLOpsCommunity)
+- [MLOps Community](https://www.youtube.com/c/MLOpscommunity)
 - [DeepLearning.AI](https://www.youtube.com/@Deeplearningai)
 
 ### DevOps tools

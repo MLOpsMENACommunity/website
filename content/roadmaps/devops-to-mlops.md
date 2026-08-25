@@ -71,7 +71,7 @@ Here's where your DevOps skills pay off big. Every tool in this phase is another
 Think of DVC as Git for large files. Since you already know Git deeply, this is easy.
 
 - [DVC official docs](https://dvc.org)
-- [DVC YouTube channel](https://www.youtube.com/@dvcorg9684)
+- [DVC YouTube channel](https://www.youtube.com/channel/UC37rp97Go-xIX3aNFVHhXfQ)
 
 ### Experiment tracking — MLflow
 
