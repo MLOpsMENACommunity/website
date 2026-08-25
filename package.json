@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "serve": "npx serve out",
-    "test": "node --test \"scripts/**/*.test.mjs\"",
+    "test": "node --test scripts/*.test.mjs",
     "refresh": "node scripts/fetch-youtube.mjs",
     "check:i18n": "tsx scripts/check-i18n.ts",
     "add:article": "node scripts/add-article.mjs"
