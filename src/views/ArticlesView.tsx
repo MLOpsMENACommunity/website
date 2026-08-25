@@ -7,6 +7,7 @@ import { externalArticles } from '~/data/articles'
 import { channels } from '~/site.config'
 import { t, localeHref, type Lang } from '@/lib/i18n'
 import { tArticle } from '@/lib/content-i18n'
+import UntranslatedChip from '@/components/UntranslatedChip'
 
 /**
  * Without an explicit timeZone this inherits the machine's — UTC on the CI
@@ -64,6 +65,7 @@ export default function ArticlesView({ lang }: { lang: Lang }) {
                     {leadRaw.tags.map((tag) => (
                       <span key={tag} className="chip !px-2 !py-0.5 text-[10px]">{tag}</span>
                     ))}
+                    <UntranslatedChip lang={lang} kind="article" itemKey={leadRaw.id} />
                   </div>
 
                   <h2 className="mt-5 max-w-3xl text-2xl font-bold leading-snug text-fg sm:text-3xl">
@@ -103,6 +105,7 @@ export default function ArticlesView({ lang }: { lang: Lang }) {
                         {raw.tags.slice(0, 2).map((tag) => (
                           <span key={tag} className="chip !px-2 !py-0.5 text-[10px]">{tag}</span>
                         ))}
+                        <UntranslatedChip lang={lang} kind="article" itemKey={raw.id} />
                       </div>
 
                       <h3 className="mt-4 text-lg font-semibold leading-snug text-fg">{a.title}</h3>

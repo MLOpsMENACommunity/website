@@ -13,6 +13,7 @@ import FaqAccordion from '@/components/FaqAccordion'
 import JoinCTA from '@/components/JoinCTA'
 import HexField from '@/components/HexField'
 import MemberCard from '@/components/MemberCard'
+import UntranslatedChip from '@/components/UntranslatedChip'
 import { asset } from '@/lib/asset'
 import { getRoadmaps, accentClasses } from '@/lib/roadmaps'
 import { t, localeHref, type Lang } from '@/lib/i18n'
@@ -258,7 +259,10 @@ export default function HomeView({ lang }: { lang: Lang }) {
                     </div>
 
                     <div className="flex flex-1 flex-col p-6">
-                      <span className="chip w-fit">{copy.common.recordingAvailable}</span>
+                      <span className="flex flex-wrap items-center gap-2">
+                        <span className="chip w-fit">{copy.common.recordingAvailable}</span>
+                        <UntranslatedChip lang={lang} kind="session" itemKey={s.slug} />
+                      </span>
                       <h3 className="mt-3 text-lg font-bold leading-snug text-fg">{s.title}</h3>
                       <p className="mt-1.5 flex-1 text-sm leading-relaxed text-muted">{s.subtitle}</p>
 
@@ -403,8 +407,11 @@ export default function HomeView({ lang }: { lang: Lang }) {
             return (
               <Reveal key={raw.href} delay={i * 80}>
                 <article className="card card-hover flex h-full flex-col p-6">
-                  <span className="chip w-fit border-cyan-400/30 text-cyan-400">
-                    <Linkedin className="h-3 w-3" /> {raw.platform}
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="chip w-fit border-cyan-400/30 text-cyan-400">
+                      <Linkedin className="h-3 w-3" /> {raw.platform}
+                    </span>
+                    <UntranslatedChip lang={lang} kind="article" itemKey={raw.id} />
                   </span>
                   <h3 className="mt-4 text-lg font-semibold leading-snug text-fg">{a.title}</h3>
                   <p className="mt-2.5 flex-1 text-sm leading-relaxed text-muted">{a.description}</p>

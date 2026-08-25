@@ -86,6 +86,7 @@ const en = {
     reviews: 'reviews',
     home: 'home',
     backToTop: 'Back to top',
+    inEnglish: 'in English',
   },
 
   home: {
@@ -465,6 +466,7 @@ const ar: typeof en = {
     reviews: 'تقييم',
     home: 'الرئيسية',
     backToTop: 'العودة إلى الأعلى',
+    inEnglish: 'بالإنجليزية',
   },
 
   home: {

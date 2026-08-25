@@ -7,6 +7,11 @@
  */
 
 export type ExternalArticle = {
+  /**
+   * Stable key for the Arabic overlay in src/lib/content-i18n.ts. Never reuse
+   * or rewrite one — the title can change freely, this cannot.
+   */
+  id: string
   title: string
   description: string
   date: string
@@ -19,6 +24,7 @@ export type ExternalArticle = {
 
 export const externalArticles: ExternalArticle[] = [
   {
+    id: 'mlops-roadmap-seniors',
     title: 'MLOps Roadmap for Seniors',
     description:
       'Seven specializations — LLMOps, model optimization, production Kubernetes, advanced monitoring, performance and load testing, system design for ML, and soft skills. Pick two or three and go deep.',
@@ -29,6 +35,7 @@ export const externalArticles: ExternalArticle[] = [
     internalHref: '/roadmaps/senior-mlops-engineer',
   },
   {
+    id: 'devops-mlops-transition-roadmap',
     title: 'The DevOps to MLOps Transition Roadmap',
     description:
       'You already own 60–70% of the skillset. This roadmap adds only the ML layer on top — the fastest career pivot in tech, in five phases over three to five months.',
@@ -39,6 +46,7 @@ export const externalArticles: ExternalArticle[] = [
     internalHref: '/roadmaps/devops-to-mlops',
   },
   {
+    id: 'basic-mlops-engineer-roadmap',
     title: 'Basic MLOps Engineer Roadmap',
     description:
       'The roadmap I would give my younger self — five phases over six to nine months, built entirely on free and open-source resources, because the real knowledge in this field lives on GitHub and YouTube.',

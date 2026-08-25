@@ -14,6 +14,7 @@ import {
   type SessionState,
 } from '@/lib/sessions'
 import { tSession } from '@/lib/content-i18n'
+import UntranslatedChip from '@/components/UntranslatedChip'
 
 export default function SessionsView({ lang }: { lang: Lang }) {
   const copy = t(lang)
@@ -200,6 +201,7 @@ export default function SessionsView({ lang }: { lang: Lang }) {
                   <span className="chip">
                     <CalendarDays className="h-3 w-3" />{formatSessionDate(s, lang)}
                   </span>
+                  <UntranslatedChip lang={lang} kind="session" itemKey={s.slug} />
                 </div>
                 <p className="mt-3 flex-1 text-sm text-muted">
                   <span className="text-body">{s.speaker}</span> · {s.speakerRole}

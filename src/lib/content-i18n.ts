@@ -79,7 +79,7 @@ type SessionCopy = Pick<Session, 'subtitle' | 'speakerRole'> & {
   topics?: string[]
 }
 
-const sessionsAr: Record<string, SessionCopy> = {
+export const sessionsAr: Record<string, SessionCopy> = {
   'docker-deep-dive': {
     subtitle: 'Docker: أساس البناء لـ MLOps — اليوم الأول',
     speakerRole: 'مدرّب · خبرة أكثر من 3 سنوات',
@@ -337,27 +337,31 @@ export const teamSummaryAr = 'مؤسِّسة، ومديران للمجتمع، �
 /* Articles                                                             */
 /* ------------------------------------------------------------------ */
 
-const articlesAr: Record<string, { title: string; description: string }> = {
-  'MLOps Roadmap for Seniors': {
+/** Keyed by ExternalArticle.id — a title is editorial and will change. */
+export const articlesAr: Record<string, { title: string; description: string }> = {
+  'mlops-roadmap-seniors': {
     title: 'خريطة MLOps للخبراء',
     description:
       'سبعة تخصّصات — LLMOps، وتحسين النماذج، وKubernetes في الإنتاج، والمراقبة المتقدّمة، واختبار الأداء والحِمل، وتصميم أنظمة التعلّم الآلي، والمهارات الشخصية. اختر اثنين أو ثلاثة وتعمّق فيها.',
   },
-  'The DevOps to MLOps Transition Roadmap': {
+  'devops-mlops-transition-roadmap': {
     title: 'خريطة الانتقال من DevOps إلى MLOps',
     description:
       'أنت تملك بالفعل 60–70% من المهارات المطلوبة. هذه الخريطة تضيف طبقة التعلّم الآلي فوقها فقط — أسرع تحوّل مهني في مجال التقنية، في خمس مراحل خلال ثلاثة إلى خمسة أشهر.',
   },
-  'Basic MLOps Engineer Roadmap': {
+  'basic-mlops-engineer-roadmap': {
     title: 'خريطة مهندس MLOps المبتدئ',
     description:
       'الخريطة التي كنت سأعطيها لنفسي في البداية — خمس مراحل على مدى ستة إلى تسعة أشهر، مبنية بالكامل على مصادر مجانية ومفتوحة المصدر، لأن المعرفة الحقيقية في هذا المجال موجودة على GitHub ويوتيوب.',
   },
 }
 
-export function tArticle<T extends { title: string; description: string }>(lang: Lang, a: T) {
+export function tArticle<T extends { id: string; title: string; description: string }>(
+  lang: Lang,
+  a: T,
+) {
   if (lang !== 'ar') return a
-  const o = articlesAr[a.title]
+  const o = articlesAr[a.id]
   return o ? { ...a, ...o } : a
 }
 
@@ -412,10 +416,15 @@ type RoadmapCopy = {
   duration: string
   commitment: string
   audience: string
-  phases: string[]
+  /**
+   * Keyed by the English heading label ("Phase 0", "Specialization 3"), NOT by
+   * position. Positional matching silently mistranslated every later phase the
+   * moment a phase was inserted into the markdown; a missing key is loud.
+   */
+  phases: Record<string, string>
 }
 
-const roadmapsAr: Record<string, RoadmapCopy> = {
+export const roadmapsAr: Record<string, RoadmapCopy> = {
   'basic-mlops-engineer': {
     title: 'خريطة مهندس MLOps المبتدئ',
     tagline: 'من الصفر إلى الجاهزية للعمل',
@@ -423,13 +432,13 @@ const roadmapsAr: Record<string, RoadmapCopy> = {
     duration: '6–9 أشهر',
     commitment: '10–15 ساعة أسبوعيًا',
     audience: 'للطلاب ومهندسي التعلّم الآلي ومهندسي البرمجيات وعلماء البيانات الداخلين إلى مجال MLOps.',
-    phases: [
-      'الأساسيات',
-      'هندسة البرمجيات للتعلّم الآلي',
-      'جوهر MLOps',
-      'أساسيات السحابة',
-      'المراقبة الأساسية',
-    ],
+    phases: {
+      'Phase 0': 'الأساسيات',
+      'Phase 1': 'هندسة البرمجيات للتعلّم الآلي',
+      'Phase 2': 'جوهر MLOps',
+      'Phase 3': 'أساسيات السحابة',
+      'Phase 4': 'المراقبة الأساسية',
+    },
   },
   'devops-to-mlops': {
     title: 'خريطة الانتقال من DevOps إلى MLOps',
@@ -438,13 +447,13 @@ const roadmapsAr: Record<string, RoadmapCopy> = {
     duration: '3–5 أشهر',
     commitment: '10–15 ساعة أسبوعيًا',
     audience: 'لمهندسي DevOps وSRE والمنصّات والبنية التحتية المنتقلين إلى التعلّم الآلي.',
-    phases: [
-      'سدّ فجوة Python والتعلّم الآلي',
-      'تعلّم أدوات التعلّم الآلي',
-      'حيث تتألّق مهاراتك في DevOps',
-      'مفاهيم MLOps التي لن تعرفها',
-      'تخصّص اختياري: LLMOps',
-    ],
+    phases: {
+      'Phase 1': 'سدّ فجوة Python والتعلّم الآلي',
+      'Phase 2': 'تعلّم أدوات التعلّم الآلي',
+      'Phase 3': 'حيث تتألّق مهاراتك في DevOps',
+      'Phase 4': 'مفاهيم MLOps التي لن تعرفها',
+      'Phase 5': 'تخصّص اختياري: LLMOps',
+    },
   },
   'senior-mlops-engineer': {
     title: 'خريطة MLOps للخبراء',
@@ -453,15 +462,15 @@ const roadmapsAr: Record<string, RoadmapCopy> = {
     duration: 'مستمرة',
     commitment: 'اختر 2–3 تخصّصات',
     audience: 'لمهندسي MLOps في المستويين المبتدئ والمتوسط الراغبين في الوصول إلى مستوى الخبير.',
-    phases: [
-      'LLMOps',
-      'تحسين النماذج',
-      'Kubernetes في الإنتاج والأنظمة الموزّعة',
-      'المراقبة المتقدّمة',
-      'اختبار الأداء والحِمل',
-      'تصميم أنظمة التعلّم الآلي',
-      'المهارات الشخصية',
-    ],
+    phases: {
+      'Specialization 1': 'LLMOps',
+      'Specialization 2': 'تحسين النماذج',
+      'Specialization 3': 'Kubernetes في الإنتاج والأنظمة الموزّعة',
+      'Specialization 4': 'المراقبة المتقدّمة',
+      'Specialization 5': 'اختبار الأداء والحِمل',
+      'Specialization 6': 'تصميم أنظمة التعلّم الآلي',
+      'Specialization 7': 'المهارات الشخصية',
+    },
   },
 }
 
@@ -478,8 +487,8 @@ export function tRoadmap(lang: Lang, r: RoadmapMeta): RoadmapMeta {
     commitment: o.commitment,
     audience: o.audience,
     // Keep the original `when` and the anchor-generating English label; only the
-    // human-readable phase name is translated.
-    phases: r.phases.map((p, i) => ({ ...p, title: o.phases[i] ?? p.title })),
+    // human-readable phase name is translated. Looked up BY that label.
+    phases: r.phases.map((p) => ({ ...p, title: o.phases[p.label] ?? p.title })),
   }
 }
 
@@ -589,4 +598,26 @@ export const courseAr = {
 export function tCourseResource(lang: Lang, r: { label: string; desc: string }) {
   if (lang !== 'ar') return r
   return courseAr.resources[r.label] ?? r
+}
+
+/* ------------------------------------------------------------------ */
+/* Translation coverage                                                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Whether an item has an Arabic overlay.
+ *
+ * A sibling predicate rather than a field on what `tSession`/`tArticle` return:
+ * those are generic over their argument, and widening the return type would
+ * ripple through every call site's inference.
+ *
+ * Used to show a small "in English" marker on /ar, so a reader is not left
+ * wondering why one card switched language. Scoped to body copy on purpose —
+ * English is deliberate for tool names and course titles, and badging those
+ * would be pure noise.
+ */
+export function isTranslated(kind: 'session' | 'article' | 'roadmap', key: string): boolean {
+  if (kind === 'session') return key in sessionsAr
+  if (kind === 'article') return key in articlesAr
+  return key in roadmapsAr
 }
