@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import RoadmapDetailView from '@/views/RoadmapDetailView'
 import { getRoadmaps, getRoadmap } from '@/lib/roadmaps'
 import { t } from '@/lib/i18n'
+import { pageMetadata } from '@/lib/seo'
 import { tRoadmap } from '@/lib/content-i18n'
 
 type Props = { params: { slug: string } }
@@ -17,17 +18,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!raw) return {}
   const r = tRoadmap('ar', raw)
   const copy = t('ar')
-  return {
+  return pageMetadata({
+    lang: 'ar',
+    path: `/roadmaps/${params.slug}`,
     title: r.title,
     description: `${r.tagline} — ${r.audience} ${r.resourceCount} ${copy.common.freeResources}.`,
-    alternates: {
-      canonical: '/ar/roadmaps/' + params.slug + '/',
-      languages: {
-        en: `/roadmaps/${params.slug}/`,
-        ar: `/ar/roadmaps/${params.slug}/`,
-      },
-    },
-  }
+  })
 }
 
 export default async function RoadmapPage({ params }: Props) {

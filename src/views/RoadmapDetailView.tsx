@@ -6,6 +6,8 @@ import HexField from '@/components/HexField'
 import { getRoadmaps, accentClasses, type Roadmap } from '@/lib/roadmaps'
 import { t, localeHref, type Lang } from '@/lib/i18n'
 import { tRoadmap, tPhaseLabel } from '@/lib/content-i18n'
+import JsonLd from '@/components/JsonLd'
+import { breadcrumbSchema, roadmapArticleSchema } from '@/lib/schema'
 
 /**
  * Mirrors github-slugger (used by rehype-slug) so TOC anchors match heading ids.
@@ -44,8 +46,18 @@ export default function RoadmapDetailView({
     return slugify(`${p.label} — ${p.title}${p.when ? ` (${p.when})` : ''}`)
   }
 
+  /** Root-relative, edition-aware — the schema builders make it absolute. */
+  const path = localeHref(lang, `/roadmaps/${roadmap.slug}`)
+
   return (
     <>
+      <JsonLd data={roadmapArticleSchema(localized, lang, path)} />
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: copy.nav.items.roadmaps, path: localeHref(lang, '/roadmaps') },
+          { name: localized.title, path },
+        ])}
+      />
       {/* ---------- Cover ---------- */}
       <section className="relative overflow-hidden border-b border-line">
         <div className={`pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full ${a.bg} blur-[100px]`} />

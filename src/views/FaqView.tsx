@@ -7,6 +7,8 @@ import { faqs, sessionMaterial } from '~/data/faq'
 import { contacts, channels } from '~/site.config'
 import { t, type Lang } from '@/lib/i18n'
 import { tFaq } from '@/lib/content-i18n'
+import JsonLd from '@/components/JsonLd'
+import { faqSchema } from '@/lib/schema'
 
 export default function FaqView({ lang }: { lang: Lang }) {
   const copy = t(lang)
@@ -22,6 +24,7 @@ export default function FaqView({ lang }: { lang: Lang }) {
 
   return (
     <>
+      <JsonLd data={faqSchema([...courseFaqs, ...generalFaqs])} />
       <section className="relative overflow-hidden border-b border-line">
         <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-teal/10 blur-[100px]" />
         <HexField className="pointer-events-none absolute end-6 top-16 hidden h-56 w-80 text-hex lg:block" />

@@ -10,6 +10,9 @@ const copy = t('ar')
 const titleAr = 'مجتمع MLOps MENA — تعليم مجاني في الذكاء الاصطناعي وMLOps'
 const descriptionAr = copy.home.hero.lead
 
+/** Same card `pageMetadata` uses, so every page reports identical dimensions. */
+const card = { url: asset('/logo-full.png'), width: 1200, height: 670, alt: site.name }
+
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
@@ -24,17 +27,18 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: 'website',
+    url: '/ar/',
     siteName: site.name,
     locale: 'ar_EG',
     title: titleAr,
     description: descriptionAr,
-    images: [asset('/logo-full.png')],
+    images: [card],
   },
   twitter: {
     card: 'summary_large_image',
     title: titleAr,
     description: descriptionAr,
-    images: [asset('/logo-full.png')],
+    images: [card],
   },
   icons: { icon: asset('/logo-mark.png'), apple: asset('/logo-mark.png') },
 }

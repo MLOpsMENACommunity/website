@@ -2,7 +2,9 @@ import { Inter, JetBrains_Mono, IBM_Plex_Sans_Arabic } from 'next/font/google'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import ScrollProgress from '@/components/ScrollProgress'
+import JsonLd from '@/components/JsonLd'
 import { themeScript } from '@/lib/theme'
+import { organizationSchema } from '@/lib/schema'
 import { t, type Lang } from '@/lib/i18n'
 
 const inter = Inter({
@@ -45,6 +47,8 @@ export default function RootShell({
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        {/* The entity every other schema node on the site points back at. */}
+        <JsonLd data={organizationSchema()} />
       </head>
       <body className="min-h-screen">
         <a

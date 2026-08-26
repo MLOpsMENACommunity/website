@@ -19,6 +19,8 @@ import { t, localeHref, type Lang } from '@/lib/i18n'
 import {
   courseAr, tCourseResource, tStudyGroup, tFaq, tGroupRule, groupRuleNoteAr,
 } from '@/lib/content-i18n'
+import JsonLd from '@/components/JsonLd'
+import { courseSchema } from '@/lib/schema'
 
 const includeIcons = [Radio, InfinityIcon, Users, Award]
 const resourceIcons = { Github, Presentation, FileText, Youtube } as const
@@ -40,6 +42,7 @@ export default function PractitionerView({ lang }: { lang: Lang }) {
 
   return (
     <>
+      <JsonLd data={courseSchema(lang, cc.summary)} />
       {/* ---------- Hero ---------- */}
       <section className="relative overflow-hidden border-b border-line">
         <div className="pointer-events-none absolute -left-40 -top-40 h-[32rem] w-[32rem] rounded-full bg-teal/10 blur-[110px]" />

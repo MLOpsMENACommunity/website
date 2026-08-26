@@ -15,6 +15,8 @@ import {
 } from '@/lib/sessions'
 import { tSession } from '@/lib/content-i18n'
 import UntranslatedChip from '@/components/UntranslatedChip'
+import JsonLd from '@/components/JsonLd'
+import { eventSchema } from '@/lib/schema'
 
 export default function SessionsView({ lang }: { lang: Lang }) {
   const copy = t(lang)
@@ -34,6 +36,11 @@ export default function SessionsView({ lang }: { lang: Lang }) {
 
   return (
     <>
+      {/* Only sessions that have not finished — a past date in an Event node
+          is valid but earns nothing. */}
+      {upcoming.map((s) => (
+        <JsonLd key={s.slug} data={eventSchema(s, lang)} />
+      ))}
       <section className="relative overflow-hidden border-b border-line">
         <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-teal/10 blur-[100px]" />
         <HexField className="pointer-events-none absolute end-6 top-16 hidden h-56 w-80 text-hex lg:block" />

@@ -30,6 +30,41 @@ export type RoadmapMeta = {
 
 export type Roadmap = RoadmapMeta & { html: string }
 
+/** A hast element, narrowed to the little this file touches. */
+type HastNode = {
+  type: string
+  tagName?: string
+  properties?: Record<string, unknown>
+  children?: HastNode[]
+}
+
+/**
+ * Sends every off-site link in a roadmap to a new tab.
+ *
+ * A roadmap is a reading list — 160-odd curated links, worked through over
+ * months. Following one in the same tab loses the reader's place in a very long
+ * page, and the back button does not restore the scroll position reliably once
+ * the anchors have been used. `noopener` is the part that matters for safety;
+ * `noreferrer` follows it because these are third-party sites.
+ *
+ * Written inline rather than pulling in rehype-external-links: it is eight
+ * lines, and the dependency list here is pinned and deliberately short.
+ */
+function rehypeExternalLinks() {
+  return (tree: HastNode) => {
+    const visit = (node: HastNode) => {
+      if (node.tagName === 'a') {
+        const href = node.properties?.href
+        if (typeof href === 'string' && /^https?:\/\//.test(href)) {
+          node.properties = { ...node.properties, target: '_blank', rel: ['noopener', 'noreferrer'] }
+        }
+      }
+      node.children?.forEach(visit)
+    }
+    visit(tree)
+  }
+}
+
 /** Splits "Phase 0 — Foundations (Month 1-2)" into its three parts. */
 function parseHeading(heading: string) {
   const m = heading.match(/^(Phase \d+|Specialization \d+)\s*—\s*(.+?)(?:\s*\(([^)]+)\))?$/)
@@ -90,6 +125,7 @@ export async function getRoadmap(slug: string): Promise<Roadmap | null> {
       .use(remarkGfm)
       .use(remarkRehype)
       .use(rehypeSlug)
+      .use(rehypeExternalLinks)
       .use(rehypeStringify)
       .process(content),
   )

@@ -1,14 +1,16 @@
 import type { Metadata } from 'next'
 import MentorshipView from '@/views/MentorshipView'
 import { t } from '@/lib/i18n'
+import { pageMetadata } from '@/lib/seo'
 
 const copy = t('ar').mentorshipPage
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  lang: 'ar',
+  path: '/mentorship',
   title: copy.metaTitle,
   description: copy.metaDesc,
-  alternates: { canonical: '/ar/mentorship/', languages: { en: '/mentorship/', ar: '/ar/mentorship/' } },
-}
+})
 
 export default function ArMentorshipPage() {
   return <MentorshipView lang="ar" />

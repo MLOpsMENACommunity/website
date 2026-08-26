@@ -4,6 +4,9 @@ import { site } from '~/site.config'
 import { asset } from '@/lib/asset'
 import '../globals.css'
 
+/** Same card `pageMetadata` uses, so every page reports identical dimensions. */
+const card = { url: asset('/logo-full.png'), width: 1200, height: 670, alt: site.name }
+
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
@@ -18,17 +21,18 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: 'website',
+    url: '/',
     siteName: site.name,
     locale: 'en_US',
     title: `${site.name} — Free AI & MLOps education for MENA`,
     description: site.description,
-    images: [asset('/logo-full.png')],
+    images: [card],
   },
   twitter: {
     card: 'summary_large_image',
     title: site.name,
     description: site.description,
-    images: [asset('/logo-full.png')],
+    images: [card],
   },
   icons: { icon: asset('/logo-mark.png'), apple: asset('/logo-mark.png') },
 }
