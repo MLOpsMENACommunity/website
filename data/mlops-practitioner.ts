@@ -20,16 +20,6 @@ export const course = {
   rating: { score: 4.9, count: 7 },
   students: 1200,
 
-  /**
-   * Next live lesson for the running cohort.
-   * TODO: confirm — the week grid puts Week 2 at Sat 8/22, but you said the
-   * Session 2 call is Sunday 7:00 PM. Sunday is used here.
-   */
-  nextLesson: {
-    title: 'Session 2 — MLOps Core',
-    startsAt: '2026-08-23T19:00:00+03:00',
-    dateLabel: 'Sunday, 23 Aug · 7:00 PM Cairo',
-  },
 
   instructor: {
     name: 'Aya Nasser Salama',
@@ -88,17 +78,31 @@ export const course = {
     },
   ],
 
-  /** Live session recordings on YouTube. Source: master reference §2. */
+  /**
+   * The five live lessons. Every one has a YouTube URL from the moment it is
+   * scheduled — a stream gets its link before it airs — so the URL alone says
+   * nothing about whether there is anything to watch yet. `airsAt` is what
+   * decides that, and without it the site presented lessons weeks away as
+   * finished recordings.
+   *
+   * Lessons run Sunday 19:00 Cairo, one per teaching week of the outline below
+   * (week 3 and week 7 are project weeks with no lecture).
+   */
   recordings: [
     { n: 1, module: 'From Notebook to Production-Ready Code',
+      airsAt: '2026-08-16T19:00:00+03:00',
       href: 'https://www.youtube.com/live/rJFIn83w0Dc' },
     { n: 2, module: 'MLOps Core — Experiment Tracking, Versioning & Automation',
+      airsAt: '2026-08-23T19:00:00+03:00',
       href: 'https://www.youtube.com/live/slxkWpCAqI8' },
     { n: 3, module: 'Inference, Serving & Release Strategies',
+      airsAt: '2026-09-06T19:00:00+03:00',
       href: 'https://www.youtube.com/live/N3v8va_P0DE' },
     { n: 4, module: 'Model Optimization — Faster, Smaller, Cheaper',
+      airsAt: '2026-09-13T19:00:00+03:00',
       href: 'https://www.youtube.com/live/i7jT4Dr6qgE' },
     { n: 5, module: 'Observability & Drift Detection',
+      airsAt: '2026-09-20T19:00:00+03:00',
       href: 'https://www.youtube.com/live/_rfZUcMQFeg' },
   ],
 

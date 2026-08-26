@@ -51,7 +51,30 @@ export const sessions: Session[] = [
     ],
     registerUrl: 'https://zomra.io/free-sessions/75841596-2358-4ec5-b6e7-ee3fbc45bb63',
     note: 'No prerequisites — no prior Docker or Kubernetes required.',
-    // TODO: paste the youtubeId once the recording is published.
+    youtubeId: 'AFcoKDtyhec',
+  },
+  {
+    slug: 'hands-on-cicd-github-actions',
+    title: 'Hands-on CI/CD and GitHub Actions',
+    subtitle: 'Build a working workflow file you can drop into your own repo the same day',
+    speaker: 'Abdallah Almalawany',
+    speakerRole: 'DevOps Engineer',
+    startsAt: '2026-08-29T19:00:00+03:00',
+    durationMinutes: 90,
+    topics: [
+      'Writing ci.yml from scratch',
+      'Triggers, jobs and steps',
+      'needs: and matrix builds',
+      'Hosted vs self-hosted runners',
+      'Artifacts and caching',
+      'Secrets and GITHUB_TOKEN scope',
+      'Conditions and approval gates',
+      'Pinning actions to a SHA',
+      'Ruff and pre-commit',
+    ],
+    // TODO: paste the Zomra registration URL — without it the register button
+    // does not render and people can only reach the session through WhatsApp.
+    note: 'Assumes Git branching, Bash basics, and building and pushing a Docker image.',
   },
   {
     slug: 'on-prem-mlops-playbook',

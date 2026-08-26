@@ -4,6 +4,7 @@ import Reveal from '@/components/Reveal'
 import Countdown from '@/components/Countdown'
 import JoinCTA from '@/components/JoinCTA'
 import HexField from '@/components/HexField'
+import CourseLessons from '@/components/CourseLessons'
 import { SessionBadge, RegisterGate } from '@/components/SessionStatus'
 import { sessions } from '~/data/sessions'
 import { course } from '~/data/mlops-practitioner'
@@ -169,25 +170,7 @@ export default function SessionsView({ lang }: { lang: Lang }) {
             </div>
           </Reveal>
 
-          <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {course.recordings.map((r, i) => (
-              <Reveal key={r.n} delay={i * 60}>
-                <a href={r.href} target="_blank" rel="noreferrer"
-                   className="card card-hover group flex h-full items-start gap-4 p-5">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-cyan-400/10 font-mono text-sm font-bold text-cyan-400">
-                    {String(r.n).padStart(2, '0')}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold leading-snug text-fg">{r.module}</span>
-                    <span className="mt-2 inline-flex items-center gap-1.5 text-xs text-faint transition group-hover:text-cyan-400">
-                      <PlayCircle className="h-3.5 w-3.5" /> {c.watchOnYoutube}
-                    </span>
-                  </span>
-                  <ArrowUpRight className="h-4 w-4 shrink-0 text-ghost transition group-hover:text-cyan-400" />
-                </a>
-              </Reveal>
-            ))}
-          </div>
+          <CourseLessons lang={lang} />
         </div>
       </section>
 

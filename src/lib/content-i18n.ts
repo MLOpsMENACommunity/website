@@ -56,6 +56,7 @@ export function tPillar(lang: Lang, p: { title: string; desc: string }) {
 /** Keyed by the stable stat id, so renaming an English label cannot orphan it. */
 const statLabelsAr: Record<StatId, string> = {
   whatsapp: 'عضو على واتساب',
+  discord: 'عضو على ديسكورد',
   linkedin: 'متابع على لينكدإن',
   students: 'دارس في الدورات',
   'yt-views': 'مشاهدة على يوتيوب',
@@ -93,6 +94,22 @@ export const sessionsAr: Record<string, SessionCopy> = {
       'كتابة ملف Dockerfile',
       'الأمان',
       'Docker Compose',
+    ],
+  },
+  'hands-on-cicd-github-actions': {
+    subtitle: 'اخرج بملف workflow جاهز تضعه في مستودعك في نفس اليوم، لا بمجرد ملاحظات',
+    speakerRole: 'مهندس DevOps',
+    note: 'يفترض معرفتك بفروع Git وأساسيات Bash وبناء صورة Docker ورفعها.',
+    topics: [
+      'كتابة ci.yml من الصفر',
+      'المشغّلات والمهام والخطوات',
+      'needs: وبناء المصفوفات',
+      'المشغّلات المستضافة مقابل الذاتية',
+      'الملفات الوسيطة والتخزين المؤقت',
+      'الأسرار ونطاق GITHUB_TOKEN',
+      'الشروط وبوابات الموافقة',
+      'تثبيت الإجراءات على SHA',
+      'Ruff وpre-commit',
     ],
   },
   'on-prem-mlops-playbook': {

@@ -11,6 +11,18 @@
 import type { Session } from '~/data/sessions'
 import type { Lang } from './i18n'
 
+/**
+ * The minimum a thing needs to have a time-derived state. `Session` satisfies
+ * it, and so does a course lesson — which is why the lesson grid can no longer
+ * present a talk three weeks away as an available recording.
+ */
+export type Timed = {
+  startsAt: string
+  durationMinutes?: number
+  youtubeId?: string
+  recordingUrl?: string
+}
+
 /** Sessions run about two hours unless the entry says otherwise. */
 export const DEFAULT_DURATION_MINUTES = 120
 
@@ -24,21 +36,21 @@ export type SessionState =
   /** Over, recording available. */
   | 'archived'
 
-export function sessionStartsAt(s: Session): number {
+export function sessionStartsAt(s: Timed): number {
   return new Date(s.startsAt).getTime()
 }
 
-export function sessionEndsAt(s: Session): number {
+export function sessionEndsAt(s: Timed): number {
   return sessionStartsAt(s) + (s.durationMinutes ?? DEFAULT_DURATION_MINUTES) * 60_000
 }
 
 /** The watch link, whether it came from a YouTube id or an explicit URL. */
-export function recordingUrl(s: Session): string | undefined {
+export function recordingUrl(s: Timed): string | undefined {
   if (s.recordingUrl) return s.recordingUrl
   return s.youtubeId ? `https://www.youtube.com/watch?v=${s.youtubeId}` : undefined
 }
 
-export function sessionState(s: Session, now: number): SessionState {
+export function sessionState(s: Timed, now: number): SessionState {
   if (now < sessionStartsAt(s)) return 'upcoming'
   if (now < sessionEndsAt(s)) return 'live'
   return recordingUrl(s) ? 'archived' : 'ended'
@@ -95,7 +107,7 @@ export function buildNow(): number {
  * browsers and nowhere else. `-u-nu-latn` pins the numbering system; passing the
  * formatted string down as a prop keeps the formatting itself off the client.
  */
-export function formatSessionDate(s: Session, lang: Lang): string {
+export function formatSessionDate(s: Timed & { dateLabelOverride?: string }, lang: Lang): string {
   if (s.dateLabelOverride) return s.dateLabelOverride
 
   const formatted = new Intl.DateTimeFormat(lang === 'ar' ? 'ar-EG-u-nu-latn' : 'en-GB', {

@@ -10,12 +10,14 @@ import Countdown from '@/components/Countdown'
 import FaqAccordion from '@/components/FaqAccordion'
 import JoinCTA from '@/components/JoinCTA'
 import HexField from '@/components/HexField'
+import CourseLessons from '@/components/CourseLessons'
 import { course } from '~/data/mlops-practitioner'
 import { studyGroups, groupRule, groupRuleNote } from '~/data/study-groups'
 import { faqs } from '~/data/faq'
 import { channels, partners } from '~/site.config'
 import { asset } from '@/lib/asset'
 import { t, localeHref, type Lang } from '@/lib/i18n'
+import { buildNow, formatSessionDate, sessionEndsAt, sessionState } from '@/lib/sessions'
 import {
   courseAr, tCourseResource, tStudyGroup, tFaq, tGroupRule, groupRuleNoteAr,
 } from '@/lib/content-i18n'
@@ -39,6 +41,15 @@ export default function PractitionerView({ lang }: { lang: Lang }) {
   const cc = ar ? courseAr : course
   const zomra = partners.find((p) => p.name === 'Zomra')
   const courseFaqs = faqs.filter((f) => f.scope === 'course').map((f) => tFaq(lang, f))
+
+  // The next lesson is whichever one has not aired yet — it used to be a
+  // hand-set field, which meant the card kept counting down to a lesson that
+  // had already happened.
+  const now = buildNow()
+  const upcomingLesson = course.recordings
+    .map((r) => ({ ...r, timed: { startsAt: r.airsAt, durationMinutes: 90, recordingUrl: r.href } }))
+    .filter((r) => sessionState(r.timed, now) !== 'archived' && sessionState(r.timed, now) !== 'ended')
+    .sort((a, b) => a.airsAt.localeCompare(b.airsAt))[0]
 
   return (
     <>
@@ -94,22 +105,34 @@ export default function PractitionerView({ lang }: { lang: Lang }) {
             <div className="relative self-start">
               <div className="absolute inset-0 -z-10 rounded-3xl brand-gradient opacity-15 blur-2xl" />
               <div className="card p-6">
-                <div className="flex items-center gap-2.5">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-70" />
-                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-400" />
-                  </span>
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-400">
-                    {c.nextSession}
-                  </span>
-                </div>
+                {upcomingLesson && (
+                  <>
+                    <div className="flex items-center gap-2.5">
+                      <span className="relative flex h-2.5 w-2.5">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-70" />
+                        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-400" />
+                      </span>
+                      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-400">
+                        {c.nextSession}
+                      </span>
+                    </div>
 
-                <p className="mt-4 text-lg font-bold leading-snug text-fg">{course.nextLesson.title}</p>
-                <p className="mt-1.5 text-sm text-faint">
-                  {ar ? courseAr.nextLessonDateLabel : course.nextLesson.dateLabel}
-                </p>
+                    <p className="mt-4 text-lg font-bold leading-snug text-fg">
+                      {upcomingLesson.module}
+                    </p>
+                    <p className="mt-1.5 text-sm text-faint">
+                      {formatSessionDate(upcomingLesson.timed, lang)}
+                    </p>
 
-                <div className="mt-5"><Countdown iso={course.nextLesson.startsAt} lang={lang} /></div>
+                    <div className="mt-5">
+                      <Countdown
+                        iso={upcomingLesson.airsAt}
+                        endsAt={new Date(sessionEndsAt(upcomingLesson.timed)).toISOString()}
+                        lang={lang}
+                      />
+                    </div>
+                  </>
+                )}
 
                 <div className="mt-6 space-y-2.5">
                   {cc.includes.map((inc, i) => {
@@ -361,25 +384,7 @@ export default function PractitionerView({ lang }: { lang: Lang }) {
           </h2>
         </Reveal>
 
-        <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {course.recordings.map((r, i) => (
-            <Reveal key={r.n} delay={i * 60}>
-              <a href={r.href} target="_blank" rel="noreferrer"
-                 className="card card-hover group flex h-full items-start gap-4 p-5">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-cyan-400/10 font-mono text-sm font-bold text-cyan-400">
-                  {String(r.n).padStart(2, '0')}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-semibold leading-snug text-fg">{r.module}</span>
-                  <span className="mt-2 inline-flex items-center gap-1.5 text-xs text-faint transition group-hover:text-cyan-400">
-                    <PlayCircle className="h-3.5 w-3.5" /> {copy.sessionsPage.watchOnYoutube}
-                  </span>
-                </span>
-                <ArrowUpRight className="h-4 w-4 shrink-0 text-ghost transition group-hover:text-cyan-400" />
-              </a>
-            </Reveal>
-          ))}
-        </div>
+        <CourseLessons lang={lang} />
       </section>
 
       {/* ---------- Study groups ---------- */}

@@ -89,3 +89,33 @@ export function RegisterGate({
   if (state === 'ended' || state === 'archived') return null
   return <>{children}</>
 }
+
+/**
+ * The action link on a course lesson.
+ *
+ * A YouTube live URL exists from the moment a stream is scheduled, so the link
+ * alone says nothing about whether there is anything to watch. Before the
+ * lesson airs the same URL is a reminder page, which is why the href never
+ * changes — only what the link honestly claims to be.
+ */
+export function LessonAction({
+  href,
+  labels,
+  ...props
+}: Omit<StatusProps, 'labels'> & {
+  href: string
+  labels: { upcoming: string; live: string; past: string }
+}) {
+  const state = useLiveState(props.startsAt, props.endsAt, props.hasRecording, props.buildState)
+  const text = state === 'upcoming' ? labels.upcoming : state === 'live' ? labels.live : labels.past
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="mt-2 inline-flex items-center gap-1.5 text-xs text-faint transition hover:text-cyan-400"
+    >
+      {text}
+    </a>
+  )
+}
