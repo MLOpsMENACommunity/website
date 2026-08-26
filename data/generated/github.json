@@ -1,0 +1,28 @@
+{
+  "repos": {
+    "DataTalksClub/mlops-zoomcamp": {
+      "stars": 15200,
+      "fullName": "DataTalksClub/mlops-zoomcamp"
+    },
+    "visenger/awesome-mlops": {
+      "stars": 14200,
+      "fullName": "visenger/awesome-mlops"
+    },
+    "mlflow/mlflow": {
+      "stars": 27700,
+      "fullName": "mlflow/mlflow"
+    },
+    "iterative/dvc": {
+      "stars": 15800,
+      "fullName": "treeverse/dvc"
+    },
+    "bentoml/BentoML": {
+      "stars": 8800,
+      "fullName": "bentoml/BentoML"
+    },
+    "evidentlyai/evidently": {
+      "stars": 7800,
+      "fullName": "evidentlyai/evidently"
+    }
+  }
+}

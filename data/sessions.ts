@@ -72,8 +72,7 @@ export const sessions: Session[] = [
       'Pinning actions to a SHA',
       'Ruff and pre-commit',
     ],
-    // TODO: paste the Zomra registration URL — without it the register button
-    // does not render and people can only reach the session through WhatsApp.
+    registerUrl: 'https://zomra.io/free-sessions/4f2b8aa6-1018-44b2-a151-a35a63d93bbc',
     note: 'Assumes Git branching, Bash basics, and building and pushing a Docker image.',
   },
   {

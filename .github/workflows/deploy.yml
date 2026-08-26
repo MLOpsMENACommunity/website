@@ -4,9 +4,9 @@ on:
   push:
     branches: [main]
   # Rebuilds the frozen HTML so time-derived content stays honest: a session
-  # that has aired moves itself into "Past" within six hours, and the YouTube
-  # figures refresh. Sessions air around 20:00 Cairo, so a daily run would
-  # strand a Saturday-night session for most of Sunday.
+  # that has aired moves itself into "Past" within six hours, and the YouTube,
+  # GitHub and Discord figures refresh. Sessions air around 20:00 Cairo, so a
+  # daily run would strand a Saturday-night session for most of Sunday.
   #
   # Minute 17 rather than 00 — GitHub's scheduler is heavily oversubscribed on
   # the hour and delays runs accordingly.
@@ -51,6 +51,10 @@ jobs:
         run: npm run refresh
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          # Not a secret you create — Actions mints this for every run. It only
+          # lifts the anonymous API's 60-requests-an-hour-per-IP ceiling, which
+          # is shared with every other job on the same runner.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Durability and audit trail only — the artifact below is built from the
       # freshly fetched files either way, so losing a race to a human push must

@@ -9,9 +9,12 @@ import { asset } from './asset'
  * renders a broken `next/image`. Build-time only — same `fs` trick `roadmaps.ts`
  * already uses.
  */
+const POSTER_FORMATS = ['jpg', 'png', 'webp', 'jpeg'] as const
+
 export function sessionPoster(s: Session): string {
-  const rel = `/sessions/${s.slug}.jpg`
-  return fs.existsSync(path.join(process.cwd(), 'public', rel))
-    ? asset(rel)
-    : asset('/logo-full.png')
+  for (const ext of POSTER_FORMATS) {
+    const rel = `/sessions/${s.slug}.${ext}`
+    if (fs.existsSync(path.join(process.cwd(), 'public', rel))) return asset(rel)
+  }
+  return asset('/logo-full.png')
 }

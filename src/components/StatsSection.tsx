@@ -20,7 +20,7 @@ export default function StatsSection({ lang = 'en' }: { lang?: Lang }) {
           </SectionHeading>
         </Reveal>
 
-        <dl className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <dl className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
           {stats.map((s, i) => (
             <Reveal key={s.id} delay={i * 70} variant="scale">
               <a

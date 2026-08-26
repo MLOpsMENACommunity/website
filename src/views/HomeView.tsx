@@ -29,7 +29,8 @@ import { studyGroups } from '~/data/study-groups'
 import { externalArticles } from '~/data/articles'
 import { sessions } from '~/data/sessions'
 import { faqs } from '~/data/faq'
-import { repos, pillars } from '~/data/community'
+import { pillars } from '~/data/community'
+import { getRepos } from '@/lib/repos'
 import { founder, directors, leads, teamCount } from '~/data/team'
 import { partners, channels, contacts, brainsmingle } from '~/site.config'
 
@@ -360,7 +361,7 @@ export default function HomeView({ lang }: { lang: Lang }) {
               </a>
             </Reveal>
 
-            {repos.slice(0, 5).map((raw, i) => {
+            {getRepos().slice(0, 5).map((raw, i) => {
               const r = tRepo(lang, raw)
               return (
                 <Reveal key={raw.name} delay={(i + 1) * 60}>

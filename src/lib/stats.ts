@@ -1,3 +1,4 @@
+import discord from '~/data/generated/discord.json'
 import youtube from '~/data/generated/youtube.json'
 import { stats as baseStats, type StatId } from '~/site.config'
 
@@ -7,9 +8,10 @@ import { stats as baseStats, type StatId } from '~/site.config'
  * would turn that into a compile error rather than the intended fallback.
  */
 type ChannelStats = { subscriberCount?: number; viewCount?: number; videoCount?: number }
+type GuildStats = { memberCount?: number }
 
 /**
- * The stat tiles, with the two YouTube figures replaced by the real channel
+ * The stat tiles, with the YouTube and Discord figures replaced by the real
  * numbers when a refresh has fetched them.
  *
  * Falls back per-field rather than wholesale: a refresh that got the video list
@@ -18,9 +20,11 @@ type ChannelStats = { subscriberCount?: number; viewCount?: number; videoCount?:
  */
 export function getStats() {
   const channel = (youtube.stats ?? {}) as ChannelStats
+  const guild = discord as GuildStats
   const live: Partial<Record<StatId, number | undefined>> = {
     'yt-views': channel.viewCount,
     'yt-subs': channel.subscriberCount,
+    discord: guild.memberCount,
   }
 
   return baseStats.map((s) => {

@@ -15,7 +15,7 @@ npm run build        # static export into ./out
 npm run serve        # preview the exported ./out
 npm test             # session state machine
 npm run check:i18n   # what is missing an Arabic translation
-npm run refresh      # pull fresh YouTube data (the only script that uses the network)
+npm run refresh      # pull fresh YouTube, GitHub and Discord data (the only scripts that use the network)
 ```
 
 `next build` never touches the network. `npm run refresh` is separate and
@@ -155,7 +155,7 @@ fields instead of failing.
 ### How the site stays current
 
 `.github/workflows/deploy.yml` rebuilds every six hours as well as on push. That is what
-moves an aired session into "Past" and refreshes the YouTube figures. Between rebuilds the
+moves an aired session into "Past" and refreshes the YouTube, GitHub and Discord figures. Between rebuilds the
 browser corrects each session's badge and hides its register button, so a stale page is
 never actively wrong.
 
@@ -163,10 +163,25 @@ never actively wrong.
 with no network still builds, and the git history is an audit trail. Fetchers never fail
 the build and never write an empty payload over a good one.
 
-To get real subscriber/view counts, add a `YOUTUBE_API_KEY` repo secret (Google Cloud →
-YouTube Data API v3, restricted to that API). Without it the video list still refreshes and
-the two YouTube tiles keep their hand-set floors. The key is read only inside
+Three fetchers feed it, and every one of them degrades to the committed numbers rather
+than to a blank or a zero:
+
+| Script | Fills | Needs |
+|---|---|---|
+| `fetch-youtube.mjs` | Video list, subscriber and view tiles | Video list: nothing. Tiles: a `YOUTUBE_API_KEY` repo secret |
+| `fetch-github.mjs` | Star count on each repo card | Nothing — anonymous REST API |
+| `fetch-discord.mjs` | Discord member tile | Nothing — the invite endpoint answers anonymously |
+
+For the YouTube tiles, add a `YOUTUBE_API_KEY` repo secret (Google Cloud → YouTube Data
+API v3, restricted to that API). Without it the video list still refreshes and the two
+YouTube tiles keep their hand-set floors. The key is read only inside
 `scripts/fetch-youtube.mjs` — never at render time, where a static export would publish it.
+
+The GitHub fetcher takes the repo list from the `href`s in `data/community.ts`, so adding a
+card is the whole change; it follows redirects, which is why the renamed `iterative/dvc`
+still reports. The Discord fetcher takes the invite code from `site.config.ts`. **That
+invite must never expire** — an expiring one takes the join link and the counter down with
+it on the same day.
 
 ### Adding team photos and bios
 

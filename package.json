@@ -10,7 +10,10 @@
     "lint": "next lint",
     "serve": "npx serve out",
     "test": "node --test scripts/*.test.mjs",
-    "refresh": "node scripts/fetch-youtube.mjs",
+    "refresh": "npm run refresh:youtube && npm run refresh:github && npm run refresh:discord",
+    "refresh:youtube": "node scripts/fetch-youtube.mjs",
+    "refresh:github": "node scripts/fetch-github.mjs",
+    "refresh:discord": "node scripts/fetch-discord.mjs",
     "check:i18n": "tsx scripts/check-i18n.ts",
     "add:article": "node scripts/add-article.mjs"
   },
