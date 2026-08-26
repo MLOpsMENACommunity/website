@@ -59,11 +59,13 @@ export const primaryChannel: keyof typeof channels = 'whatsapp'
  * Community at a glance. Rendered as animated counters.
  *
  * `value` is the floor — the number shown when nothing better is available.
- * The two YouTube tiles are overwritten from the real channel figures by
- * `src/lib/stats.ts`; the other three have no public API and are edited here.
+ * The two YouTube tiles and the Discord tile are overwritten from real
+ * figures by `src/lib/stats.ts`; the other three have no public API — neither
+ * WhatsApp nor LinkedIn exposes one without a business account — so they stay
+ * hand-edited here.
  * Read them through `getStats()`, not directly.
  */
-export type StatId = 'whatsapp' | 'linkedin' | 'students' | 'yt-views' | 'yt-subs'
+export type StatId = 'whatsapp' | 'discord' | 'linkedin' | 'students' | 'yt-views' | 'yt-subs'
 
 export const stats: {
   id: StatId
@@ -73,6 +75,7 @@ export const stats: {
   href: string
 }[] = [
   { id: 'whatsapp', label: 'WhatsApp members', value: 3000, suffix: '+', href: channels.whatsapp },
+  { id: 'discord', label: 'Discord members', value: 500, suffix: '+', href: channels.discord },
   { id: 'linkedin', label: 'LinkedIn followers', value: 3000, suffix: '+', href: channels.linkedin },
   { id: 'students', label: 'Course students', value: 1200, suffix: '+', href: channels.zomra },
   { id: 'yt-views', label: 'YouTube views', value: 4000, suffix: '+', href: channels.youtube },
