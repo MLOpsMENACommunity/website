@@ -169,7 +169,7 @@ than to a blank or a zero:
 | Script | Fills | Needs |
 |---|---|---|
 | `fetch-youtube.mjs` | Video list, subscriber and view tiles | Video list: nothing. Tiles: a `YOUTUBE_API_KEY` repo secret |
-| `fetch-github.mjs` | Star count on each repo card | Nothing — anonymous REST API |
+| `fetch-github.mjs` | Every public repo under our org, with stars and forks | Nothing — anonymous REST API |
 | `fetch-discord.mjs` | Discord member tile | Nothing — the invite endpoint answers anonymously |
 
 For the YouTube tiles, add a `YOUTUBE_API_KEY` repo secret (Google Cloud → YouTube Data
@@ -177,9 +177,12 @@ API v3, restricted to that API). Without it the video list still refreshes and t
 YouTube tiles keep their hand-set floors. The key is read only inside
 `scripts/fetch-youtube.mjs` — never at render time, where a static export would publish it.
 
-The GitHub fetcher takes the repo list from the `href`s in `data/community.ts`, so adding a
-card is the whole change; it follows redirects, which is why the renamed `iterative/dvc`
-still reports. The Discord fetcher takes the invite code from `site.config.ts`. **That
+The GitHub fetcher lists every public repo under the org in `channels.github`, so
+publishing a repo is the whole act of putting it on the homepage — description, language,
+stars and forks all come from GitHub, and forks and archived repos are skipped. A repo with
+no description on GitHub falls back to `repoNotes` in `data/community.ts`; writing the
+description on GitHub is the better fix. Private repos never appear, by design. The Discord
+fetcher takes the invite code from `site.config.ts`. **That
 invite must never expire** — an expiring one takes the join link and the counter down with
 it on the same day.
 

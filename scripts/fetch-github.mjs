@@ -1,100 +1,114 @@
 /**
- * Refreshes data/generated/github.json — the star counts on the repo cards.
+ * Refreshes data/generated/github.json — the community's own GitHub presence.
  *
- * No key to create: the unauthenticated REST API allows 60 requests an hour per
- * IP and this asks for six. GITHUB_TOKEN is used when present only to lift that
+ * Deliberately scoped to our org and nothing else. The org endpoint lists every
+ * public repo, so publishing a repo puts it on the homepage with no edit here
+ * and no edit to the site: description, language, stars and forks all come from
+ * GitHub. A private repo is invisible to this, which is the correct behaviour —
+ * a card the public cannot open is worse than no card.
+ *
+ * No key to create: the anonymous REST API allows 60 requests an hour per IP
+ * and this asks for two. GITHUB_TOKEN is used when present only to lift that
  * ceiling — Actions runners share outbound IPs, so the anonymous budget can
- * already be spent by a stranger. The workflow passes the token GitHub mints
- * for every run automatically, so there is still nothing to configure by hand.
+ * already be spent by a stranger. Actions mints that token for every run, so
+ * there is still nothing to configure by hand.
  *
- * Stars only. `lang` and `desc` stay hand-written: the API reports the dominant
- * language, which is "Jupyter Notebook" for the Zoomcamp and null for a
- * Markdown-only list — both worse on a card than what a human chose.
+ * Star counts are stored exactly, not rounded like the YouTube figures: ours are
+ * small enough that rounding to the nearest hundred would render them as zero.
  */
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { ROOT, get, log, readJson, writeJsonIfChanged } from './lib/net.mjs'
 
 const OUT = 'data/generated/github.json'
-/** The cards are the source of truth for *which* repos; this file only adds a
- *  number to each. Adding a card therefore needs no edit here. */
-const SOURCE = 'data/community.ts'
+/** The org comes from `channels.github`, so the link and the data agree. */
+const SOURCE = 'site.config.ts'
 
-const previous = readJson(OUT, { repos: {} })
+const previous = readJson(OUT, {})
 
-function slugsFromCards() {
-  let src
+function orgLogin() {
   try {
-    src = readFileSync(path.join(ROOT, SOURCE), 'utf8')
+    const src = readFileSync(path.join(ROOT, SOURCE), 'utf8')
+    return src.match(/github:\s*'https:\/\/github\.com\/([\w.-]+)'/)?.[1] ?? null
   } catch (err) {
     log.warn(`could not read ${SOURCE}: ${err.message}`)
-    return []
+    return null
   }
-  const found = [...src.matchAll(/https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)/g)]
-    .map((m) => `${m[1]}/${m[2]}`)
-    .filter((s) => !s.endsWith('.git'))
-  return [...new Set(found)]
 }
 
-/**
- * Nearest 100 — precisely the resolution a card renders ("27.7k"), so the four
- * daily runs commit only when the displayed text would actually change.
- * Nearest rather than floor because the chip carries no "+": 27,684 stars reads
- * honestly as 27.7k and misleadingly as 27.6k.
- */
-function round100(n) {
-  return typeof n === 'number' && Number.isFinite(n) ? Math.round(n / 100) * 100 : undefined
-}
-
-async function fetchRepo(slug) {
+function headers() {
   const token = process.env.GITHUB_TOKEN
-  // Renamed and transferred repos answer 301 with the new API location, which
-  // fetch follows on its own — iterative/dvc is treeverse/dvc today. Keying the
-  // result by the slug we asked for keeps the card's link the one that matches.
-  const body = await get(`https://api.github.com/repos/${slug}`, {
-    headers: {
-      accept: 'application/vnd.github+json',
-      'x-github-api-version': '2022-11-28',
-      ...(token ? { authorization: `Bearer ${token}` } : {}),
-    },
-  })
+  return {
+    accept: 'application/vnd.github+json',
+    'x-github-api-version': '2022-11-28',
+    ...(token ? { authorization: `Bearer ${token}` } : {}),
+  }
+}
+
+async function getJson(url) {
+  const body = await get(url, { headers: headers() })
   if (!body) return null
-
-  let repo
   try {
-    repo = JSON.parse(body)
+    return JSON.parse(body)
   } catch (err) {
-    log.warn(`${slug}: could not parse the response — ${err.message}`)
+    log.warn(`could not parse ${url}: ${err.message}`)
     return null
   }
-
-  const stars = round100(repo?.stargazers_count)
-  if (stars === undefined) {
-    log.warn(`${slug}: no star count in the response — keeping the committed figure`)
-    return null
-  }
-  if (repo.full_name && repo.full_name.toLowerCase() !== slug.toLowerCase()) {
-    log.info(`${slug} now redirects to ${repo.full_name}`)
-  }
-  return { stars, fullName: repo.full_name ?? slug }
 }
 
-const slugs = slugsFromCards()
-if (slugs.length === 0) {
-  // A regex that matched nothing means the cards moved or were reformatted —
-  // not that the community has no repos. Never write that over good data.
-  log.warn(`no GitHub links found in ${SOURCE} — keeping the committed file`)
-} else {
-  const fetched = await Promise.all(slugs.map(fetchRepo))
-  const repos = {}
-  slugs.forEach((slug, i) => {
-    // Per-repo fallback: one 404 or one rate-limited call must not blank the
-    // other five cards.
-    const entry = fetched[i] ?? previous.repos?.[slug]
-    if (entry) repos[slug] = entry
-  })
-  writeJsonIfChanged(OUT, { repos })
+const org = orgLogin()
+if (!org) {
+  log.warn(`no GitHub org found in ${SOURCE} — keeping the committed file`)
+  process.exit(0)
 }
+
+const [profile, list] = await Promise.all([
+  getJson(`https://api.github.com/orgs/${org}`),
+  // `sort=updated` so a freshly published repo leads; the site re-sorts by
+  // stars, but this keeps the slice sensible if the org ever grows past 100.
+  getJson(`https://api.github.com/orgs/${org}/repos?per_page=100&type=public&sort=updated`),
+])
+
+if (!Array.isArray(list)) {
+  // A failed call is not the same as an org with no repos. Never let one
+  // outage empty the section.
+  log.warn(`could not list repos for ${org} — keeping the committed file`)
+  process.exit(0)
+}
+
+// Forks and archives are somebody else's work or finished work; neither belongs
+// on a "what we build" wall.
+const visible = list.filter((r) => !r.fork && !r.archived && !r.private)
+const skipped = list.length - visible.length
+if (skipped > 0) log.info(`${skipped} repo(s) skipped as forks or archived`)
+
+const repos = visible
+  .map((r) => ({
+    name: r.name,
+    href: r.html_url,
+    // null, not '', so the site can tell "no description on GitHub" from an
+    // empty one and fall back to the note in data/community.ts.
+    desc: r.description?.trim() || null,
+    lang: r.language ?? null,
+    stars: r.stargazers_count ?? 0,
+    forks: r.forks_count ?? 0,
+  }))
+  .sort((a, b) => b.stars - a.stars || a.name.localeCompare(b.name))
+
+for (const r of repos) {
+  if (!r.desc) log.info(`${r.name} has no description on GitHub — the site falls back to repoNotes`)
+}
+
+writeJsonIfChanged(OUT, {
+  org,
+  url: `https://github.com/${org}`,
+  // Org-level totals: not rendered today, but this file is the audit trail of
+  // how the org grew, and `git log -p` is free.
+  followers: profile?.followers ?? previous.followers ?? 0,
+  publicRepos: profile?.public_repos ?? previous.publicRepos ?? repos.length,
+  stars: repos.reduce((n, r) => n + r.stars, 0),
+  repos,
+})
 
 // Always succeed. A refresh failure is a stale site, not a broken one.
 process.exit(0)

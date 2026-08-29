@@ -1,31 +1,17 @@
 /**
- * Curated GitHub repositories. Replace hrefs with your own org repos as they land.
+ * Fallback one-liners for our own repositories.
  *
- * `stars` is the floor — what shows when no refresh has run. `scripts/fetch-github.mjs`
- * reads the hrefs below to know which repos to ask about and overwrites the figure
- * via `getRepos()`, so a new card needs no change anywhere else. `lang` and `desc`
- * stay hand-written: the API's answers for those are worse than a human's.
+ * The cards themselves come from the GitHub org — `scripts/fetch-github.mjs`
+ * lists every public repo under it, so publishing a repo puts it on the site
+ * with no edit here. A repo's GitHub description wins whenever it has one; this
+ * map only covers repos whose description is still empty, and the right fix for
+ * those is to write one on GitHub rather than to add a line here.
+ *
+ * Keyed by repo name. Arabic lives in `src/lib/content-i18n.ts`.
  */
-export const repos = [
-  { name: 'mlops-zoomcamp', owner: 'DataTalksClub', stars: '15.2k', lang: 'Jupyter',
-    desc: 'Free MLOps course covering the full lifecycle — a staple starting point.',
-    href: 'https://github.com/DataTalksClub/mlops-zoomcamp', tags: ['course', 'free'] },
-  { name: 'awesome-mlops', owner: 'visenger', stars: '14.2k', lang: 'Markdown',
-    desc: 'The reference list of MLOps papers, tools, and articles.',
-    href: 'https://github.com/visenger/awesome-mlops', tags: ['reference'] },
-  { name: 'mlflow', owner: 'mlflow', stars: '27.7k', lang: 'Python',
-    desc: 'Experiment tracking, model registry, and lifecycle management.',
-    href: 'https://github.com/mlflow/mlflow', tags: ['tracking'] },
-  { name: 'dvc', owner: 'iterative', stars: '15.8k', lang: 'Python',
-    desc: 'Git for data — version datasets and models alongside your code.',
-    href: 'https://github.com/iterative/dvc', tags: ['versioning'] },
-  { name: 'BentoML', owner: 'bentoml', stars: '8.8k', lang: 'Python',
-    desc: 'Build, ship, and scale model serving without writing infrastructure.',
-    href: 'https://github.com/bentoml/BentoML', tags: ['serving'] },
-  { name: 'evidently', owner: 'evidentlyai', stars: '7.8k', lang: 'Python',
-    desc: 'Data and model drift detection with reports you can actually read.',
-    href: 'https://github.com/evidentlyai/evidently', tags: ['monitoring'] },
-] as const
+export const repoNotes: Record<string, string> = {
+  website: 'The source of this site — Next.js, static export, open to read and fork.',
+}
 
 /**
  * Community team and mentors.

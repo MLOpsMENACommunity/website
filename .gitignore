@@ -8,3 +8,14 @@ next-env.d.ts
 
 # Raw team photos and bio drafts — processed copies live in public/team/
 data/core_team/
+
+# Credentials and personal data. These live outside the repo entirely — see
+# ../private/ — because this repository is PUBLIC and .gitignore only protects
+# against habit, not against `git add -f` or a careless glob.
+claudflare_secret.txt
+cloudflare_secret.txt
+team-emails.txt
+routing.txt
+new-destinations.txt
+*.token
+.env

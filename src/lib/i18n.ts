@@ -151,12 +151,10 @@ const en = {
     },
     repos: {
       eyebrow: 'Open source',
-      title: 'Repositories worth',
-      accent: 'your time',
-      lead: 'The tools and courses we point people at, plus our own course repo.',
+      title: 'What we build',
+      accent: 'in the open',
+      lead: 'Every public repository under our GitHub organisation, listed straight from GitHub.',
       ourGithub: 'Our GitHub',
-      ours: 'Ours',
-      ourRepoDesc: 'All the code, notebooks, and module projects from The MLOps Practitioner.',
     },
     articles: {
       eyebrow: 'Articles',
@@ -212,6 +210,7 @@ const en = {
       linkedin: '3,000+ followers',
       youtube: 'All recordings',
       discord: 'Chat & help',
+      x: 'Follow for updates',
     },
   },
 
@@ -347,6 +346,18 @@ const en = {
     fullVersion: 'Full version here',
     moreTitle: 'More articles on the way',
     moreLead: 'We publish regularly on LinkedIn and Medium. Follow the page so you do not miss them.',
+  },
+
+  privacyPage: {
+    metaTitle: 'Privacy Policy',
+    metaDesc:
+      'What data MLOps MENA collects, how long we keep it, how account credentials are handled, and how to reach us about it.',
+    eyebrow: 'Privacy',
+    titleBefore: 'What we collect, and',
+    accent: 'what we do not',
+    lead: 'Short version: the website tracks nothing, and we hold no personal data about the people who read our posts. The detail is below.',
+    updated: 'Last updated',
+    contents: 'Contents',
   },
 
   faqPage: {
@@ -534,12 +545,10 @@ const ar: typeof en = {
     },
     repos: {
       eyebrow: 'مفتوح المصدر',
-      title: 'مستودعات تستحق',
-      accent: 'وقتك',
-      lead: 'الأدوات والدورات التي نرشّحها للناس، ومعها مستودع دورتنا.',
+      title: 'ما نبنيه',
+      accent: 'في العلن',
+      lead: 'كل مستودع عام تحت حسابنا على GitHub، معروض مباشرةً من GitHub.',
       ourGithub: 'حسابنا على GitHub',
-      ours: 'خاص بنا',
-      ourRepoDesc: 'كل الأكواد والدفاتر ومشاريع الوحدات من دورة The MLOps Practitioner.',
     },
     articles: {
       eyebrow: 'المقالات',
@@ -595,6 +604,7 @@ const ar: typeof en = {
       linkedin: '+3,000 متابع',
       youtube: 'كل التسجيلات',
       discord: 'نقاش ومساعدة',
+      x: 'تابِعنا للتحديثات',
     },
   },
 
@@ -729,6 +739,18 @@ const ar: typeof en = {
     fullVersion: 'النسخة الكاملة هنا',
     moreTitle: 'مقالات أخرى في الطريق',
     moreLead: 'ننشر بانتظام على لينكدإن وميديوم. تابع الصفحة حتى لا يفوتك جديد.',
+  },
+
+  privacyPage: {
+    metaTitle: 'سياسة الخصوصية',
+    metaDesc:
+      'ما البيانات التي يجمعها مجتمع MLOps MENA، ومدّة الاحتفاظ بها، وكيف نتعامل مع بيانات الدخول إلى الحسابات، وكيف تتواصل معنا بشأنها.',
+    eyebrow: 'الخصوصية',
+    titleBefore: 'ما نجمعه،',
+    accent: 'وما لا نجمعه',
+    lead: 'باختصار: الموقع لا يتتبّع شيئًا، ولا نحتفظ بأي بيانات شخصية عمّن يقرأون منشوراتنا. والتفصيل في الأسفل.',
+    updated: 'آخر تحديث',
+    contents: 'المحتويات',
   },
 
   faqPage: {

@@ -1,12 +1,16 @@
 import Link from 'next/link'
+import type { ComponentType } from 'react'
 import { Youtube, Linkedin, MessageCircle, Mail, Github, Sparkles } from 'lucide-react'
 import Logo from './Logo'
+import XIcon from './XIcon'
 import { site, channels, contacts, brainsmingle } from '~/site.config'
 import { t, localeHref, type Lang } from '@/lib/i18n'
 
-const social = [
+/** Annotated so a hand-drawn icon and a lucide one can sit in the same array. */
+const social: { href: string; label: string; Icon: ComponentType<{ className?: string }> }[] = [
   { href: channels.whatsapp, label: 'WhatsApp community', Icon: MessageCircle },
   { href: channels.linkedin, label: 'LinkedIn', Icon: Linkedin },
+  { href: channels.x, label: 'X', Icon: XIcon },
   { href: channels.youtube, label: 'YouTube', Icon: Youtube },
   { href: channels.github, label: 'GitHub', Icon: Github },
   { href: `mailto:${contacts.email}`, label: 'Email', Icon: Mail },
@@ -29,6 +33,9 @@ export default function Footer({ lang = 'en' }: { lang?: Lang }) {
     { label: copy.footer.mentorship, href: '/mentorship' },
     { label: copy.nav.items.faq, href: '/faq' },
     { label: copy.common.contactUs, href: '/#contact' },
+    // Reachable from every page: LinkedIn, Google and Meta all check that the
+    // policy URL in an OAuth application actually resolves and is findable.
+    { label: copy.privacyPage.metaTitle, href: '/privacy-policy' },
   ]
 
   return (
@@ -86,6 +93,7 @@ export default function Footer({ lang = 'en' }: { lang?: Lang }) {
               <li><a href={channels.whatsapp} target="_blank" rel="noreferrer" className="text-muted transition hover:text-cyan-400">WhatsApp</a></li>
               <li><a href={channels.discord} target="_blank" rel="noreferrer" className="text-muted transition hover:text-cyan-400">Discord</a></li>
               <li><a href={channels.linkedin} target="_blank" rel="noreferrer" className="text-muted transition hover:text-cyan-400">LinkedIn</a></li>
+              <li><a href={channels.x} target="_blank" rel="noreferrer" className="text-muted transition hover:text-cyan-400">X</a></li>
               <li><a href={channels.youtube} target="_blank" rel="noreferrer" className="text-muted transition hover:text-cyan-400">YouTube</a></li>
               <li><a href={channels.github} target="_blank" rel="noreferrer" className="text-muted transition hover:text-cyan-400">GitHub</a></li>
               <li><a href={channels.zomra} target="_blank" rel="noreferrer" className="text-muted transition hover:text-cyan-400">Zomra</a></li>

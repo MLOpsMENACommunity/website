@@ -1,28 +1,17 @@
 {
-  "repos": {
-    "DataTalksClub/mlops-zoomcamp": {
-      "stars": 15200,
-      "fullName": "DataTalksClub/mlops-zoomcamp"
-    },
-    "visenger/awesome-mlops": {
-      "stars": 14200,
-      "fullName": "visenger/awesome-mlops"
-    },
-    "mlflow/mlflow": {
-      "stars": 27700,
-      "fullName": "mlflow/mlflow"
-    },
-    "iterative/dvc": {
-      "stars": 15900,
-      "fullName": "treeverse/dvc"
-    },
-    "bentoml/BentoML": {
-      "stars": 8800,
-      "fullName": "bentoml/BentoML"
-    },
-    "evidentlyai/evidently": {
-      "stars": 7900,
-      "fullName": "evidentlyai/evidently"
+  "org": "MLOpsMENACommunity",
+  "url": "https://github.com/MLOpsMENACommunity",
+  "followers": 28,
+  "publicRepos": 1,
+  "stars": 1,
+  "repos": [
+    {
+      "name": "website",
+      "href": "https://github.com/MLOpsMENACommunity/website",
+      "desc": null,
+      "lang": "TypeScript",
+      "stars": 1,
+      "forks": 0
     }
-  }
+  ]
 }

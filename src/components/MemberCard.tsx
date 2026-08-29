@@ -79,9 +79,15 @@ export default function MemberCard({
         {SHOW_TEAM_EMAILS && member.email && (
           <a
             href={`mailto:${member.email}`}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-muted transition hover:text-cyan-400"
+            aria-label={`${copy.teamPage.email} — ${member.name}`}
+            className="inline-flex min-w-0 items-center gap-1.5 text-sm font-medium text-muted transition hover:text-cyan-400"
           >
-            <Mail className="h-4 w-4" /> {copy.teamPage.email}
+            <Mail className="h-4 w-4 shrink-0" />
+            {/* The address itself rather than the word "Email". A mailto: link
+                does nothing at all in a browser with no mail handler registered
+                — a very ordinary state — and the label alone left those
+                visitors with no address on screen to copy. */}
+            <span dir="ltr" className="break-all">{member.email}</span>
           </a>
         )}
       </div>

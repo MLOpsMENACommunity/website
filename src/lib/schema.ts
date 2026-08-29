@@ -55,7 +55,7 @@ export function organizationSchema() {
     image: abs('/logo-full.png'),
     description: site.description,
     email: contacts.email,
-    sameAs: [channels.linkedin, channels.youtube, channels.github, channels.discord],
+    sameAs: [channels.linkedin, channels.x, channels.youtube, channels.github, channels.discord],
   }
 }
 

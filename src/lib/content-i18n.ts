@@ -387,15 +387,10 @@ export function tArticle<T extends { id: string; title: string; description: str
 /* ------------------------------------------------------------------ */
 
 const reposAr: Record<string, string> = {
-  'mlops-zoomcamp': 'دورة MLOps مجانية تغطّي دورة الحياة كاملة — نقطة انطلاق أساسية.',
-  'awesome-mlops': 'القائمة المرجعية لأوراق وأدوات ومقالات MLOps.',
-  mlflow: 'تتبّع التجارب وسجلّ النماذج وإدارة دورة حياتها.',
-  dvc: 'Git للبيانات — أصدِر نسخًا من مجموعات البيانات والنماذج جنبًا إلى جنب مع الكود.',
-  BentoML: 'ابنِ خدمة النماذج وانشرها ووسّعها من دون كتابة بنية تحتية.',
-  evidently: 'رصد انحراف البيانات والنماذج بتقارير يمكن قراءتها فعلًا.',
+  website: 'شفرة هذا الموقع — Next.js وتصدير ثابت، مفتوحة للقراءة والاشتقاق.',
 }
 
-export function tRepo<T extends { name: string; desc: string }>(lang: Lang, r: T) {
+export function tRepo<T extends { name: string; desc: string | null }>(lang: Lang, r: T) {
   if (lang !== 'ar') return r
   const o = reposAr[r.name]
   return o ? { ...r, desc: o } : r

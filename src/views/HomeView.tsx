@@ -30,7 +30,7 @@ import { externalArticles } from '~/data/articles'
 import { sessions } from '~/data/sessions'
 import { faqs } from '~/data/faq'
 import { pillars } from '~/data/community'
-import { getRepos } from '@/lib/repos'
+import { getOrg } from '@/lib/repos'
 import { founder, directors, leads, teamCount } from '~/data/team'
 import { partners, channels, contacts, brainsmingle } from '~/site.config'
 
@@ -53,6 +53,7 @@ export default function HomeView({ lang }: { lang: Lang }) {
   const h = copy.home
   const href = (p: string) => localeHref(lang, p)
 
+  const org = getOrg()
   const roadmaps = getRoadmaps().map((r) => tRoadmap(lang, r))
   const articles = [...externalArticles]
     .sort((a, b) => (a.date < b.date ? 1 : -1))
@@ -327,6 +328,7 @@ export default function HomeView({ lang }: { lang: Lang }) {
       </section>
 
       {/* ---------- Repos ---------- */}
+      {org.repos.length > 0 && (
       <section className="border-y border-line bg-alt">
         <div className="mx-auto max-w-content px-5 py-20 sm:px-8">
           <Reveal>
@@ -340,46 +342,33 @@ export default function HomeView({ lang }: { lang: Lang }) {
             </div>
           </Reveal>
 
-          <div className="mt-12 grid gap-4 [&>*]:min-w-0 sm:grid-cols-2 lg:grid-cols-3">
-            <Reveal>
-              <a href={course.repoUrl} target="_blank" rel="noreferrer"
-                 className="card card-hover group flex h-full flex-col border-cyan-400/30 bg-cyan-400/[0.05] p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate font-mono text-sm font-semibold text-fg">mlops_practitioner_course</p>
-                    <p className="truncate text-xs text-faint">MLOpsMENACommunity</p>
-                  </div>
-                  <span className="chip !px-2 !py-0.5 shrink-0 text-[10px] text-cyan-400">{h.repos.ours}</span>
-                </div>
-                <p className="mt-3 flex-1 text-sm leading-relaxed text-muted">{h.repos.ourRepoDesc}</p>
-                <div className="mt-4 flex items-center justify-between border-t border-line pt-3">
-                  <span className="flex items-center gap-1.5 text-xs text-faint">
-                    <Layers className="h-3 w-3" />Python
-                  </span>
-                  <ArrowUpRight className="h-4 w-4 text-ghost transition group-hover:text-cyan-400" />
-                </div>
-              </a>
-            </Reveal>
-
-            {getRepos().slice(0, 5).map((raw, i) => {
+          {/* Static class strings, not interpolated ones — Tailwind only ships
+              classes it can see. Narrowing the grid keeps one or two repos from
+              rendering as a lonely third of a row. */}
+          <div className={`mt-12 grid gap-4 [&>*]:min-w-0 ${
+            org.repos.length === 1 ? 'max-w-md'
+            : org.repos.length === 2 ? 'max-w-3xl sm:grid-cols-2'
+            : 'sm:grid-cols-2 lg:grid-cols-3'
+          }`}>
+            {org.repos.map((raw, i) => {
               const r = tRepo(lang, raw)
               return (
-                <Reveal key={raw.name} delay={(i + 1) * 60}>
+                <Reveal key={raw.name} delay={i * 60}>
                   <a href={raw.href} target="_blank" rel="noreferrer"
-                     className="card card-hover group flex h-full flex-col p-5">
+                     className="card card-hover group flex h-full flex-col border-cyan-400/30 bg-cyan-400/[0.05] p-5">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="truncate font-mono text-sm font-semibold text-fg">{raw.name}</p>
-                        <p className="truncate text-xs text-faint">{raw.owner}</p>
+                        <p className="truncate text-xs text-faint">{org.org}</p>
                       </div>
                       <span className="chip !px-2 !py-0.5 shrink-0 text-[10px]">
                         <Star className="h-3 w-3 text-amber-400" />{raw.stars}
                       </span>
                     </div>
-                    <p className="mt-3 flex-1 text-sm leading-relaxed text-muted">{r.desc}</p>
+                    {r.desc && <p className="mt-3 flex-1 text-sm leading-relaxed text-muted">{r.desc}</p>}
                     <div className="mt-4 flex items-center justify-between border-t border-line pt-3">
                       <span className="flex items-center gap-1.5 text-xs text-faint">
-                        <Layers className="h-3 w-3" />{raw.lang}
+                        {raw.lang && <><Layers className="h-3 w-3" />{raw.lang}</>}
                       </span>
                       <ArrowUpRight className="h-4 w-4 text-ghost transition group-hover:text-cyan-400" />
                     </div>
@@ -390,6 +379,7 @@ export default function HomeView({ lang }: { lang: Lang }) {
           </div>
         </div>
       </section>
+      )}
 
       {/* ---------- Articles ---------- */}
       <section className="mx-auto max-w-content px-5 py-20 sm:px-8">

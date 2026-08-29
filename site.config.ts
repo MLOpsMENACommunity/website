@@ -14,8 +14,12 @@ export const site = {
 
 export const channels = {
   whatsapp: 'https://chat.whatsapp.com/Fumc1KNwp9CASOYJ31dRjJ',
-  discord: 'https://discord.gg/9QJUnCmSD',
+  /** Never-expiring, unlimited-use. `scripts/fetch-discord.mjs` reads the code
+   *  from this line for the member tile, so an expiring invite would take the
+   *  join link and the counter down together. */
+  discord: 'https://discord.gg/eFrPegB8Gu',
   linkedin: 'https://www.linkedin.com/company/mlops-mena',
+  x: 'https://x.com/MLOpsMENA',
   youtube: 'https://www.youtube.com/@MLOpsMENACommunity',
   github: 'https://github.com/MLOpsMENACommunity',
   brainsmingle: 'https://brainsmingle.com/spaces/mlops-mena-community',

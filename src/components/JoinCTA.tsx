@@ -1,15 +1,24 @@
+import type { ComponentType } from 'react'
 import { MessageCircle, Linkedin, Youtube, ArrowUpRight } from 'lucide-react'
 import { channels } from '~/site.config'
+import XIcon from './XIcon'
 import HexField from './HexField'
 import { t, type Lang } from '@/lib/i18n'
 
 export default function JoinCTA({ lang = 'en' }: { lang?: Lang }) {
   const copy = t(lang)
-  const options = [
+  const options: {
+    href: string
+    label: string
+    note: string
+    Icon: ComponentType<{ className?: string }>
+    primary?: boolean
+  }[] = [
     { href: channels.whatsapp, label: 'WhatsApp', note: copy.joinCta.notes.whatsapp, Icon: MessageCircle, primary: true },
     { href: channels.linkedin, label: 'LinkedIn', note: copy.joinCta.notes.linkedin, Icon: Linkedin },
     { href: channels.youtube, label: 'YouTube', note: copy.joinCta.notes.youtube, Icon: Youtube },
     { href: channels.discord, label: 'Discord', note: copy.joinCta.notes.discord, Icon: MessageCircle },
+    { href: channels.x, label: 'X', note: copy.joinCta.notes.x, Icon: XIcon },
   ]
 
   return (
