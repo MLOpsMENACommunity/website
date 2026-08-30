@@ -45,6 +45,7 @@ const en = {
     themeToLight: 'Switch to light theme',
     items: {
       roadmaps: 'Roadmaps',
+      studentGuides: 'Student Guides',
       courses: 'Courses',
       sessions: 'Sessions',
       team: 'Team',
@@ -99,6 +100,7 @@ const en = {
       titleLine2: 'Almost none can ship it.',
       lead: 'Free MLOps and AI learning for engineers across the Middle East and North Africa. Live sessions, structured roadmaps, open courses, and mentorship — always free.',
       exploreRoadmaps: 'Explore the roadmaps',
+      exploreGuides: 'Explore student guides',
       watchPast: 'Watch past sessions',
     },
     thisWeek: {
@@ -243,6 +245,32 @@ const en = {
     otherPaths: 'Other paths',
     englishNotice:
       'The full roadmap below is published in English. The overview, phases, and every resource link work the same in both editions.',
+  },
+
+  studentGuidesPage: {
+    metaTitle: 'Student Guides',
+    metaDesc:
+      'Practical student guides from the MLOps MENA Community, collected in one place for learners.',
+    eyebrow: 'Student guides',
+    titleBefore: 'Practical guides for',
+    accent: 'your learning journey',
+    lead: 'A dedicated home for clear, practical guidance to help students move forward with confidence.',
+    emptyTitle: 'No guides published yet',
+    emptyLead: 'Student guides will appear here when they are ready.',
+    searchLabel: 'Search student guides',
+    searchPlaceholder: 'Search by title, topic, or tag...',
+    clearSearch: 'Clear search',
+    noResultsTitle: 'No guides match your search',
+    noResultsLead: 'Try a different title, topic, or keyword.',
+    openGuide: 'Read guide',
+    englishGuide: 'English guide',
+    backToGuides: 'Back to student guides',
+    onThisPage: 'On this page',
+    searchGuide: 'Search this guide',
+    searchGuidePlaceholder: 'Find a section...',
+    noSectionResults: 'No sections match your search.',
+    readingProgress: 'Reading progress',
+    copied: 'Copied!',
   },
 
   coursesPage: {
@@ -439,6 +467,7 @@ const ar: typeof en = {
     themeToLight: 'التبديل إلى الوضع الفاتح',
     items: {
       roadmaps: 'خرائط التعلّم',
+      studentGuides: 'أدلة الدارسين',
       courses: 'الدورات',
       sessions: 'الجلسات',
       team: 'الفريق',
@@ -493,6 +522,7 @@ const ar: typeof en = {
       titleLine2: 'قليلون جدًا يستطيعون تشغيله في الإنتاج.',
       lead: 'تعليم مجاني في MLOps والذكاء الاصطناعي لمهندسي الشرق الأوسط وشمال أفريقيا. جلسات مباشرة، خرائط تعلّم منظّمة، دورات مفتوحة، وإرشاد — مجانًا دائمًا.',
       exploreRoadmaps: 'استكشف خرائط التعلّم',
+      exploreGuides: 'استكشف أدلة الدارسين',
       watchPast: 'شاهد الجلسات السابقة',
     },
     thisWeek: {
@@ -637,6 +667,32 @@ const ar: typeof en = {
     otherPaths: 'مسارات أخرى',
     englishNotice:
       'نص الخريطة الكامل بالأسفل منشور بالإنجليزية. النظرة العامة والمراحل وكل روابط المصادر تعمل بنفس الطريقة في النسختين.',
+  },
+
+  studentGuidesPage: {
+    metaTitle: 'أدلة الدارسين',
+    metaDesc:
+      'أدلة عملية للدارسين من مجتمع MLOps MENA، مجمّعة في مكان واحد لمساعدة المتعلّمين.',
+    eyebrow: 'أدلة الدارسين',
+    titleBefore: 'أدلة عملية من أجل',
+    accent: 'رحلتك التعليمية',
+    lead: 'مساحة مخصّصة لإرشادات واضحة وعملية تساعد الدارسين على التقدّم بثقة.',
+    emptyTitle: 'لم تُنشر أدلة بعد',
+    emptyLead: 'ستظهر أدلة الدارسين هنا فور جاهزيتها.',
+    searchLabel: 'ابحث في أدلة الدارسين',
+    searchPlaceholder: 'ابحث بالعنوان أو الموضوع أو الوسم...',
+    clearSearch: 'امسح البحث',
+    noResultsTitle: 'لا توجد أدلة تطابق بحثك',
+    noResultsLead: 'جرّب عنوانًا أو موضوعًا أو كلمة مفتاحية أخرى.',
+    openGuide: 'اقرأ الدليل',
+    englishGuide: 'دليل بالإنجليزية',
+    backToGuides: 'العودة إلى أدلة الدارسين',
+    onThisPage: 'في هذه الصفحة',
+    searchGuide: 'ابحث في هذا الدليل',
+    searchGuidePlaceholder: 'ابحث عن قسم...',
+    noSectionResults: 'لا توجد أقسام تطابق بحثك.',
+    readingProgress: 'تقدّم القراءة',
+    copied: 'تم النسخ!',
   },
 
   coursesPage: {

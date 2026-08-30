@@ -36,7 +36,7 @@ export default function Nav({ lang = 'en' }: { lang?: Lang }) {
       <nav className="mx-auto flex h-16 max-w-content items-center justify-between px-5 sm:px-8">
         <Logo lang={lang} />
 
-        <div className="hidden items-center gap-0.5 lg:flex">
+        <div className="hidden items-center gap-0.5 xl:flex">
           {nav.map((item) => {
             const href = localeHref(lang, item.href)
             const active = pathname.startsWith(href)
@@ -45,7 +45,7 @@ export default function Nav({ lang = 'en' }: { lang?: Lang }) {
                 key={item.key}
                 href={href}
                 data-active={active}
-                className={`nav-link rounded-full px-3 py-2 text-[13px] font-medium transition-colors duration-200 ${
+                className={`nav-link inline-flex min-h-10 flex-col items-center justify-center rounded-full px-3 py-2 text-center text-[13px] font-medium transition-colors duration-200 ${
                   active ? 'text-fg' : 'text-muted hover:text-fg'
                 }`}
               >
@@ -78,7 +78,7 @@ export default function Nav({ lang = 'en' }: { lang?: Lang }) {
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="rounded-lg p-2 text-body transition-colors duration-200 hover:bg-surface-hover hover:text-fg lg:hidden"
+            className="rounded-lg p-2 text-body transition-colors duration-200 hover:bg-surface-hover hover:text-fg xl:hidden"
             aria-label={open ? copy.nav.closeMenu : copy.nav.openMenu}
             aria-expanded={open}
           >
@@ -100,23 +100,23 @@ export default function Nav({ lang = 'en' }: { lang?: Lang }) {
 
       {/* Height-animated rather than mounted/unmounted, so the panel slides. */}
       <div
-        className={`grid overflow-hidden border-line bg-nav backdrop-blur-xl transition-all duration-300 ease-out lg:hidden ${
+        className={`grid overflow-hidden border-line bg-nav backdrop-blur-xl transition-all duration-300 ease-out xl:hidden ${
           open ? 'grid-rows-[1fr] border-t' : 'grid-rows-[0fr] border-t-0'
         }`}
       >
         <div className="min-h-0 overflow-hidden">
           <div className="space-y-1 px-5 py-4">
             {nav.map((item, i) => (
-              <Link
-                key={item.key}
-                href={localeHref(lang, item.href)}
-                style={{ transitionDelay: open ? `${60 + i * 35}ms` : '0ms' }}
-                className={`block rounded-lg px-3 py-2.5 text-sm font-medium text-body transition-all duration-300 hover:bg-surface-hover hover:text-fg ${
-                  open ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
-                }`}
-              >
-                {copy.nav.items[item.key]}
-              </Link>
+                <Link
+                  key={item.key}
+                  href={localeHref(lang, item.href)}
+                  style={{ transitionDelay: open ? `${60 + i * 35}ms` : '0ms' }}
+                  className={`block rounded-lg px-3 py-2.5 text-center text-sm font-medium text-body transition-all duration-300 hover:bg-surface-hover hover:text-fg ${
+                    open ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
+                  }`}
+                >
+                  {copy.nav.items[item.key]}
+                </Link>
             ))}
             <a
               href={channels[primaryChannel]}

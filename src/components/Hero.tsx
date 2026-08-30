@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight, ArrowUpRight, PlayCircle } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, BookOpen, PlayCircle } from 'lucide-react'
 import HexField from './HexField'
 import { channels, primaryChannel } from '~/site.config'
 import { t, localeHref, type Lang } from '@/lib/i18n'
@@ -42,6 +42,10 @@ export default function Hero({ lang = 'en' }: { lang?: Lang }) {
           <Link href={localeHref(lang, '/roadmaps')} className="btn-ghost group">
             {copy.exploreRoadmaps}
             <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 rtl:-scale-x-100 rtl:group-hover:-translate-x-1" />
+          </Link>
+          <Link href={localeHref(lang, '/student-guides')} className="btn-ghost group">
+            <BookOpen className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
+            {copy.exploreGuides}
           </Link>
           <a href={channels.youtube} target="_blank" rel="noreferrer"
              className="btn group text-sm font-semibold text-muted transition hover:text-fg">
