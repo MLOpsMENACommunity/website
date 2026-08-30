@@ -1,9 +1,9 @@
 {
   "org": "MLOpsMENACommunity",
   "url": "https://github.com/MLOpsMENACommunity",
-  "followers": 30,
+  "followers": 31,
   "publicRepos": 2,
-  "stars": 12,
+  "stars": 13,
   "repos": [
     {
       "name": "mlops_practitioner_course",
@@ -18,7 +18,7 @@
       "href": "https://github.com/MLOpsMENACommunity/website",
       "desc": null,
       "lang": "TypeScript",
-      "stars": 1,
+      "stars": 2,
       "forks": 1
     }
   ]
