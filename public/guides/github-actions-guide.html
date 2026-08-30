@@ -1,0 +1,2674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitHub Actions — Complete Guide with Examples</title>
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<script>
+  /* apply saved/system theme before first paint to avoid flash */
+  (function () {
+    try {
+      var t = localStorage.getItem('ga-theme');
+      var light = t ? t === 'light'
+                    : (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches);
+      if (light) document.documentElement.classList.add('light');
+    } catch (e) {}
+  })();
+</script>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-tertiary: #1c2129;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --accent3: #d29922;
+    --accent4: #ff7b72;
+    --accent5: #bc8cff;
+    --code-bg: #0a0d12;
+    --sidebar-w: 280px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+  }
+
+  /* ============ HEADER ============ */
+  header {
+    position: fixed; top: 0; left: 0; right: 0; height: 60px;
+    background: rgba(13,17,23,.95); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 24px; gap: 16px;
+    z-index: 1000;
+  }
+  header .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.05rem; }
+  header .logo svg { width: 28px; height: 28px; }
+  header .logo span { color: var(--accent); }
+  header .tag {
+    font-size: .72rem; padding: 3px 10px; border: 1px solid var(--border);
+    border-radius: 20px; color: var(--text-muted); background: var(--bg-secondary);
+  }
+  #menuBtn {
+    display: none; background: none; border: 1px solid var(--border); color: var(--text);
+    border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 1rem;
+  }
+  header .brand-right {
+    margin-left: auto; display: flex; align-items: center; gap: 9px;
+    animation: fadeInRight .8s .3s cubic-bezier(.2,.8,.2,1) both;
+  }
+  header .brand-icon {
+    width: 30px; height: 30px; border-radius: 8px; object-fit: cover;
+    border: 1px solid var(--border);
+    animation: brandSpinIn 1s .3s cubic-bezier(.3,1.3,.4,1) both, glowPulse 3.5s 1.4s ease-in-out infinite;
+  }
+  header .brand-text { font-size: .78rem; color: var(--text-muted); white-space: nowrap; }
+  header .brand-text strong { color: var(--accent); font-weight: 600; }
+  @keyframes fadeInRight {
+    from { opacity: 0; transform: translateX(18px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes brandSpinIn {
+    from { opacity: 0; transform: rotate(-180deg) scale(.3); }
+    to   { opacity: 1; transform: rotate(0) scale(1); }
+  }
+  @media (max-width: 640px) {
+    header .brand-text { display: none; }   /* icon-only on small screens */
+    header .tag { display: none; }
+  }
+
+  /* ============ LAYOUT ============ */
+  .layout { display: flex; padding-top: 60px; min-height: 100vh; }
+  nav#sidebar {
+    width: var(--sidebar-w); position: fixed; top: 60px; bottom: 0; left: 0;
+    overflow-y: auto; overflow-x: hidden; border-right: 1px solid var(--border);
+    background: var(--bg); padding: 10px 10px 24px 0;
+  }
+  nav#sidebar::-webkit-scrollbar { width: 8px; }
+  nav#sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* reading progress bar (top of sidebar) */
+  .sidebar-progress {
+    position: sticky; top: 0; z-index: 6; height: 3px; margin: 4px 12px 12px 16px;
+    background: var(--bg-tertiary); border-radius: 3px; overflow: hidden;
+  }
+  .sidebar-progress i {
+    display: block; height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent5));
+    border-radius: 3px; transition: width .15s linear;
+  }
+
+  /* moving active-link indicator */
+  .nav-glider {
+    position: absolute; left: 10px; width: 3px; border-radius: 3px; z-index: 2;
+    background: linear-gradient(180deg, var(--accent), var(--accent5));
+    box-shadow: 0 0 12px rgba(88,166,255,.55);
+    opacity: 0;
+    transition: top .35s cubic-bezier(.3,.9,.3,1), height .35s cubic-bezier(.3,.9,.3,1), opacity .25s;
+  }
+
+  /* collapsible sections */
+  .nav-section { margin-bottom: 2px; }
+  .nav-group {
+    display: flex; align-items: center; justify-content: space-between;
+    width: calc(100% - 28px); margin: 0 0 2px 16px; padding: 10px 8px 6px;
+    background: none; border: none; cursor: pointer; font-family: inherit;
+    font-size: .66rem; font-weight: 700; text-transform: uppercase; letter-spacing: .12em;
+    color: var(--text-muted); border-radius: 6px; transition: color .2s;
+  }
+  .nav-group:hover { color: var(--text); }
+  .nav-group-right { display: flex; align-items: center; gap: 6px; }
+  .nav-cnt {
+    font-size: .6rem; line-height: 15px; padding: 0 7px; border-radius: 9px;
+    background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-muted);
+  }
+  .chev { transition: transform .3s cubic-bezier(.2,.8,.2,1); }
+  .nav-section:not(.open) .chev { transform: rotate(-90deg); }
+  .nav-links {
+    overflow: hidden; opacity: 1;
+    transition: max-height .38s cubic-bezier(.2,.8,.2,1), opacity .3s ease;
+  }
+  .nav-section:not(.open) .nav-links { opacity: 0; }
+
+  nav#sidebar a {
+    position: relative; display: flex; align-items: center; gap: 10px;
+    margin: 1px 0 1px 10px; padding: 7px 10px 7px 11px;
+    color: var(--text-muted); text-decoration: none; font-size: .85rem;
+    border-radius: 8px; z-index: 1;
+    transition: color .18s, background .18s, transform .18s;
+  }
+  .nav-ico {
+    font-size: .92rem; width: 20px; text-align: center; flex: none;
+    filter: grayscale(.5); opacity: .75;
+    transition: transform .25s cubic-bezier(.3,1.4,.4,1), filter .25s, opacity .25s;
+  }
+  .nav-txt { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nav-num {
+    font-family: Consolas, monospace; font-size: .62rem; color: var(--text-muted);
+    opacity: .55; transition: all .2s;
+  }
+  nav#sidebar a:hover { color: var(--text); background: var(--bg-secondary); transform: translateX(3px); }
+  nav#sidebar a:hover .nav-ico { opacity: 1; transform: scale(1.18); filter: none; }
+  nav#sidebar a.active {
+    color: var(--accent);
+    background: linear-gradient(90deg, rgba(88,166,255,.15), rgba(188,140,255,.05) 65%, transparent);
+  }
+  nav#sidebar a.active .nav-ico { opacity: 1; transform: scale(1.15); filter: none; }
+  nav#sidebar a.active .nav-num { color: var(--accent); opacity: 1; }
+
+  .nav-top {
+    display: block; width: calc(100% - 28px); margin: 20px 0 0 16px; padding: 9px;
+    background: var(--bg-secondary); color: var(--text-muted);
+    border: 1px solid var(--border); border-radius: 8px; cursor: pointer;
+    font-family: inherit; font-size: .78rem; transition: all .2s;
+  }
+  .nav-top:hover { color: var(--accent); border-color: var(--accent); transform: translateY(-2px); }
+  main { margin-left: var(--sidebar-w); flex: 1; padding: 40px 56px 120px; max-width: 1100px; }
+
+  /* ============ TYPOGRAPHY ============ */
+  h1 { font-size: 2.3rem; margin-bottom: 10px; letter-spacing: -.02em; }
+  h1 .gradient {
+    background: linear-gradient(90deg, #58a6ff, #bc8cff, #ff7b72);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  h2 {
+    font-size: 1.6rem; margin: 64px 0 8px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--border); letter-spacing: -.01em;
+    scroll-margin-top: 80px;
+  }
+  h2 .num { color: var(--accent); font-size: 1.1rem; margin-right: 10px; font-family: Consolas, monospace; }
+  h3 { font-size: 1.18rem; margin: 34px 0 10px; color: var(--text); }
+  h3::before { content: "▸ "; color: var(--accent); }
+  p { margin: 12px 0; color: #c9d1d9; }
+  ul, ol { margin: 12px 0 12px 26px; color: #c9d1d9; }
+  li { margin: 6px 0; }
+  li::marker { color: var(--accent); }
+  a { color: var(--accent); }
+  strong { color: #fff; }
+  em { color: var(--accent3); font-style: normal; background: rgba(210,153,34,.12); padding: 1px 6px; border-radius: 4px; font-size: .88em; font-family: Consolas, monospace; }
+
+  /* ============ HERO ============ */
+  .hero {
+    background: linear-gradient(135deg, rgba(88,166,255,.09), rgba(188,140,255,.07) 50%, rgba(255,123,114,.06));
+    border: 1px solid var(--border); border-radius: 16px; padding: 44px 40px; margin: 10px 0 20px;
+  }
+  .hero p.lead { font-size: 1.15rem; color: #adbac7; max-width: 760px; }
+  .hero-badges { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+  .hero-badges .b {
+    font-size: .78rem; padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border);
+    background: var(--bg-secondary); color: var(--text-muted);
+  }
+  .hero-badges .b b { color: var(--accent); }
+
+  /* ============ TABLES ============ */
+  table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: .875rem; }
+  th { text-align: left; padding: 10px 14px; background: var(--bg-secondary); color: var(--accent); border: 1px solid var(--border); font-weight: 600; }
+  td { padding: 9px 14px; border: 1px solid var(--border); color: #c9d1d9; vertical-align: top; }
+  tr:nth-child(even) td { background: rgba(22,27,34,.5); }
+  td code { white-space: nowrap; }
+
+  /* ============ CODE ============ */
+  .code-window { margin: 18px 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--code-bg); }
+  .code-window .code-head {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--bg-tertiary); padding: 7px 14px; border-bottom: 1px solid var(--border);
+  }
+  .code-window .code-head .dots { display: flex; gap: 6px; }
+  .code-window .code-head .dots i { width: 11px; height: 11px; border-radius: 50%; display: block; }
+  .code-window .code-head .dots i:nth-child(1) { background: #ff5f57; }
+  .code-window .code-head .dots i:nth-child(2) { background: #febc2e; }
+  .code-window .code-head .dots i:nth-child(3) { background: #28c840; }
+  .code-window .file { font-family: Consolas, "Courier New", monospace; font-size: .78rem; color: var(--text-muted); margin-left: 10px; }
+  .copy-btn {
+    background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-muted);
+    font-size: .72rem; padding: 3px 12px; border-radius: 6px; cursor: pointer; transition: all .15s;
+  }
+  .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+  pre {
+    padding: 16px 18px; overflow-x: auto; font-size: .84rem; line-height: 1.6;
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+  }
+  pre::-webkit-scrollbar { height: 8px; }
+  pre::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  code { font-family: "Cascadia Code", Consolas, monospace; }
+  p code, li code, td code, h3 code {
+    background: rgba(110,118,129,.2); padding: 2px 7px; border-radius: 5px;
+    font-size: .85em; color: #79c0ff;
+  }
+
+  /* syntax colors */
+  .c-key { color: #79c0ff; }            /* yaml key */
+  .c-str { color: #a5d6ff; }            /* string */
+  .c-com { color: #6272a4; font-style: italic; } /* comment */
+  .c-bool { color: #ff7b72; }           /* bool/number/keyword */
+  .c-act { color: #d2a8ff; }            /* action ref */
+  .c-run { color: #7ee787; }            /* run command */
+  .c-expr { color: #ffa657; }           /* ${{ }} expression */
+  .c-sec { color: #ffd699; }            /* secret */
+
+  /* ============ CALLOUTS ============ */
+  .callout {
+    border-radius: 10px; padding: 14px 18px; margin: 18px 0; font-size: .92rem;
+    border: 1px solid; border-left-width: 4px;
+  }
+  .callout .ct { font-weight: 700; display: block; margin-bottom: 4px; }
+  .callout.tip { background: rgba(63,185,80,.08); border-color: rgba(63,185,80,.4); }
+  .callout.tip .ct { color: var(--accent2); }
+  .callout.warn { background: rgba(210,153,34,.08); border-color: rgba(210,153,34,.45); }
+  .callout.warn .ct { color: var(--accent3); }
+  .callout.note { background: rgba(88,166,255,.08); border-color: rgba(88,166,255,.4); }
+  .callout.note .ct { color: var(--accent); }
+
+  /* ============ CONCEPT CARDS ============ */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin: 22px 0; }
+  .card {
+    background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px; transition: all .2s;
+  }
+  .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .card .icon { font-size: 1.5rem; margin-bottom: 10px; }
+  .card h4 { font-size: 1rem; margin-bottom: 8px; color: var(--accent); }
+  .card p { font-size: .86rem; color: var(--text-muted); margin: 0; }
+  .card code { font-size: .8em; }
+
+  /* ============ FLOW DIAGRAM ============ */
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 24px 0; }
+  .flow .node {
+    padding: 10px 18px; border-radius: 10px; font-size: .85rem; font-weight: 600;
+    border: 1px solid; text-align: center;
+  }
+  .flow .node small { display: block; font-weight: 400; font-size: .7rem; color: var(--text-muted); }
+  .flow .arrow { color: var(--text-muted); font-size: 1.2rem; }
+  .n-event { border-color: var(--accent3); color: var(--accent3); background: rgba(210,153,34,.08); }
+  .n-wf { border-color: var(--accent5); color: var(--accent5); background: rgba(188,140,255,.08); }
+  .n-job { border-color: var(--accent); color: var(--accent); background: rgba(88,166,255,.08); }
+  .n-step { border-color: var(--accent2); color: var(--accent2); background: rgba(63,185,80,.08); }
+  .n-run { border-color: var(--accent4); color: var(--accent4); background: rgba(255,123,114,.08); }
+
+  footer { margin-top: 80px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: .85rem; }
+
+  .pill { display: inline-block; font-size: .7rem; padding: 2px 10px; border-radius: 12px; margin-right: 6px; font-weight: 600; }
+  .pill.req { background: rgba(255,123,114,.15); color: #ff7b72; }
+  .pill.opt { background: rgba(63,185,80,.15); color: #3fb950; }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 900px) {
+    #menuBtn { display: block; }
+    nav#sidebar { transform: translateX(-100%); transition: transform .25s; z-index: 999; box-shadow: 8px 0 30px rgba(0,0,0,.5); }
+    nav#sidebar.open { transform: translateX(0); }
+    main { margin-left: 0; padding: 24px 18px 100px; }
+    h1 { font-size: 1.7rem; }
+    .hero { padding: 28px 20px; }
+  }
+
+  /* ============ ANIMATIONS ============ */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeInLeft {
+    from { opacity: 0; transform: translateX(-18px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes popIn {
+    0%   { opacity: 0; transform: scale(.85); }
+    70%  { transform: scale(1.03); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  @keyframes heroShift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(88,166,255,0); }
+    50%      { box-shadow: 0 0 18px 2px rgba(88,166,255,.22); }
+  }
+  @keyframes arrowNudge {
+    0%, 100% { transform: translateX(0); opacity: .55; }
+    50%      { transform: translateX(5px); opacity: 1; }
+  }
+  @keyframes floatY {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+  }
+  @keyframes dotBlink {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: .25; }
+  }
+  @keyframes barGrow {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+  @keyframes gradientText {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* hero — animated gradient backdrop + title shimmer */
+  .hero {
+    background: linear-gradient(120deg, rgba(88,166,255,.12), rgba(188,140,255,.09) 40%, rgba(255,123,114,.08) 70%, rgba(88,166,255,.12));
+    background-size: 300% 300%;
+    animation: heroShift 14s ease-in-out infinite;
+  }
+  h1 .gradient {
+    background-size: 220% auto;
+    animation: gradientText 8s ease-in-out infinite;
+  }
+  .hero-badges .b { animation: popIn .5s cubic-bezier(.2,.8,.3,1.2) both; }
+  .hero-badges .b:nth-child(1) { animation-delay: .15s; }
+  .hero-badges .b:nth-child(2) { animation-delay: .30s; }
+  .hero-badges .b:nth-child(3) { animation-delay: .45s; }
+  .hero-badges .b:nth-child(4) { animation-delay: .60s; }
+
+  /* flow diagram — breathing nodes, traveling arrows */
+  .flow .node { animation: glowPulse 3.2s ease-in-out infinite, floatY 5s ease-in-out infinite; }
+  .flow .node:nth-child(3) { animation-delay: .4s; }
+  .flow .node:nth-child(5) { animation-delay: .8s; }
+  .flow .node:nth-child(7) { animation-delay: 1.2s; }
+  .flow .node:nth-child(9) { animation-delay: 1.6s; }
+  .flow .arrow { display: inline-block; animation: arrowNudge 1.8s ease-in-out infinite; }
+
+  /* code window traffic lights blink */
+  .code-window .code-head .dots i:nth-child(1) { animation: dotBlink 2.4s infinite; }
+  .code-window .code-head .dots i:nth-child(2) { animation: dotBlink 2.4s .4s infinite; }
+  .code-window .code-head .dots i:nth-child(3) { animation: dotBlink 2.4s .8s infinite; }
+
+  /* copy button press feedback */
+  .copy-btn { transition: all .15s; }
+  .copy-btn:active { transform: scale(.9); }
+
+  /* h2 underline grows in */
+  html.anim-ready h2 { position: relative; }
+  html.anim-ready h2::after {
+    content: ""; position: absolute; left: 0; bottom: -1px; height: 1px; width: 100%;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    transform-origin: left; animation: barGrow 1s .25s cubic-bezier(.2,.8,.2,1) both;
+  }
+
+  /* scroll-reveal — enabled only when JS is running (html.anim-ready),
+     otherwise content stays fully visible */
+  html.anim-ready .reveal {
+    opacity: 0; transform: translateY(24px);
+    transition: opacity .7s cubic-bezier(.2,.8,.2,1), transform .7s cubic-bezier(.2,.8,.2,1);
+    will-change: opacity, transform;
+  }
+  html.anim-ready .reveal.in-view { opacity: 1; transform: translateY(0); }
+  html.anim-ready .reveal.d1 { transition-delay: .08s; }
+  html.anim-ready .reveal.d2 { transition-delay: .16s; }
+  html.anim-ready .reveal.d3 { transition-delay: .24s; }
+
+  /* logo hover spin */
+  header .logo svg { transition: transform .6s cubic-bezier(.3,1.4,.4,1); }
+  header .logo:hover svg { transform: rotate(360deg) scale(1.1); }
+
+  /* card hover lift (extends existing hover) */
+  .card { transition: transform .25s cubic-bezier(.2,.8,.2,1), border-color .25s, box-shadow .25s; }
+  .card:hover { box-shadow: 0 10px 28px -10px rgba(88,166,255,.25); }
+
+  /* nav active indicator is handled by the .nav-glider transitions */
+
+  /* ============ LIGHT / DARK THEME ============ */
+  :root { color-scheme: dark; }
+  html.light {
+    color-scheme: light;
+    --bg: #f6f8fa;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #eaeef3;
+    --border: #d4dae0;
+    --text: #1f2328;
+    --text-muted: #57606a;
+    --accent: #0969da;
+    --accent2: #1a7f37;
+    --accent3: #9a6700;
+    --accent4: #cf222e;
+    --accent5: #8250df;
+    --code-bg: #ffffff;
+  }
+  html.light p, html.light ul, html.light ol, html.light td { color: #3d444d; }
+  html.light strong { color: #0a0c10; }
+  html.light header { background: rgba(246,248,250,.92); }
+  html.light .hero {
+    background: linear-gradient(120deg, rgba(9,105,218,.10), rgba(130,80,223,.08) 40%, rgba(207,34,46,.07) 70%, rgba(9,105,218,.10));
+    background-size: 300% 300%;
+  }
+  html.light .hero p.lead { color: #424a53; }
+  html.light h1 .gradient {
+    background: linear-gradient(90deg, #0969da, #8250df, #cf222e);
+    /* re-assert clip AFTER the background shorthand — the shorthand
+       resets background-clip, which would break the gradient text */
+    -webkit-background-clip: text; background-clip: text;
+    background-size: 220% auto;
+  }
+  html.light tr:nth-child(even) td { background: rgba(246,248,250,.75); }
+  html.light p code, html.light li code, html.light td code, html.light h3 code {
+    background: rgba(110,118,129,.14); color: #0550ae;
+  }
+  html.light em { background: rgba(154,103,0,.14); }
+  html.light .callout.tip  { background: rgba(26,127,55,.07);  border-color: rgba(26,127,55,.35); }
+  html.light .callout.warn { background: rgba(154,103,0,.07);  border-color: rgba(154,103,0,.4); }
+  html.light .callout.note { background: rgba(9,105,218,.07);  border-color: rgba(9,105,218,.35); }
+  html.light .pill.req { background: rgba(207,34,46,.1); color: #cf222e; }
+  html.light .pill.opt { background: rgba(26,127,55,.1);  color: #1a7f37; }
+  html.light .n-event { background: rgba(154,103,0,.1); }
+  html.light .n-wf    { background: rgba(130,80,223,.1); }
+  html.light .n-job   { background: rgba(9,105,218,.1); }
+  html.light .n-step  { background: rgba(26,127,55,.1); }
+  html.light .n-run   { background: rgba(207,34,46,.1); }
+  html.light nav#sidebar a.active {
+    background: linear-gradient(90deg, rgba(9,105,218,.12), rgba(130,80,223,.05) 65%, transparent);
+  }
+  html.light .code-window { box-shadow: 0 1px 3px rgba(140,149,159,.14); }
+  /* light syntax colors */
+  html.light .c-key { color: #0550ae; }
+  html.light .c-str { color: #0a3069; }
+  html.light .c-com { color: #6e7781; }
+  html.light .c-bool { color: #cf222e; }
+  html.light .c-act { color: #8250df; }
+  html.light .c-run { color: #116329; }
+  html.light .c-expr { color: #953800; }
+  html.light .c-sec { color: #953800; }
+
+  /* ---- modern slide theme toggle (day/night) ---- */
+  .theme-toggle {
+    position: relative; flex: none; width: 62px; height: 30px; padding: 0;
+    border-radius: 999px; border: 1px solid var(--border); cursor: pointer;
+    background: linear-gradient(90deg, #bfe3ff 0%, #e6f4ff 46%, #27334f 54%, #101828 100%);
+    overflow: hidden; box-sizing: border-box;
+    transition: transform .2s ease, box-shadow .35s ease, border-color .35s ease;
+    animation: popIn .5s .55s cubic-bezier(.2,.8,.3,1.2) backwards;
+  }
+  .theme-toggle:hover { transform: scale(1.07); }
+  .theme-toggle:active { transform: scale(.96); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  html.light .theme-toggle { box-shadow: 0 0 12px rgba(255,196,80,.45); }
+  html:not(.light) .theme-toggle { box-shadow: 0 0 12px rgba(88,166,255,.35); }
+  .tt-stars i {
+    position: absolute; border-radius: 50%; background: #fff; opacity: .8;
+    animation: dotBlink 2.2s ease-in-out infinite;
+  }
+  .tt-stars i:nth-child(1) { width: 2px; height: 2px; top: 6px;  right: 8px; }
+  .tt-stars i:nth-child(2) { width: 3px; height: 3px; top: 16px; right: 15px; animation-delay: .7s; }
+  .tt-stars i:nth-child(3) { width: 2px; height: 2px; top: 4px;  right: 22px; animation-delay: 1.3s; }
+  .tt-knob {
+    position: absolute; top: 2px; left: 2px; width: 24px; height: 24px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    transform: translateX(34px);
+    background: linear-gradient(135deg, #33415e, #131b2e);
+    box-shadow: 0 2px 6px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.14);
+    transition: transform .5s cubic-bezier(.3,1.4,.4,1), background .4s ease, box-shadow .4s ease;
+  }
+  html.light .tt-knob {
+    transform: translateX(0);
+    background: linear-gradient(135deg, #ffffff, #ffe9c2);
+    box-shadow: 0 2px 6px rgba(180,140,40,.45), inset 0 0 0 1px rgba(255,255,255,.8);
+  }
+  .tt-knob svg {
+    position: absolute; width: 13px; height: 13px;
+    transition: opacity .3s ease, transform .5s cubic-bezier(.3,1.4,.4,1);
+  }
+  .tt-knob .k-sun { color: #f59e0b; }
+  .tt-knob .k-moon { color: #d6deff; }
+  html.light .tt-knob .k-sun  { opacity: 1; transform: rotate(0deg) scale(1); }
+  html.light .tt-knob .k-moon { opacity: 0; transform: rotate(90deg) scale(.3); }
+  html:not(.light) .tt-knob .k-sun  { opacity: 0; transform: rotate(-90deg) scale(.3); }
+  html:not(.light) .tt-knob .k-moon { opacity: 1; transform: rotate(0deg) scale(1); }
+
+  /* ---- theme switch transitions ---- */
+  /* circular reveal via View Transitions API (see JS) */
+  ::view-transition-old(root), ::view-transition-new(root) {
+    animation: none; mix-blend-mode: normal;
+  }
+  ::view-transition-old(root) { z-index: 1; }
+  ::view-transition-new(root) { z-index: 2147483646; }
+  ::view-transition-old(root), ::view-transition-new(root) {
+    pointer-events: none;
+  }
+
+  /* fallback cross-fade for browsers without View Transitions */
+  html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
+    transition: background-color .45s ease, background .45s ease, color .45s ease,
+                border-color .45s ease, box-shadow .45s ease, fill .45s ease,
+                stroke .45s ease !important;
+  }
+  /* soft ambient flash while switching (fallback path) */
+  html.theme-fade body::after {
+    content: ""; position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+    opacity: 0;                                /* hidden when animations are off */
+    background: radial-gradient(circle at var(--fx-x, 90%) 30px,
+                rgba(255,255,255,.10), transparent 45%);
+    animation: fxAmbient .55s ease-out both;
+  }
+  @keyframes fxAmbient {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+  }
+  /* extra flair on the toggle when used */
+  .theme-toggle.fx-burst { animation: txFxBurst .55s cubic-bezier(.3,1.5,.4,1); }
+  @keyframes txFxBurst {
+    0%   { transform: scale(1); }
+    35%  { transform: scale(1.22) rotate(-6deg); }
+    100% { transform: scale(1); }
+  }
+
+  /* accessibility — respect reduced-motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    html.anim-ready .reveal { opacity: 1 !important; transform: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="menuBtn">☰</button>
+  <div class="logo">
+    <svg viewBox="0 0 16 16" fill="#58a6ff"><path d="M8 0a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.93-.89-1.18-.89-1.18-.73-.5.05-.49.05-.49.8.06 1.23.83 1.23.83.71 1.22 1.87.87 2.33.66.07-.52.28-.87.5-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.83-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.68 7.68 0 0 1 4 0c1.53-1.03 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.52.56.83 1.28.83 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 8 0Z"/></svg>
+    GitHub <span>Actions</span> Guide
+  </div>
+  <span class="tag">CI/CD · Automation · DevOps</span>
+  <div class="brand-right">
+    <img src="icon.png" alt="MLOps MENA Community" class="brand-icon">
+    <span class="brand-text">Created by <strong>MLOps MENA Community</strong></span>
+  </div>
+  <button class="theme-toggle" id="themeToggle" type="button" role="switch" aria-checked="false" aria-label="Toggle light or dark theme" title="Switch to light mode">
+    <span class="tt-stars" aria-hidden="true"><i></i><i></i><i></i></span>
+    <span class="tt-knob" aria-hidden="true">
+      <svg class="k-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5 5l1.4 1.4M17.6 17.6L19 19M19 5l-1.4 1.4M6.4 17.6L5 19"/></svg>
+      <svg class="k-moon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 13.2A8.6 8.6 0 1 1 10.8 3 6.8 6.8 0 0 0 21 13.2Z"/></svg>
+    </span>
+  </button>
+</header>
+
+<div class="layout">
+<nav id="sidebar">
+  <div class="sidebar-progress" aria-hidden="true"><i id="readProgress"></i></div>
+  <span class="nav-glider" id="navGlider" aria-hidden="true"></span>
+
+  <div class="nav-section open">
+    <button class="nav-group" type="button" aria-expanded="true">
+      <span>Getting Started</span>
+      <span class="nav-group-right"><span class="nav-cnt">3</span><svg class="chev" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </button>
+    <div class="nav-links">
+      <a href="#intro"><span class="nav-ico">📘</span><span class="nav-txt">Introduction</span></a>
+      <a href="#first-workflow"><span class="nav-ico">🚀</span><span class="nav-txt">Your First Workflow</span></a>
+      <a href="#anatomy"><span class="nav-ico">🗺️</span><span class="nav-txt">Anatomy of a Workflow</span></a>
+    </div>
+  </div>
+
+  <div class="nav-section open">
+    <button class="nav-group" type="button" aria-expanded="true">
+      <span>Core Concepts</span>
+      <span class="nav-group-right"><span class="nav-cnt">6</span><svg class="chev" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </button>
+    <div class="nav-links">
+      <a href="#workflows"><span class="nav-ico">⚙️</span><span class="nav-txt">Workflows</span><span class="nav-num">01</span></a>
+      <a href="#events"><span class="nav-ico">⚡</span><span class="nav-txt">Events (Triggers)</span><span class="nav-num">02</span></a>
+      <a href="#jobs"><span class="nav-ico">🧩</span><span class="nav-txt">Jobs</span><span class="nav-num">03</span></a>
+      <a href="#steps"><span class="nav-ico">👣</span><span class="nav-txt">Steps</span><span class="nav-num">04</span></a>
+      <a href="#actions"><span class="nav-ico">🧱</span><span class="nav-txt">Actions</span><span class="nav-num">05</span></a>
+      <a href="#runners"><span class="nav-ico">🖥️</span><span class="nav-txt">Runners</span><span class="nav-num">06</span></a>
+    </div>
+  </div>
+
+  <div class="nav-section open">
+    <button class="nav-group" type="button" aria-expanded="true">
+      <span>Configuration</span>
+      <span class="nav-group-right"><span class="nav-cnt">7</span><svg class="chev" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </button>
+    <div class="nav-links">
+      <a href="#contexts"><span class="nav-ico">🧮</span><span class="nav-txt">Contexts &amp; Expressions</span><span class="nav-num">07</span></a>
+      <a href="#env"><span class="nav-ico">🌍</span><span class="nav-txt">Environment Variables</span><span class="nav-num">08</span></a>
+      <a href="#secrets"><span class="nav-ico">🔑</span><span class="nav-txt">Secrets &amp; Variables</span><span class="nav-num">09</span></a>
+      <a href="#caching"><span class="nav-ico">💾</span><span class="nav-txt">Caching</span><span class="nav-num">10</span></a>
+      <a href="#artifacts"><span class="nav-ico">📦</span><span class="nav-txt">Artifacts</span><span class="nav-num">11</span></a>
+      <a href="#matrix"><span class="nav-ico">🔢</span><span class="nav-txt">Matrix Builds</span><span class="nav-num">12</span></a>
+      <a href="#services"><span class="nav-ico">🗄️</span><span class="nav-txt">Service Containers</span><span class="nav-num">13</span></a>
+    </div>
+  </div>
+
+  <div class="nav-section open">
+    <button class="nav-group" type="button" aria-expanded="true">
+      <span>Advanced</span>
+      <span class="nav-group-right"><span class="nav-cnt">4</span><svg class="chev" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </button>
+    <div class="nav-links">
+      <a href="#reusable"><span class="nav-ico">♻️</span><span class="nav-txt">Reusable Workflows</span><span class="nav-num">14</span></a>
+      <a href="#environments"><span class="nav-ico">🚦</span><span class="nav-txt">Environments &amp; Approvals</span><span class="nav-num">15</span></a>
+      <a href="#docker"><span class="nav-ico">🐳</span><span class="nav-txt">Docker in Actions</span><span class="nav-num">16</span></a>
+      <a href="#custom-action"><span class="nav-ico">🛠️</span><span class="nav-txt">Creating Custom Actions</span><span class="nav-num">17</span></a>
+    </div>
+  </div>
+
+  <div class="nav-section open">
+    <button class="nav-group" type="button" aria-expanded="true">
+      <span>Real World</span>
+      <span class="nav-group-right"><span class="nav-cnt">4</span><svg class="chev" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </button>
+    <div class="nav-links">
+      <a href="#examples"><span class="nav-ico">🏆</span><span class="nav-txt">Complete CI/CD Examples</span></a>
+      <a href="#best-practices"><span class="nav-ico">⭐</span><span class="nav-txt">Best Practices</span></a>
+      <a href="#mistakes"><span class="nav-ico">🩹</span><span class="nav-txt">Beginner Mistakes</span></a>
+      <a href="#cheatsheet"><span class="nav-ico">📋</span><span class="nav-txt">Cheat Sheet</span></a>
+    </div>
+  </div>
+
+  <button id="navTop" class="nav-top" type="button">↑ Back to top</button>
+</nav>
+
+<main>
+
+<h1>The Complete <span class="gradient">GitHub Actions</span> Guide</h1>
+
+<div class="hero">
+  <p class="lead">GitHub Actions is a <strong>CI/CD and automation platform</strong> built right into GitHub — no external servers required. In plain words: you write a small instruction file (a "recipe"), and GitHub's computers follow that recipe automatically whenever something happens in your project — a push, a pull request, a new release, or even a fixed time of day. This guide assumes <strong>zero prior experience</strong>: every concept is explained from scratch, step by step, with copy-paste examples.</p>
+  <div class="hero-badges">
+    <span class="b"><b>CI</b> Continuous Integration</span>
+    <span class="b"><b>CD</b> Continuous Deployment</span>
+    <span class="b"><b>Free</b> unlimited minutes on public repos</span>
+    <span class="b"><b>20,000+</b> Marketplace actions</span>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<h2 id="intro">Introduction — What is GitHub Actions?</h2>
+
+<p>GitHub Actions is GitHub's <strong>built-in automation platform</strong>. Instead of installing and maintaining a separate automation server (like Jenkins or CircleCI), you simply add special instruction files to your repository — and GitHub runs them for you, on GitHub's own computers, whenever something happens: a push, a pull request, a new release, a comment, or even on a fixed daily schedule.</p>
+
+<p>Think of it as a tireless robot assistant for your project: every time you save new code, the robot downloads it, checks it, tests it, packages it, and can even publish it — exactly the same way, every single time, without ever getting bored or making a typo.</p>
+
+<h3>New to CI/CD? A 60-second explanation</h3>
+<p>You will meet the terms <strong>CI</strong> and <strong>CD</strong> constantly in this guide:</p>
+<ul>
+  <li><strong>Continuous Integration (CI)</strong> — every change you push is automatically built and tested. If something breaks, you find out within minutes instead of weeks, which keeps the main branch of your project healthy at all times.</li>
+  <li><strong>Continuous Deployment / Delivery (CD)</strong> — once your changes pass all checks, they are automatically packaged and shipped: deployed to a server, published to npm or PyPI, built into a Docker image, and so on. No manual "build and upload" sessions.</li>
+</ul>
+<p>GitHub Actions is simply one tool that provides CI/CD — with the big advantage that it lives exactly where your code already does.</p>
+
+<div class="callout note">
+  <span class="ct">Where do workflows live?</span>
+  Every workflow file must be placed in <code>.github/workflows/</code> at the root of your repository, e.g. <code>.github/workflows/ci.yml</code>. Any file in that folder with a <code>.yml</code>/<code>.yaml</code> extension becomes an active workflow.
+</div>
+
+<h3>What you need before you start</h3>
+<ul>
+  <li>A <strong>free GitHub account</strong> — genuinely all the tooling you need; the tutorial in the next section runs entirely in your browser.</li>
+  <li><strong>Basic Git</strong>: how to make a commit and push it (editing files directly on github.com works too).</li>
+  <li><strong>A repository</strong> — any language, any size. A brand-new empty repo is a perfect playground.</li>
+  <li><strong>No credit card</strong>: public repositories run workflows for free, with unlimited minutes; private repositories get a free monthly allowance.</li>
+</ul>
+
+<h3>The seven words you'll see everywhere</h3>
+<p>These terms repeat through the whole guide. Skim them now and revisit anytime — each one gets a full section of its own.</p>
+<table>
+  <tr><th>Term</th><th>Plain-English meaning</th></tr>
+  <tr><td><strong>Workflow</strong></td><td>The complete recipe — one YAML file in <code>.github/workflows/</code> describing everything that should happen</td></tr>
+  <tr><td><strong>Event</strong></td><td>The doorbell that starts the recipe: a push, a pull request, a schedule, a manual click…</td></tr>
+  <tr><td><strong>Job</strong></td><td>A named group of work that runs on one machine (e.g. "build", "test", "deploy")</td></tr>
+  <tr><td><strong>Step</strong></td><td>A single task inside a job — one shell command or one ready-made building block</td></tr>
+  <tr><td><strong>Action</strong></td><td>A ready-made, reusable step that someone already wrote and published</td></tr>
+  <tr><td><strong>Runner</strong></td><td>The virtual machine GitHub starts up to do the actual work</td></tr>
+  <tr><td><strong>YAML</strong></td><td>The simple text format workflow files are written in — introduced gently in the next section</td></tr>
+</table>
+
+<h3>How to use this guide</h3>
+<ul>
+  <li><strong>First time?</strong> Read top to bottom — sections build on each other, and the hands-on tutorial comes right after this introduction.</li>
+  <li><strong>Every code block has a Copy button</strong> — take examples into your own repo and experiment; breaking things in a playground repo costs nothing.</li>
+  <li><strong>In a hurry?</strong> Jump straight to the Cheat Sheet or the complete examples at the end.</li>
+  <li><strong>Stuck on an error?</strong> The <a href="#mistakes">Common Beginner Mistakes</a> section covers the ones everyone hits.</li>
+</ul>
+
+<h3>What you can build with it</h3>
+<div class="cards">
+  <div class="card"><div class="icon">🧪</div><h4>Continuous Integration</h4><p>Run tests, linters, and type checks on every push and pull request automatically.</p></div>
+  <div class="card"><div class="icon">🚀</div><h4>Continuous Deployment</h4><p>Deploy to AWS, Azure, Vercel, Kubernetes, npm, Docker Hub, and more on merge or tag.</p></div>
+  <div class="card"><div class="icon">📅</div><h4>Scheduled Tasks</h4><p>Cron-style jobs for nightly builds, dependency updates, backups, and cleanups.</p></div>
+  <div class="card"><div class="icon">🏷️</div><h4>Release Automation</h4><p>Auto-generate release notes, build binaries, and publish packages when you tag a version.</p></div>
+  <div class="card"><div class="icon">🤖</div><h4>Repo Automation</h4><p>Auto-label issues, greet contributors, close stale issues, assign reviewers.</p></div>
+  <div class="card"><div class="icon">🔒</div><h4>Security Scanning</h4><p>Run CodeQL, dependency audits, and secret scanning on every change.</p></div>
+</div>
+
+<!-- ================================================================ -->
+<h2 id="first-workflow">Your First Workflow — Hands-On Tutorial</h2>
+
+<p>Reading about automation is one thing — watching a machine run your instructions is another. This 5-minute tutorial takes you from zero to your first green ✓, using <strong>only your browser</strong>. You'll create a workflow, trigger it, and read its logs.</p>
+
+<h3>Step 0 — a one-minute YAML primer</h3>
+<p>Workflow files are written in <strong>YAML</strong>, a human-friendly text format. Four rules cover almost everything a beginner needs:</p>
+<table>
+  <tr><th>Rule</th><th>Looks like</th><th>Meaning</th></tr>
+  <tr><td>Settings are <code>key: value</code> pairs</td><td><code>name: CI</code></td><td>A setting called "name" with the value "CI"</td></tr>
+  <tr><td>Indentation (2 spaces) shows nesting</td><td><code>jobs:</code><br><code>&nbsp;&nbsp;build:</code></td><td>"build" belongs to "jobs" — <strong>never use Tab</strong>, only spaces</td></tr>
+  <tr><td>Lines starting with <code>-</code> form a list</td><td><code>- name: Checkout</code></td><td>One item in a list (here: of steps)</td></tr>
+  <tr><td><code>#</code> starts a comment</td><td><code># run tests</code></td><td>Ignored by the machine — notes for humans</td></tr>
+</table>
+
+<h3>Step 1 — open (or create) a repository</h3>
+<p>Go to <a href="https://github.com/new" target="_blank">github.com/new</a> and create a public repository — call it <code>actions-playground</code>. Public repos get <strong>unlimited free workflow minutes</strong>, so a playground repo costs nothing forever. (An existing repo works just as well.)</p>
+
+<h3>Step 2 — create the workflow file in the browser</h3>
+<ol>
+  <li>On your repository page, click <strong>Add file → Create new file</strong>.</li>
+  <li>Type the full path <code>.github/workflows/first.yml</code> — as you type the slashes, GitHub automatically turns each part into a folder. The leading dot in <code>.github</code> is intentional.</li>
+  <li>Paste the workflow below into the editor.</li>
+</ol>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">.github/workflows/first.yml — paste this</span><button class="copy-btn">Copy</button></div>
+<pre><code>name: My First Workflow
+
+on: push                    # the doorbell: run on every push
+
+jobs:
+  hello:                    # you choose this name
+    runs-on: ubuntu-latest  # ask GitHub for a free Linux machine
+    steps:
+      - name: Say hello
+        run: echo "Hello, GitHub Actions!"
+
+      - name: Show run info
+        run: |
+          echo "Operating system : ${{ runner.os }}"
+          echo "Repository       : ${{ github.repository }}"
+          echo "Triggered by    : ${{ github.actor }}"
+</code></pre>
+</div>
+
+<h3>Step 3 — commit the file</h3>
+<p>Scroll down and click <strong>Commit new file</strong>. That's it — the workflow is now live, and committing it <em>is itself a push event</em>, so it triggers immediately.</p>
+
+<h3>Step 4 — watch it run</h3>
+<ol>
+  <li>Click the <strong>Actions</strong> tab at the top of your repository.</li>
+  <li>You'll see "My First Workflow" in the left sidebar and one run in the list — "Initiated by <em>your-username</em>".</li>
+  <li>Click the run, then click the <strong>hello</strong> job, then expand each step to see its output — including the exact lines your <code>echo</code> commands printed.</li>
+  <li>A yellow dot means running, a green ✓ means success, a red ✗ means something failed.</li>
+</ol>
+
+<h3>What just happened?</h3>
+<ul>
+  <li>Your commit fired the <strong>push event</strong>.</li>
+  <li>GitHub found <code>.github/workflows/first.yml</code> and read its <code>on:</code> trigger.</li>
+  <li>It started a <strong>brand-new Ubuntu virtual machine</strong>, created one job (<code>hello</code>), and ran the two steps in order.</li>
+  <li>The <em>${{ ... }}</em> placeholders were filled in with real values (<em>Linux</em>, <em>your-repo</em>, <em>your-username</em>) before the commands ran.</li>
+  <li>The machine was destroyed afterwards. Every future push runs this recipe again, on a fresh machine — until you delete or disable the file.</li>
+</ul>
+
+<div class="callout tip">
+  <span class="ct">Exercises (5 minutes each, highly recommended)</span>
+  ① Add a third step <code>- run: date</code> — commit and find its output. ② Change <code>on: push</code> to <code>on: workflow_dispatch</code> — now it runs only when you click "Run workflow" in the Actions tab. ③ Break it on purpose: add <code>- run: exit 1</code>, watch the red ✗, open the log, then fix it. Reading failure logs calmly is the #1 practical Actions skill.
+</div>
+
+<!-- ================================================================ -->
+<h2 id="anatomy">Anatomy of a Workflow — The Big Picture</h2>
+
+<p>Everything in GitHub Actions is built from six building blocks. Understanding how they nest is 90% of learning the platform:</p>
+
+<div class="flow">
+  <div class="node n-event">EVENT<small>push / PR / schedule</small></div>
+  <span class="arrow">→</span>
+  <div class="node n-wf">WORKFLOW<small>.github/workflows/*.yml</small></div>
+  <span class="arrow">→</span>
+  <div class="node n-job">JOB<small>runs on a runner VM</small></div>
+  <span class="arrow">→</span>
+  <div class="node n-step">STEP<small>action or shell command</small></div>
+  <span class="arrow">→</span>
+  <div class="node n-run">RUNNER<small>the machine executing it</small></div>
+</div>
+
+<p>An <em>event</em> triggers a <em>workflow</em>. A workflow contains one or more <em>jobs</em>. Each job runs on a fresh <em>runner</em> (VM) and is made of <em>steps</em>. Each step is either a shell script or a pre-built <em>action</em>.</p>
+
+<h3>The six building blocks in plain English</h3>
+<table>
+  <tr><th>Term</th><th>What it really is</th><th>Analogy</th></tr>
+  <tr><td><strong>Event</strong></td><td>Something that happened in or around your repo</td><td>The doorbell ringing</td></tr>
+  <tr><td><strong>Workflow</strong></td><td>The YAML file describing what to do</td><td>The full recipe</td></tr>
+  <tr><td><strong>Job</strong></td><td>A group of steps running on one machine</td><td>One chapter of the recipe</td></tr>
+  <tr><td><strong>Step</strong></td><td>A single command or action</td><td>A single instruction: "crack two eggs"</td></tr>
+  <tr><td><strong>Action</strong></td><td>A reusable step someone already wrote</td><td>A pre-mixed spice blend</td></tr>
+  <tr><td><strong>Runner</strong></td><td>The fresh virtual machine doing the work</td><td>The kitchen</td></tr>
+</table>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">.github/workflows/anatomy.yml — every keyword annotated</span><button class="copy-btn">Copy</button></div>
+<pre><code># ┌────────────────────────────────────────────────────────
+# │ 1. WORKFLOW — the whole file is one workflow
+# └────────────────────────────────────────────────────────
+name: Learn GitHub Actions          # display name in the Actions tab
+
+run-name: Deploy by @${{ github.actor }}   # dynamic run title (optional)
+
+on: push                            # 2. EVENT — what triggers this
+
+permissions:
+  contents: read                    # least-privilege token (optional)
+
+env:
+  PROJECT: demo                     # workflow-wide env vars (optional)
+
+defaults:
+  run:
+    shell: bash                     # default shell for `run` steps
+
+jobs:                               # 3. JOBS — groups of steps
+  build:                            # job id (you choose the name)
+    name: Build & Test              # display name
+    runs-on: ubuntu-latest          # 6. RUNNER — the VM to use
+    timeout-minutes: 10             # kill job after 10 min (safety)
+
+    steps:                          # 4. STEPS — sequential tasks
+      - name: Checkout code         # step 1: uses an ACTION
+        uses: actions/checkout@v4   # 5. ACTION — reusable unit
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:                       # inputs to the action
+          node-version: '20'
+          cache: npm
+
+      - name: Install & test        # step 3: raw shell command
+        run: |
+          npm ci
+          npm test
+
+      - name: Share build output    # step 4: save ARTIFACT
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+</code></pre>
+</div>
+
+<h3>How to read that file</h3>
+<ul>
+  <li><strong>Top to bottom:</strong> display name → trigger → global settings (<code>permissions</code>, <code>env</code>, <code>defaults</code>) → <code>jobs:</code>.</li>
+  <li><strong>Under <code>jobs:</code></strong>, <code>build:</code> is a job <em>id</em> you invent — its display name, runner, and steps are indented beneath it.</li>
+  <li><strong>Under <code>steps:</code></strong>, the dash lines run <em>in order, on the same machine</em> — files created by step 1 exist in step 2.</li>
+  <li><strong><em>${{ ... }}</em></strong> marks spots where GitHub injects real values at run time (here: the username who triggered the run).</li>
+  <li>Everything marked "optional" can be deleted — a minimal workflow needs only <code>on:</code>, one job, <code>runs-on:</code>, and <code>steps:</code>.</li>
+</ul>
+
+<div class="callout tip">
+  <span class="ct">Pro tip</span>
+  Paste any workflow into the <a href="https://github.com/actions/starter-workflows" target="_blank">starter-workflows repo</a> or use the "Actions" tab → "New workflow" in your repo to see dozens of ready-made templates for your language and platform.
+</div>
+
+<!-- ================================================================ -->
+<h2 id="workflows"><span class="num">01</span>Workflows</h2>
+
+<p>A <strong>workflow</strong> is a configurable automated process defined in a YAML file — the complete "recipe" from the previous section. In practice: <strong>one YAML file = one workflow</strong>. A repository can contain as many as you like, each independent — e.g. <code>ci.yml</code> for tests, <code>deploy.yml</code> for releases, <code>codeql.yml</code> for security scanning. GitHub decides which one(s) to run by looking at each file's <code>on:</code> trigger.</p>
+
+<p>Beginners usually start with a single <code>ci.yml</code> and split out more workflows as the project grows. Rule of thumb: group by <em>purpose and trigger</em> — tests run on every push, deploys only on the main branch, releases only on tags.</p>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">.github/workflows/ci.yml</span><button class="copy-btn">Copy</button></div>
+<pre><code>name: CI                              # shown in the Actions tab
+                                      # (optional — defaults to file name)
+
+on:                                   # single event
+  push
+
+# ── multiple events ─────────────────────────────────────
+# on: [push, pull_request, workflow_dispatch]
+
+# ── event with filters (activity types / branch filters) ─
+# on:
+#   push:
+#     branches: [main, 'release/**']  # only these branches
+#     paths-ignore: ['docs/**']       # skip doc-only changes
+#   pull_request:
+#     types: [opened, synchronize, reopened]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Workflow triggered by ${{ github.event_name }}"
+</code></pre>
+</div>
+
+<h3>Workflow-level keywords</h3>
+<table>
+  <tr><th>Keyword</th><th>Required</th><th>Purpose</th></tr>
+  <tr><td><code>name</code></td><td><span class="pill opt">optional</span></td><td>Display name in the Actions tab</td></tr>
+  <tr><td><code>run-name</code></td><td><span class="pill opt">optional</span></td><td>Dynamic name per-run, supports expressions</td></tr>
+  <tr><td><code>on</code></td><td><span class="pill req">required</span></td><td>Event(s) that trigger the workflow</td></tr>
+  <tr><td><code>permissions</code></td><td><span class="pill opt">optional</span></td><td>Restrict the GITHUB_TOKEN's access scopes</td></tr>
+  <tr><td><code>env</code></td><td><span class="pill opt">optional</span></td><td>Variables available to all jobs/steps</td></tr>
+  <tr><td><code>concurrency</code></td><td><span class="pill opt">optional</span></td><td>Cancel outdated in-progress runs of the same group</td></tr>
+  <tr><td><code>defaults</code></td><td><span class="pill opt">optional</span></td><td>Default shell / working-directory for run steps</td></tr>
+</table>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">concurrency — auto-cancel superseded runs (great for deploys)</span><button class="copy-btn">Copy</button></div>
+<pre><code>concurrency:
+  group: production-deploy           # same group = serialized
+  cancel-in-progress: true           # new run cancels the old one
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Only the latest push deploys"
+</code></pre>
+</div>
+
+<!-- ================================================================ -->
+<h2 id="events"><span class="num">02</span>Events (Triggers)</h2>
+
+<p>Events are the things that happen in or around your repository that can start a workflow — the <code>on:</code> block answers the question <em>"when should this run?"</em>. GitHub offers 30+ events, and each can be filtered so you react only to what matters: only certain branches, only certain file paths, only certain tags, or only certain activity types (e.g. "PR opened" but not "PR closed").</p>
+
+<p>The table below covers the events you'll meet in 95% of real projects. Don't memorize it — scan it now, come back when you need a specific behavior.</p>
+
+<h3>Most-used events reference</h3>
+<table>
+  <tr><th>Event</th><th>Triggers when…</th><th>Typical use</th></tr>
+  <tr><td><code>push</code></td><td>Commits pushed to a branch/tag</td><td>CI on main, deploys</td></tr>
+  <tr><td><code>pull_request</code></td><td>PR opened/updated/closed</td><td>Test PRs before merge</td></tr>
+  <tr><td><code>pull_request_target</code></td><td>Like above but runs in base repo context (secrets!)</td><td>Label/comment on forks</td></tr>
+  <tr><td><code>workflow_dispatch</code></td><td>Manually from the Actions tab UI</td><td>On-demand runs with inputs</td></tr>
+  <tr><td><code>schedule</code></td><td>Cron schedule (UTC)</td><td>Nightly builds, cleanups</td></tr>
+  <tr><td><code>release</code></td><td>Release published/created</td><td>Upload assets, publish packages</td></tr>
+  <tr><td><code>issues</code></td><td>Issue opened/labeled/…</td><td>Auto-triage, greetings</td></tr>
+  <tr><td><code>issue_comment</code></td><td>Comment on issue/PR</td><td>Slash commands</td></tr>
+  <tr><td><code>workflow_call</code></td><td>Called by another workflow</td><td>Reusable workflows</td></tr>
+  <tr><td><code>repository_dispatch</code></td><td>External event via REST API</td><td>Trigger from other systems</td></tr>
+  <tr><td><code>push</code> + tags</td><td>Tag like <code>v1.2.0</code> pushed</td><td>Versioned releases</td></tr>
+  <tr><td><code>delete</code>, <code>fork</code>, <code>star</code>, <code>watch</code></td><td>Various repo activities</td><td>Automation / stats</td></tr>
+</table>
+
+<h3>Example — every trigger style in one file</h3>
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">.github/workflows/triggers.yml</span><button class="copy-btn">Copy</button></div>
+<pre><code>name: Trigger Examples
+
+on:
+  # ① push filtered by branch and path
+  push:
+    branches: [main, 'feat/**']        # glob supported
+    paths:
+      - 'src/**'
+      - '!src/**/*.md'                 # exclude markdown
+
+  # ② pull requests, filtered by activity type
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+  # ③ tags — publish when a version tag is pushed
+  push:
+    tags: ['v*.*.*']
+
+  # ④ cron — "every day at 03:15 UTC" (min hour dom mon dow)
+  schedule:
+    - cron: '15 3 * * *'
+
+  # ⑤ manual — button in the Actions tab, with input form
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deploy target'
+        type: choice
+        options: [staging, production]
+        default: staging
+      dry_run:
+        description: 'Skip the actual deploy?'
+        type: boolean
+        default: false
+
+jobs:
+  show:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "event    = ${{ github.event_name }}"
+          echo "ref      = ${{ github.ref }}"
+          echo "target   = ${{ inputs.environment }}"
+          echo "dry run? = ${{ inputs.dry_run }}"
+</code></pre>
+</div>
+
+<div class="callout warn">
+  <span class="ct">Schedule gotchas</span>
+  Cron uses <strong>UTC</strong>. The shortest interval is 5 minutes, and scheduled runs are delayed during high-load periods (often 15+ min). Also, schedules are disabled after 60 days of repo inactivity.
+</div>
+
+<div class="callout note">
+  <span class="ct">Reading a cron expression</span>
+  The five fields of <code>'15 3 * * *'</code> are, left to right: <strong>minute (0–59), hour (0–23), day-of-month (1–31), month (1–12), day-of-week (0–6, Sunday=0)</strong> — so this one means "at 03:15 every day". A <code>*</code> simply means "every". Build expressions visually at <a href="https://crontab.guru" target="_blank">crontab.guru</a>, and remember to keep the whole expression quoted as a string.
+</div>
+
+<!-- ================================================================ -->
+<h2 id="jobs"><span class="num">03</span>Jobs</h2>
+
+<p>A <strong>job</strong> is a set of steps executed on the same runner — one "chapter" of your recipe. Two beginner-critical facts:</p>
+<ul>
+  <li><strong>Jobs run in parallel by default</strong>, each on its <em>own separate machine</em>. Add <code>needs:</code> to force an order ("deploy only after test passes"). If a needed job fails, dependent jobs are skipped — unless you opt out with conditions like <code>if: always()</code>.</li>
+  <li><strong>Every job gets a brand-new VM.</strong> Files created in one job are <em>not</em> visible in another — moving files between jobs is what artifacts (§11) are for.</li>
+</ul>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">.github/workflows/pipeline.yml — job dependency graph</span><button class="copy-btn">Copy</button></div>
+<pre><code>name: Pipeline
+
+on: push
+
+jobs:
+  lint:                                # ── runs first
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm run lint
+
+  test:
+    needs: lint                        # ── waits for lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false                 # don't cancel siblings on failure
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm test
+
+  deploy:
+    needs: [lint, test]                # ── waits for multiple jobs
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production            # may require approval (see §15)
+    steps:
+      - run: echo "deploying…"
+
+  notify-on-failure:                   # ── runs even if deploy failed
+    needs: deploy
+    if: always() && needs.deploy.result == 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "🚨 deploy failed — sending alert"
+</code></pre>
+</div>
+
+<h3>Job-level keywords</h3>
+<table>
+  <tr><th>Keyword</th><th>What it does</th></tr>
+  <tr><td><code>runs-on</code></td><td>Runner image / label: <code>ubuntu-latest</code>, <code>windows-latest</code>, <code>macos-latest</code>, or self-hosted label</td></tr>
+  <tr><td><code>needs</code></td><td>Job(s) that must succeed first — creates the DAG</td></tr>
+  <tr><td><code>if</code></td><td>Conditional execution with expressions</td></tr>
+  <tr><td><code>env</code></td><td>Job-scoped environment variables</td></tr>
+  <tr><td><code>timeout-minutes</code></td><td>Hard cap on job duration (default 360)</td></tr>
+  <tr><td><code>strategy</code></td><td>Matrix / retry configuration (§12)</td></tr>
+  <tr><td><code>continue-on-error</code></td><td>Let the workflow proceed even if this job fails</td></tr>
+  <tr><td><code>container</code></td><td>Run the whole job inside a Docker container</td></tr>
+  <tr><td><code>services</code></td><td>Sidecar containers: databases, Redis, etc. (§13)</td></tr>
+  <tr><td><code>environment</code></td><td>Deployment environment + protection rules (§15)</td></tr>
+  <tr><td><code>concurrency</code></td><td>Serialize/cancel runs per group</td></tr>
+  <tr><td><code>permissions</code></td><td>Job-scoped token scopes</td></tr>
+</table>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">conditional jobs — the if expression in action</span><button class="copy-btn">Copy</button></div>
+<pre><code>jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' ||
+      github.event.pull_request.draft == false
+    steps:
+      - run: echo "runs on real pushes and non-draft PRs"
+
+  deploy-preview:
+    runs-on: ubuntu-latest
+    # expressions don't need ${{ }} inside if:
+    if: github.event_name == 'pull_request'
+    steps:
+      - run: echo "PR preview deploy"
+
+  deploy-prod:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - run: echo "tag-triggered prod deploy"
+</code></pre>
+</div>
+
+<!-- ================================================================ -->
+<h2 id="steps"><span class="num">04</span>Steps</h2>
+
+<p>A <strong>step</strong> is an individual task: either a shell command (<code>run</code>) or a reusable action (<code>uses</code>). Steps in a job run sequentially in the same VM, so files created by one step are available to the next.</p>
+
+<h3>The two kinds of steps — <code>run</code> vs <code>uses</code></h3>
+<table>
+  <tr><th></th><th><code>run:</code> — your own command</th><th><code>uses:</code> — ready-made action</th></tr>
+  <tr><td>What it does</td><td>Executes a shell command you write</td><td>Runs a reusable building block from the Marketplace</td></tr>
+  <tr><td>Example</td><td><code>run: npm test</code></td><td><code>uses: actions/checkout@v4</code></td></tr>
+  <tr><td>Give it options via</td><td><code>env:</code></td><td><code>with:</code></td></tr>
+  <tr><td>Use it for</td><td>Your project's own commands (build, test, scripts)</td><td>Common plumbing (check out code, install Node, upload files)</td></tr>
+</table>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">steps — run vs uses vs with</span><button class="copy-btn">Copy</button></div>
+<pre><code>jobs:
+  example:
+    runs-on: ubuntu-latest
+    steps:
+      # ACTION step — checks out your repo into $GITHUB_WORKSPACE
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0               # full history (default: 1 commit)
+
+      # RUN step — plain shell, | for multi-line
+      - name: Build
+        run: |
+          echo "Building on $(uname -a)"
+          make build
+
+      # per-step env + working-directory
+      - name: Test
+        run: npm test
+        working-directory: ./backend
+        env:
+          NODE_ENV: test
+
+      # keep going even if this step fails
+      - name: Optional lint
+        run: npm run lint
+        continue-on-error: true
+
+      # capture step OUTPUT for later steps
+      - name: Get version
+        id: ver
+        run: echo "version=1.2.3" >> "$GITHUB_OUTPUT"
+
+      # consume the output of a previous step
+      - name: Use output
+        run: echo "Version is ${{ steps.ver.outputs.version }}"
+</code></pre>
+</div>
+
+<h3>Step outputs vs job outputs</h3>
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">passing data between steps AND jobs</span><button class="copy-btn">Copy</button></div>
+<pre><code>jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:                           # ← expose for OTHER jobs
+      version: ${{ steps.meta.outputs.version }}
+    steps:
+      - id: meta
+        run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      # available as an env var here:
+      - run: echo "Deploying v${{ needs.build.outputs.version }}"
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+</code></pre>
+</div>
+
+<div class="callout tip">
+  <span class="ct">GITHUB_OUTPUT vs set-output</span>
+  The old <code>::set-output</code> syntax is deprecated. Write <code>key=value</code> lines to the <code>$GITHUB_OUTPUT</code> file, then read them via <code>${{ steps.&lt;id&gt;.outputs.key }}</code>. For multi-line values, use the delimiter form <code>text&lt;&lt;EOF … EOF</code> shown in the Cheat Sheet section.
+</div>
+
+<!-- ================================================================ -->
+<h2 id="actions"><span class="num">05</span>Actions</h2>
+
+<p>An <strong>action</strong> is a reusable unit of code — the building block you plug into a step with <code>uses</code>. Think of the <a href="https://github.com/marketplace?type=actions" target="_blank">GitHub Marketplace</a> as an app store for automation: over 20,000 ready-made actions for checking out code, installing tools, logging in to cloud providers, posting comments, and almost anything else.</p>
+
+<p>Every reference has the shape <code>owner/repo@version</code>. In <code>actions/checkout@v4</code>: <code>actions</code> is the organization that maintains it, <code>checkout</code> is the repository containing the action's code, and <code>@v4</code> pins the major version. Actions can also come from your own repository (path reference) or run from a Docker image.</p>
+
+<h3>Referencing actions — three ways</h3>
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">action reference styles</span><button class="copy-btn">Copy</button></div>
+<pre><code>steps:
+  # ① PUBLIC repo — tag pinned (recommended: SHA-pinned)
+  - uses: actions/checkout@v4
+  - uses: actions/setup-node@v4
+
+  # ② SHA pinning — most secure &amp; reproducible (supply-chain best practice)
+  - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+  # ③ Same-repo action — path to a directory containing action.yml
+  - uses: ./.github/actions/my-custom-action
+
+  # ④ Local checkout of another private repo action
+  - uses: my-org/my-shared-actions/lint@main
+</code></pre>
+</div>
+
+<h3>Essential official actions</h3>
+<table>
+  <tr><th>Action</th><th>What it does</th><th>Key inputs</th></tr>
+  <tr><td><code>actions/checkout</code></td><td>Clone your repo into the workspace</td><td><code>ref</code>, <code>fetch-depth</code>, <code>submodules</code>, <code>token</code></td></tr>
+  <tr><td><code>actions/setup-node</code></td><td>Install Node + optional npm cache</td><td><code>node-version</code>, <code>cache</code>, <code>registry-url</code></td></tr>
+  <tr><td><code>actions/setup-python</code></td><td>Install Python + pip cache</td><td><code>python-version</code>, <code>cache</code></td></tr>
+  <tr><td><code>actions/setup-java</code></td><td>Install JDK + Maven/Gradle cache</td><td><code>java-version</code>, <code>distribution</code>, <code>cache</code></td></tr>
+  <tr><td><code>actions/cache</code></td><td>Generic cache save/restore (§10)</td><td><code>path</code>, <code>key</code>, <code>restore-keys</code></td></tr>
+  <tr><td><code>actions/upload-artifact</code> / <code>download-artifact</code></td><td>Share files between jobs &amp; runs (§11)</td><td><code>name</code>, <code>path</code></td></tr>
+  <tr><td><code>actions/github-script</code></td><td>Run the GitHub API via inline JavaScript</td><td><code>script</code></td></tr>
+  <tr><td><code>actions/labeler</code></td><td>Label PRs based on changed paths</td><td><code>configuration-path</code></td></tr>
+  <tr><td><code>github/codeql-action</code></td><td>Security analysis</td><td><code>languages</code></td></tr>
+</table>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">github-script — call the REST API without curl</span><button class="copy-btn">Copy</button></div>
+<pre><code>- name: Comment on PR
+  uses: actions/github-script@v7
+  with:
+    script: |
+      await github.rest.issues.createComment({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        issue_number: context.issue.number,
+        body: '✅ Build passed! Artifacts ready for review.'
+      })
+</code></pre>
+</div>
+
+<!-- ================================================================ -->
+<h2 id="runners"><span class="num">06</span>Runners</h2>
+
+<p>A <strong>runner</strong> is the machine that executes your jobs — the "kitchen" where your recipe is cooked. GitHub provides ready-to-use virtual machines (Linux, Windows, macOS) with popular tools preinstalled; you just say which one you want with <code>runs-on:</code>. Alternatively, you can connect your own machines ("self-hosted runners") for special hardware or network needs.</p>
+
+<div class="callout note">
+  <span class="ct">Fresh machine every time — the #1 beginner surprise</span>
+  Each job runs on a <strong>brand-new VM that is destroyed when the job ends</strong>. Nothing persists between runs: no installed software, no downloaded dependencies, no leftover files. This is deliberate (clean, reproducible builds) — caching (§10) and artifacts (§11) exist to soften the cost.
+</div>
+
+<h3>GitHub-hosted runners (ubuntu shown with tools preinstalled)</h3>
+<table>
+  <tr><th>Label</th><th>OS</th><th>Specs</th><th>Preinstalled</th></tr>
+  <tr><td><code>ubuntu-latest</code></td><td>Ubuntu 24.04</td><td>4 vCPU · 16 GB RAM · 14 GB SSD</td><td>Docker, Node, Python, Java, Go, gcloud, aws cli…</td></tr>
+  <tr><td><code>windows-latest</code></td><td>Windows Server 2022</td><td>4 vCPU · 16 GB RAM</td><td>VS, Node, Python, choco…</td></tr>
+  <tr><td><code>macos-latest</code></td><td>macOS 14 (Arm)</td><td>3 vCPU · 7 GB RAM</td><td>Xcode, Node, Python, Brew…</td></tr>
+  <tr><td><code>ubuntu-24.04-arm</code></td><td>Ubuntu Arm64</td><td>4 vCPU · 16 GB RAM</td><td>Same toolset, ARM arch</td></tr>
+</table>
+<p class="lead" style="color:var(--text-muted);font-size:.85rem;">Billing: public repos = unlimited free minutes. Private repos get a free monthly quota (2,000 min on Free plan) — note macOS runs at a 10× multiplier and Windows 2×.</p>
+
+<h3>Self-hosted runners</h3>
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">workflow targeting self-hosted runners by label</span><button class="copy-btn">Copy</button></div>
+<pre><code>jobs:
+  gpu-tests:
+    runs-on: [self-hosted, linux, x64, gpu]   # ALL labels must match
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./run-gpu-benchmarks.sh
+
+  windows-on-prem:
+    runs-on: [self-hosted, Windows, X64]
+    steps:
+      - run: echo "Running on our own datacenter machine"
+</code></pre>
+</div>
+
+<div class="callout warn">
+  <span class="ct">Self-hosted security</span>
+  Never use self-hosted runners on public repos with <code>pull_request</code> events — a forked PR could execute arbitrary code on your machine. Use GitHub-hosted runners for untrusted code.
+</div>
+
+<h3>Job containers — run the whole job inside Docker</h3>
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">container job — pinned language version everywhere</span><button class="copy-btn">Copy</button></div>
+<pre><code>jobs:
+  test-in-container:
+    runs-on: ubuntu-latest
+    container:
+      image: node:20-bookworm           # everything runs inside this
+      env:
+        NODE_ENV: ci
+      options: --cpus 2                 # docker create options
+      volumes:
+        - /data/cache:/cache
+    steps:
+      - uses: actions/checkout@v4       # checkout works inside too
+      - run: node --version             # → v20.x
+</code></pre>
+</div>
+
+<!-- ================================================================ -->
+<h2 id="contexts"><span class="num">07</span>Contexts & Expressions</h2>
+
+<p><strong>Contexts</strong> are objects that expose data about the current run — think of them as ready-made variables GitHub fills in for you: who triggered the run, which branch, which commit, which OS. <strong>Expressions</strong>, written <em>${{ ... }}</em>, are the syntax for reading that data and applying logic to it. For example, <code>${{ github.actor }}</code> literally becomes <code>alice</code> in the final command if alice triggered the run.</p>
+
+<h3>Context reference</h3>
+<table>
+  <tr><th>Context</th><th>Contains</th><th>Example</th></tr>
+  <tr><td><code>github</code></td><td>Event payload, repo, ref, sha, actor</td><td><code>${{ github.sha }}</code></td></tr>
+  <tr><td><code>env</code></td><td>Variables set via <code>env:</code></td><td><code>${{ env.NODE_ENV }}</code></td></tr>
+  <tr><td><code>job</code></td><td>Job status info</td><td><code>${{ job.status }}</code></td></tr>
+  <tr><td><code>steps</code></td><td>Outputs of steps by <code>id</code></td><td><code>${{ steps.build.outputs.bin }}</code></td></tr>
+  <tr><td><code>runner</code></td><td>Runner machine info</td><td><code>${{ runner.os }}</code></td></tr>
+  <tr><td><code>secrets</code></td><td>Repo/org/environment secrets</td><td><code>${{ secrets.DEPLOY_KEY }}</code></td></tr>
+  <tr><td><code>vars</code></td><td>Repository/org variables</td><td><code>${{ vars.REGION }}</code></td></tr>
+  <tr><td><code>needs</code></td><td>Outputs &amp; result of needed jobs</td><td><code>${{ needs.build.outputs.v }}</code></td></tr>
+  <tr><td><code>matrix</code></td><td>Current matrix combination</td><td><code>${{ matrix.node }}</code></td></tr>
+  <tr><td><code>inputs</code></td><td>workflow_dispatch / workflow_call inputs</td><td><code>${{ inputs.env }}</code></td></tr>
+  <tr><td><code>github.event</code></td><td>Full webhook payload of the trigger</td><td><code>${{ github.event.pull_request.number }}</code></td></tr>
+</table>
+
+<h3>Operators & functions</h3>
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">expression cookbook</span><button class="copy-btn">Copy</button></div>
+<pre><code># ── operators ────────────────────────────────────────────
+${{ a == b }}   ${{ a != b }}   ${{ a &amp;&amp; b }}   ${{ a || b }}
+${{ a &gt; b }}    ${{ contains('hello','ell') }}      # → true
+${{ startsWith('v1.2','v') }}                       # → true
+${{ endsWith('file.yml','.yml') }}                  # → true
+
+# ── formatting &amp; json ───────────────────────────────────
+${{ format('Hello {0}, you are #{1}', github.actor, 42) }}
+${{ toJSON(github.event) }}                         # object → JSON string
+${{ fromJSON('{"a":1}') }}                          # JSON string → object
+${{ fromJSON(steps.plan.outputs.directories) }}     # typical usage
+
+# ── state functions (great for environment toggles) ────
+environment: ${{ github.ref == 'refs/heads/main' &amp;&amp; 'production' || 'staging' }}
+
+# ── defaulting / hashing ───────────────────────────────
+${{ github.event.inputs.logLevel || 'info' }}       # fallback value
+${{ hashFiles('**/package-lock.json') }}            # stable cache key
+</code></pre>
+</div>
+
+<h3>Special status-check functions</h3>
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">always() / failure() / success() / cancelled()</span><button class="copy-btn">Copy</button></div>
+<pre><code>jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 1
+        id: failing
+
+  cleanup:
+    needs: build
+    if: always()                      # run no matter what happened
+    runs-on: ubuntu-latest
+    steps:
+      - run: ./teardown.sh
+
+  report-failure:
+    needs: build
+    if: failure()                     # only when a needed job failed
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -X POST $SLACK_WEBHOOK -d '{"text":"build broke"}'
+</code></pre>
+</div>
+
+<div class="callout warn">
+  <span class="ct">Injection warning</span>
+  Never build shell commands directly from event data: <code>run: echo "${{ github.event.pull_request.title }}"</code> lets a malicious PR title execute arbitrary shell. Pass data through <strong>env vars</strong> instead:<br><br>
+  <code>env: TITLE: ${{ github.event.pull_request.title }}</code> then <code>run: echo "$TITLE"</code>
+</div>
+
+<!-- ================================================================ -->
+<h2 id="env"><span class="num">08</span>Environment Variables</h2>
+
+<p>Environment variables are named values that programs (and your shell commands) can read — like labeled fill-in-the-blanks. GitHub automatically provides many (<code>GITHUB_REPOSITORY</code>, <code>GITHUB_SHA</code>, …), and you can define your own at workflow, job, or step scope. When the same name is defined at several scopes, the <strong>innermost one wins</strong>.</p>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">scopes + defaults + dynamic env</span><button class="copy-btn">Copy</button></div>
+<pre><code>env:                                  # ← workflow scope
+  APP_NAME: my-app
+  LOG_LEVEL: info
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:                              # ← job scope (overrides above)
+      LOG_LEVEL: debug
+    steps:
+      - name: Step scope
+        env:                          # ← step scope (highest priority)
+          TARGET: production
+        run: echo "$APP_NAME / $LOG_LEVEL / $TARGET"
+
+      - name: Dynamic — expression inside env
+        env:
+          BRANCH: ${GITHUB_REF##*/}   # shell param expansion works too
+          SHA_SHORT: ${{ github.sha }}
+        run: echo "branch=$BRANCH sha=${SHA_SHORT:0:7}"
+
+      - name: Show GitHub defaults
+        run: |
+          echo "repo  = $GITHUB_REPOSITORY"       # owner/repo
+          echo "ref   = $GITHUB_REF"              # refs/heads/main
+          echo "sha   = $GITHUB_SHA"
+          echo "ws    = $GITHUB_WORKSPACE"
+          echo "token = $GITHUB_TOKEN"            # auto-injected
+          echo "runner= $RUNNER_OS"               # Linux / Windows / macOS
+</code></pre>
+</div>
+
+<div class="callout note">
+  <span class="ct">env vs ${{ }} in run blocks</span>
+  Prefer <code>$VAR_NAME</code> shell syntax inside <code>run:</code> — it avoids YAML quoting issues and injection risks. Use <em>${{ }}</em> for non-<code>run</code> fields (like <code>if:</code>, <code>uses: with:</code>, <code>secrets</code>).
+</div>
+
+<!-- ================================================================ -->
+<h2 id="secrets"><span class="num">09</span>Secrets & Variables</h2>
+
+<p><strong>Secrets</strong> are encrypted values (API keys, tokens, passwords). <strong>Variables</strong> are non-sensitive configuration. Both exist at organization, repository, and environment scope — the most specific wins.</p>
+
+<h3>Where to set them</h3>
+<table>
+  <tr><th>Scope</th><th>Path in GitHub UI</th></tr>
+  <tr><td>Repository</td><td><em>Settings → Secrets and variables → Actions</em></td></tr>
+  <tr><td>Environment</td><td><em>Settings → Environments → [env] → secrets</em></td></tr>
+  <tr><td>Organization</td><td><em>Org Settings → Secrets and variables → Actions</em></td></tr>
+</table>
+
+<h3>Adding your first secret — click by click</h3>
+<ol>
+  <li>Open your repository → <strong>Settings</strong> (you need admin rights).</li>
+  <li>Left sidebar, "Security" section → <strong>Secrets and variables → Actions</strong>.</li>
+  <li>Click <strong>New repository secret</strong>.</li>
+  <li>Choose a name — uppercase with underscores, e.g. <code>DEPLOY_KEY</code> — paste the secret value, and click <strong>Add secret</strong>.</li>
+  <li>Use it anywhere in your workflows as <code>${{ secrets.DEPLOY_KEY }}</code>.</li>
+</ol>
+<p>After saving, the value is encrypted and can <strong>never be displayed again</strong> — you can only update or delete it. That's fine: your workflows can still read it perfectly.</p>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">using secrets &amp; vars</span><button class="copy-btn">Copy</button></div>
+<pre><code>jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production          # unlocks env-scoped secrets
+    steps:
+      - name: Deploy to cloud
+        run: ./deploy.sh
+        env:                         # secrets ALWAYS via env, masked in logs
+          AWS_KEY:    ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          REGION:     ${{ vars.AWS_REGION }}        # non-secret config
+
+      - name: Login to registry
+        run: echo "${{ secrets.DOCKER_PW }}" | docker login -u user --password-stdin
+
+      - name: Use the built-in token
+        run: gh release create v1.0 dist/*
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}     # auto-created per run
+</code></pre>
+</div>
+
+<h3>The automatic GITHUB_TOKEN</h3>
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">GITHUB_TOKEN + permissions</span><button class="copy-btn">Copy</button></div>
+<pre><code># token is auto-injected in every job as GITHUB_TOKEN / github.token
+# scope it down with top-level permissions:
+permissions:
+  contents: read          # read the repo
+  pull-requests: write    # e.g. comment on PRs
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/labeler@v5
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+</code></pre>
+</div>
+
+<div class="callout warn">
+  <span class="ct">Secret rules</span>
+  Secrets are masked in logs, but anyone with repo <strong>admin</strong> access can read them via a workflow — treat secrets as visible to collaborators. They are also <strong>not passed to workflows triggered from forks</strong> (except via <code>pull_request_target</code>, which is exactly why that event is dangerous).
+</div>
+
+<!-- ================================================================ -->
+<h2 id="caching"><span class="num">10</span>Caching Dependencies</h2>
+
+<p>Because every job starts on a fresh machine (§06), dependencies get downloaded from scratch <em>every single run</em> — often the slowest part of a build. <strong>Caching</strong> fixes this: after one run saves the downloaded packages, later runs restore them in seconds. A 4-minute install can drop to a few seconds — and on private repos this directly saves billed minutes.</p>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">easy way — built-in cache in setup actions</span><button class="copy-btn">Copy</button></div>
+<pre><code>- uses: actions/setup-node@v4
+  with:
+    node-version: 20
+    cache: npm                        # caches ~/.npm automatically
+
+- uses: actions/setup-python@v5
+  with:
+    python-version: '3.12'
+    cache: pip                        # caches ~/.cache/pip
+
+- uses: actions/setup-java@v4
+  with:
+    java-version: '21'
+    distribution: temurin
+    cache: gradle                     # caches ~/.gradle
+</code></pre>
+</div>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">generic way — actions/cache</span><button class="copy-btn">Copy</button></div>
+<pre><code>- name: Cache node modules
+  uses: actions/cache@v4
+  with:
+    path: |
+      ~/.npm
+      node_modules
+    key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+    restore-keys: |                   # fallback prefix matching
+      npm-${{ runner.os }}-
+      npm-
+
+# how the key works:
+#   hit  = exact key match        → restored, cache-hit output = 'true'
+#   miss = restore-keys prefix hit→ partial restore, then re-saved
+#   miss = nothing matches        → empty, saved at job end
+#
+# hashFiles makes the key change whenever lockfiles change,
+# so you get fresh deps after dependency updates automatically.
+</code></pre>
+</div>
+
+<div class="callout tip">
+  <span class="ct">Cache limits</span>
+  10 GB per repository — oldest unused caches are evicted. Caches are created with the branch scope: a PR can read caches from its branch and the default branch, but the default branch cannot read PR caches.
+</div>
+
+<!-- ================================================================ -->
+<h2 id="artifacts"><span class="num">11</span>Artifacts</h2>
+
+<p>Since each job runs on its own machine, files don't carry over between jobs by default. <strong>Artifacts</strong> are GitHub's built-in file-sharing system: one job uploads files (a build, a coverage report, binaries), another job downloads them, and you can grab them yourself from the run page in the UI. Unlike caches, artifacts are deliverables meant for people or later jobs, and they expire (default 90 days).</p>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">build → upload → download → deploy</span><button class="copy-btn">Copy</button></div>
+<pre><code>jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci &amp;&amp; npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ github.sha }}     # artifact name
+          path: |
+            dist/
+            coverage/
+          retention-days: 7                 # override default 90
+          if-no-files-found: error
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist-${{ github.sha }}
+          path: download/
+      - run: ls download/dist &amp;&amp; ./deploy.sh download/dist
+</code></pre>
+</div>
+
+<div class="callout note">
+  <span class="ct">Cache vs Artifact</span>
+  <strong>Cache</strong> = machine-to-machine speedup (package managers), keyed &amp; restored automatically, not browsable in UI. <strong>Artifact</strong> = deliverable output (binaries, coverage, logs), listed under the run's summary page and downloadable by humans.
+</div>
+
+<!-- ================================================================ -->
+<h2 id="matrix"><span class="num">12</span>Matrix Builds</h2>
+
+<p>Does your library work on Linux, Windows and macOS? On Node 18, 20 and 22? A <strong>matrix</strong> runs the same job once per <strong>combination</strong> of values — you write the job once, GitHub multiplies it out. In the example below: 3 OSes × 3 Node versions = 9 combinations, minus 1 excluded = 8, plus 1 extra "include" job = <strong>9 jobs in total</strong>, each shown as its own card on the run page.</p>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">cross-platform + multi-version matrix</span><button class="copy-btn">Copy</button></div>
+<pre><code>jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false                  # one failure ≠ cancel the rest
+      max-parallel: 4                   # run at most 4 at once
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node: [18, 20, 22]
+        exclude:                        # drop specific combos
+          - os: macos-latest
+            node: 18
+        include:                        # add extra one-off configs
+          - os: ubuntu-latest
+            node: 20
+            experimental: true
+    name: Test (Node ${{ matrix.node }} on ${{ matrix.os }})
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm ci
+      - run: npm test
+        continue-on-error: ${{ matrix.experimental == true }}
+</code></pre>
+</div>
+
+<h3>Dynamic matrix — from a previous step's output</h3>
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">matrix expansion via fromJSON</span><button class="copy-btn">Copy</button></div>
+<pre><code>jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.set.outputs.packages }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: set
+        run: |
+          dirs=$(ls -d packages/*/ | jq -Rsc 'split("\n")[:-1]')
+          echo "packages=$dirs" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: ${{ fromJSON(needs.discover.outputs.packages) }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm build ${{ matrix.package }}
+</code></pre>
+</div>
+
+<!-- ================================================================ -->
+<h2 id="services"><span class="num">13</span>Service Containers</h2>
+
+<p>Integration tests usually need a real database (or Redis, or RabbitMQ…) running somewhere. <strong>Service containers</strong> are extra Docker containers GitHub starts <em>next to</em> your job, already networked together — your steps simply connect to <code>localhost</code> on the mapped port, as if the database were installed on the same machine. The health-check options make the job wait until the service is actually ready before tests start.</p>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">Postgres + Redis services for integration tests</span><button class="copy-btn">Copy</button></div>
+<pre><code>jobs:
+  integration:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: secret
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432                  # host:container
+        options: &gt;-
+          --health-cmd "pg_isready -U app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10          # wait until healthy before steps
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run integration tests
+        env:
+          DATABASE_URL: postgres://app:secret@localhost:5432/testdb
+          REDIS_URL: redis://localhost:6379
+        run: |
+          npm ci
+          npm run test:integration
+</code></pre>
+</div>
+
+<div class="callout note">
+  <span class="ct">Linux only</span>
+  Service containers only work on Linux runners. For Windows/macOS, start services manually (e.g. <code>brew services start postgresql</code>) or run tests in a Linux container job.
+</div>
+
+<!-- ================================================================ -->
+<h2 id="reusable"><span class="num">14</span>Reusable Workflows</h2>
+
+<p>Call one workflow from another — define your org's standard CI once and reuse it across hundreds of repos. The called workflow declares <code>workflow_call</code> with typed inputs and secrets.</p>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">.github/workflows/called.yml — the reusable template</span><button class="copy-btn">Copy</button></div>
+<pre><code>on:
+  workflow_call:
+    inputs:
+      node-version:
+        required: true
+        type: string
+      run-lint:
+        required: false
+        type: boolean
+        default: true
+    secrets:
+      deploy-token:                    # pass secrets explicitly
+        required: false
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+      - run: npm ci
+      - if: ${{ inputs.run-lint }}
+        run: npm run lint
+      - run: npm test
+      - run: npm run deploy
+        if: ${{ secrets.deploy-token != '' }}
+        env:
+          TOKEN: ${{ secrets.deploy-token }}
+</code></pre>
+</div>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">.github/workflows/main.yml — the caller</span><button class="copy-btn">Copy</button></div>
+<pre><code>on: [push]
+
+jobs:
+  call-standard-ci:
+    uses: my-org/shared-workflows/.github/workflows/node-ci.yml@v2
+    with:
+      node-version: '20'
+      run-lint: true
+    secrets:
+      deploy-token: ${{ secrets.DEPLOY_TOKEN }}
+    permissions:
+      contents: read
+</code></pre>
+</div>
+
+<div class="callout tip">
+  <span class="ct">Why reusable workflows?</span>
+  One source of truth for org-wide CI policy, updates ship to all repos by bumping a tag, and they don't count against your workflow quota like duplicated YAML does. Nesting is limited to 4 levels; max 20 unique reusable workflows per run tree.
+</div>
+
+<!-- ================================================================ -->
+<h2 id="environments"><span class="num">15</span>Environments & Approvals</h2>
+
+<p>An <strong>environment</strong> (Settings → Environments) is a deployment target (e.g. <code>staging</code>, <code>production</code>) with its own secrets and <strong>protection rules</strong>: required reviewers, branch restrictions, and wait timers.</p>
+
+<h3>Creating an environment — one-time setup</h3>
+<ol>
+  <li>Repository <strong>Settings → Environments → New environment</strong>.</li>
+  <li>Name it (e.g. <code>production</code>) and confirm.</li>
+  <li>Optionally add <strong>required reviewers</strong> — the listed people must approve before any job using this environment may proceed.</li>
+  <li>Optionally restrict <strong>deployment branches</strong> (e.g. only <code>main</code>).</li>
+  <li>Add environment-scoped <strong>secrets</strong> — production credentials that exist only here.</li>
+</ol>
+<p>A job then opts in with a single line — <code>environment: production</code> — which activates all the rules above.</p>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">gated production deploy with manual approval</span><button class="copy-btn">Copy</button></div>
+<pre><code>name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:                # ← job PAUSES here until approvals pass
+      name: production
+      url: https://app.example.com     # shows a link on the run page
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy
+        run: ./scripts/deploy.sh
+        env:
+          DEPLOY_KEY: ${{ secrets.PROD_DEPLOY_KEY }}   # env-scoped secret
+
+  rollback:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    environment: production
+    steps:
+      - run: ./scripts/rollback.sh
+</code></pre>
+</div>
+
+<p>Protection rules you can enable per environment:</p>
+<ul>
+  <li><strong>Required reviewers</strong> — job waits until an authorized user clicks "Review deployments" and approves (configurable timeout auto-denies).</li>
+  <li><strong>Deployment branches</strong> — allow only <code>main</code>, protected branches, or a branch pattern like <code>releases/**</code>.</li>
+  <li><strong>Wait timer</strong> — delay N minutes before the job starts (buffer for change windows).</li>
+  <li><strong>Secrets scoped to the environment</strong> — production keys simply don't exist outside prod deploys.</li>
+</ul>
+
+<!-- ================================================================ -->
+<h2 id="docker"><span class="num">16</span>Docker in GitHub Actions</h2>
+
+<p>Build, scan, and push container images — either with raw <code>docker build</code> or the metadata/login/build-push trio that tags images the "right" way.</p>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">.github/workflows/docker.yml — build, tag, push</span><button class="copy-btn">Copy</button></div>
+<pre><code>name: Docker Publish
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE: ${{ github.repository }}      # owner/repo
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write                  # needed to push to ghcr
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3      # BuildKit builder
+
+      - uses: docker/login-action@v3             # auth to registry
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta                                  # smart tag + labels
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE }}
+          tags: |
+            type=ref,event=branch                 # main
+            type=semver,pattern={{version}}       # v1.2.3 → 1.2.3
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,format=long                  # sha-abc1234…
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha                    # reuse BuildKit layers
+          cache-to: type=gha,mode=max
+</code></pre>
+</div>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">building a Dockerfile inside another folder</span><button class="copy-btn">Copy</button></div>
+<pre><code>- uses: docker/build-push-action@v6
+  with:
+    context: ./backend
+    file: ./backend/Dockerfile.prod
+    build-args: |
+      VERSION=${{ github.sha }}
+    target: production          # multi-stage Dockerfile stage
+</code></pre>
+</div>
+
+<!-- ================================================================ -->
+<h2 id="custom-action"><span class="num">17</span>Creating Custom Actions</h2>
+
+<p>Package your own logic as an action in three flavors:</p>
+<table>
+  <tr><th>Type</th><th>How</th><th>Best for</th></tr>
+  <tr><td><strong>Composite</strong></td><td>YAML steps file <code>action.yml</code></td><td>Wrapping scripts/step sequences — simplest, recommended</td></tr>
+  <tr><td><strong>JavaScript</strong></td><td><code>index.js</code> with <code>@actions/core</code></td><td>Cross-platform logic, fastest startup</td></tr>
+  <tr><td><strong>Docker</strong></td><td>Dockerfile, runs in a container</td><td>Exact toolchain pinning, any language</td></tr>
+</table>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">.github/actions/greet/action.yml — composite action</span><button class="copy-btn">Copy</button></div>
+<pre><code>name: 'Greet User'
+description: 'Says hello and reports files changed'
+inputs:
+  who:
+    description: 'Who to greet'
+    required: true
+  greeting:
+    description: 'Word to use'
+    default: Hello
+outputs:
+  file-count:
+    description: 'Number of files in repo'
+    value: ${{ steps.count.outputs.count }}
+
+runs:
+  using: composite
+  steps:
+    - id: count
+      shell: bash
+      run: echo "count=$(ls -1 | wc -l)" >> "$GITHUB_OUTPUT"
+
+    - shell: bash
+      run: echo "${{ inputs.greeting }}, ${{ inputs.who }}!"
+</code></pre>
+</div>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">using it in a workflow</span><button class="copy-btn">Copy</button></div>
+<pre><code>jobs:
+  demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/greet
+        with:
+          who: ${{ github.actor }}
+          greeting: Ahoy
+      - run: echo "${{ steps.greet-run.outputs.file-count }} files"
+</code></pre>
+</div>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">JavaScript action — action.yml + index.js</span><button class="copy-btn">Copy</button></div>
+<pre><code># action.yml
+name: 'JS Action Demo'
+inputs:
+  milliseconds:
+    required: true
+    default: '1000'
+outputs:
+  result:
+    description: 'What the action produced'
+runs:
+  using: node20
+  main: index.js
+
+# index.js  (npm i @actions/core @actions/github)
+# const core = require('@actions/core');
+# async function run() {
+#   const ms = core.getInput('milliseconds');
+#   core.debug(`waiting ${ms} ms...`);
+#   core.setOutput('result', `waited ${ms}`);
+# }
+# run().catch(e =&gt; core.setFailed(e.message));
+</code></pre>
+</div>
+
+<!-- ================================================================ -->
+<h2 id="examples">Complete CI/CD Examples</h2>
+
+<p>Five complete, copy-paste-ready recipes for the most common setups. Pick the one closest to your stack, commit it to <code>.github/workflows/</code>, watch it run, then adapt the details (versions, paths, commands) to your project. Each one shows several concepts from earlier sections working together.</p>
+
+<h3>Example 1 — Node.js CI with PR checks</h3>
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">.github/workflows/node-ci.yml</span><button class="copy-btn">Copy</button></div>
+<pre><code>name: Node CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Test with coverage
+        run: npm test -- --coverage
+
+      - name: Build
+        run: npm run build
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+</code></pre>
+</div>
+
+<h3>Example 2 — Python package: test matrix → publish to PyPI</h3>
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">.github/workflows/python-publish.yml</span><button class="copy-btn">Copy</button></div>
+<pre><code>name: Python CI/CD
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.10', '3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: pytest --cov=./ --cov-report=xml
+      - uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: test
+    runs-on: ubuntu-latest
+    environment: pypi                # approvals + trusted secret
+    permissions:
+      id-token: write                # OIDC — no static token needed
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install build &amp;&amp; python -m build
+      - uses: pypa/gh-action-pypi-publish@release/v1
+</code></pre>
+</div>
+
+<h3>Example 3 — Deploy static site to GitHub Pages</h3>
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">.github/workflows/pages.yml</span><button class="copy-btn">Copy</button></div>
+<pre><code>name: Deploy to Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: dist }
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+</code></pre>
+</div>
+
+<h3>Example 4 — Release pipeline: tag → build binaries → GitHub Release</h3>
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">.github/workflows/release.yml</span><button class="copy-btn">Copy</button></div>
+<pre><code>name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: myapp-linux
+          - os: windows-latest
+            artifact: myapp-windows.exe
+          - os: macos-latest
+            artifact: myapp-macos
+    steps:
+      - uses: actions/checkout@v4
+      - run: make build RELEASE=${{ github.ref_name }}
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: bin/release/*
+
+  publish:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: bin/ }
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true   # auto changelog from PRs
+          files: |
+            bin/*
+</code></pre>
+</div>
+
+<h3>Example 5 — Scheduled dependency updates (cron)</h3>
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">.github/workflows/deps.yml</span><button class="copy-btn">Copy</button></div>
+<pre><code>name: Update Dependencies
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'        # every Monday 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+
+      - run: npm outdated || true
+      - run: npm update
+      - run: npm test
+
+      - name: Open PR if changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          gh auth setup-git                 # let git push use GH_TOKEN
+          git checkout -b deps/update-${{ github.run_id }}
+          git add package*.json
+          if git diff --cached --quiet; then
+            echo "Nothing to update"
+          else
+            git commit -m "chore: weekly dependency update"
+            git push origin deps/update-${{ github.run_id }}
+            gh pr create --title "chore: weekly dependency update" \
+                         --body "Automated weekly update" --base main
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+</code></pre>
+</div>
+
+<!-- ================================================================ -->
+<h2 id="best-practices">Best Practices</h2>
+
+<div class="cards">
+  <div class="card"><div class="icon">🔒</div><h4>Pin actions by SHA</h4><p><code>uses: actions/checkout@&lt;full-sha&gt; # v4.2.2</code> — tags can be moved by maintainers; SHAs can't.</p></div>
+  <div class="card"><div class="icon">🕶️</div><h4>Least-privilege tokens</h4><p>Always set <code>permissions:</code> explicitly. Default GITHUB_TOKEN scope is read/write — narrow it to <code>contents: read</code> unless needed.</p></div>
+  <div class="card"><div class="icon">⏱️</div><h4>Set timeouts</h4><p><code>timeout-minutes</code> prevents hung jobs burning your minute quota (default is 6 hours!).</p></div>
+  <div class="card"><div class="icon">🔁</div><h4>Use concurrency</h4><p>Group per-ref and <code>cancel-in-progress: true</code> so rapid pushes don't stack stale runs.</p></div>
+  <div class="card"><div class="icon">🏃</div><h4>Fail fast & parallelize</h4><p>Split lint/test/build into parallel jobs, then <code>needs:</code> them into a deploy stage.</p></div>
+  <div class="card"><div class="icon">📦</div><h4>Cache everything expensive</h4><p>Package managers, Docker layers (<code>cache-from/to: type=gha</code>), toolchains.</p></div>
+  <div class="card"><div class="icon">🧼</div><h4>Quote shell env, not expressions</h4><p>Pass untrusted event data through <code>env:</code> into <code>"$VAR"</code> — never inline into <code>run:</code>.</p></div>
+  <div class="card"><div class="icon">♻️</div><h4>Reuse, don't copy</h4><p>Composite actions &amp; reusable workflows keep 100 repos' CI in sync from one place.</p></div>
+  <div class="card"><div class="icon">🚦</div><h4>Gate production</h4><p>Environments with required reviewers + deployment branch allow-lists for prod deploys.</p></div>
+</div>
+
+<!-- ================================================================ -->
+<h2 id="mistakes">Common Beginner Mistakes (and Fixes)</h2>
+
+<p>Every Actions user hits these. Recognizing them early turns hours of confusion into minutes.</p>
+
+<table>
+  <tr><th>#</th><th>Symptom / mistake</th><th>Why it happens</th><th>Fix</th></tr>
+  <tr><td>1</td><td>Workflow rejected with a <em>YAML syntax error</em> (e.g. "mapping values are not allowed here")</td><td>Tabs instead of spaces, or misaligned indentation</td><td>Use <strong>2 spaces per level, never Tab</strong>; indent children consistently under their parent</td></tr>
+  <tr><td>2</td><td>Workflow never runs at all</td><td>File isn't in <code>.github/workflows/</code>, has a wrong extension (e.g. <code>.yml.txt</code>), or the <code>on:</code> trigger doesn't match what you did</td><td>Check the exact path and extension; test with <code>on: push</code> and commit something; look in the Actions tab</td></tr>
+  <tr><td>3</td><td>Python <code>3.10</code> silently becomes <code>3.1</code></td><td>YAML reads the unquoted number as a decimal float and drops the trailing zero</td><td>Always quote versions: <code>python-version: '3.10'</code>, <code>node-version: '20'</code></td></tr>
+  <tr><td>4</td><td>Second job can't find files the first job built</td><td>Each job runs on a <strong>separate fresh VM</strong> — filesystems are not shared</td><td>Upload an artifact in job 1, download it in job 2 (§11)</td></tr>
+  <tr><td>5</td><td><code>npm: command not found</code> or wrong tool version</td><td>Tools must be set up in <em>every job</em> that needs them; preinstalled versions may differ from your project's</td><td>Use the setup actions (<code>actions/setup-node</code>, <code>setup-python</code>, …) in that job, right after checkout</td></tr>
+  <tr><td>6</td><td>Secret shows as <code>***</code> in logs and you think it's broken</td><td>That's <strong>by design</strong> — GitHub masks secret values in all logs</td><td>Nothing to fix. To verify a secret exists, check its length instead: <code>if [ -z "$KEY" ]; then echo "missing"; fi</code></td></tr>
+  <tr><td>7</td><td>Workflow can't push code or create releases — <code>403</code> / <em>Resource not accessible</em></td><td>The automatic <code>GITHUB_TOKEN</code> is intentionally limited</td><td>Declare what you need: <code>permissions:</code> with <code>contents: write</code> or <code>pull-requests: write</code> (§09)</td></tr>
+  <tr><td>8</td><td>Scheduled workflow fires late — or stops firing</td><td>Cron runs in <strong>UTC</strong>, busy hours add 15+ min delays, and schedules pause after 60 days of repo inactivity</td><td>Convert your local time to UTC; don't rely on to-the-minute timing; use <code>workflow_dispatch</code> as a manual backup</td></tr>
+  <tr><td>9</td><td>Green locally, red ✗ on GitHub — no idea why</td><td>Different OS, different tool versions, missing environment, or case-sensitive paths</td><td>Open the failing step's log and read from the <strong>first error upwards</strong>; enable debug logging (tip below)</td></tr>
+  <tr><td>10</td><td>Workflow "changed behavior by itself" weeks later</td><td>Unpinned versions move: <code>@v4</code>, <code>ubuntu-latest</code>, and base images all update eventually</td><td>Pin actions by SHA for stability (§05) and consider pinned runner labels like <code>ubuntu-24.04</code></td></tr>
+  <tr><td>11</td><td>Cache "never hits"</td><td>Exact-key match required; caches are branch-scoped (PRs can read the default branch's caches, not vice versa)</td><td>Use <code>hashFiles(...)</code> in keys plus <code>restore-keys:</code> fallbacks (§10)</td></tr>
+  <tr><td>12</td><td>Everything runs on every push, wasting minutes</td><td>No path filters and no concurrency grouping</td><td>Add <code>paths-ignore:</code> for docs, and <code>concurrency:</code> with <code>cancel-in-progress: true</code> to supersede stale runs</td></tr>
+</table>
+
+<div class="callout tip">
+  <span class="ct">Debugging toolbox</span>
+  Re-run a failed run with <strong>"Enable debug logging"</strong> (Re-run jobs dropdown) for verbose logs, or add a repository secret <code>ACTIONS_STEP_DEBUG = true</code>. Print state while developing: <code>echo "var=$VAR"</code>, <code>ls -la</code>, <code>env | sort</code> — and for stubborn cases you can even get an interactive SSH session in the runner via the <a href="https://github.com/marketplace/actions/debugging-with-tmate" target="_blank">tmate action</a>.
+</div>
+
+<!-- ================================================================ -->
+<h2 id="cheatsheet">Cheat Sheet</h2>
+
+<div class="code-window">
+  <div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="file">one-page reference</span><button class="copy-btn">Copy</button></div>
+<pre><code># ── MINIMAL WORKFLOW ─────────────────────────────────────
+name: CI
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo hello
+
+# ── TRIGGERS ────────────────────────────────────────────
+on: [push, pull_request]                    # list
+on: {push: {branches: [main]}}              # filtered
+on: {schedule: [{cron: '0 3 * * *'}]}       # cron (UTC)
+on: workflow_dispatch                       # manual button
+on: workflow_call                            # reusable
+
+# ── KEY EXPRESSIONS ─────────────────────────────────────
+${{ github.sha }}            commit SHA
+${{ github.ref }}            refs/heads/main
+${{ github.ref_name }}       main
+${{ github.event_name }}     push
+${{ github.actor }}          who triggered
+${{ github.repository }}     owner/repo
+${{ github.event.* }}        webhook payload
+${{ secrets.X }}             encrypted value
+${{ vars.X }}                config value
+${{ env.X }}                 env-var value
+${{ matrix.X }}              matrix value
+${{ steps.id.outputs.x }}    step output
+${{ needs.job.outputs.x }}   job output
+${{ inputs.x }}              dispatch/call input
+${{ runner.os }}             Linux/Windows/macOS
+${{ job.status }}            success/failure/…
+
+# ── STEP OUTPUT PATTERN ─────────────────────────────────
+- id: s
+  run: echo "key=value" >> "$GITHUB_OUTPUT"
+# read: ${{ steps.s.outputs.key }}
+
+# ── MULTI-LINE OUTPUT ───────────────────────────────────
+- id: m
+  run: |
+    {
+      echo "text&lt;&lt;EOF"
+      echo "line 1"
+      echo "line 2"
+      echo "EOF"
+    } >> "$GITHUB_OUTPUT"
+
+# ── DEFAULT SHELL VARS ──────────────────────────────────
+$GITHUB_WORKSPACE   $GITHUB_SHA      $GITHUB_REF
+$GITHUB_REPOSITORY  $GITHUB_TOKEN    $RUNNER_OS
+$GITHUB_EVENT_NAME  $GITHUB_JOB      $GITHUB_RUN_ID
+
+# ── COMMON COMBOS ───────────────────────────────────────
+# checkout + lang + cache, in 3 steps:
+- uses: actions/checkout@v4
+- uses: actions/setup-node@v4
+  with: {node-version: 20, cache: npm}
+- run: npm ci &amp;&amp; npm test
+
+# debug logging when desperate:
+#   Re-run with debugging → enable step debug logs
+#   or set secrets: ACTIONS_STEP_DEBUG = true
+</code></pre>
+</div>
+
+<footer>
+  GitHub Actions Guide — single-file reference · Built for offline study ·
+  Official docs: <a href="https://docs.github.com/actions" target="_blank">docs.github.com/actions</a> ·
+  Marketplace: <a href="https://github.com/marketplace?type=actions" target="_blank">github.com/marketplace</a>
+</footer>
+
+</main>
+</div>
+
+<script>
+(function () {
+  /* ---------- light / dark theme ---------- */
+  var themeToggleBtn = document.getElementById('themeToggle');
+  var rootEl = document.documentElement;
+
+  function applyTheme(mode, animate) {
+    if (animate) {
+      rootEl.classList.add('theme-fade');
+      setTimeout(function () { rootEl.classList.remove('theme-fade'); }, 520);
+    }
+    rootEl.classList.toggle('light', mode === 'light');
+    if (themeToggleBtn) {
+      themeToggleBtn.setAttribute('aria-checked', mode === 'light' ? 'true' : 'false');
+      themeToggleBtn.title = mode === 'light' ? 'Switch to dark mode' : 'Switch to light mode';
+    }
+  }
+
+  var storedTheme = null;
+  try { storedTheme = localStorage.getItem('ga-theme'); } catch (e) {}
+  var initialTheme = storedTheme ||
+    (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+  applyTheme(initialTheme, false);
+
+  if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', function () {
+      var next = rootEl.classList.contains('light') ? 'dark' : 'light';
+
+      /* playful burst feedback on the button itself */
+      themeToggleBtn.classList.remove('fx-burst');
+      void themeToggleBtn.offsetWidth;           /* restart animation */
+      themeToggleBtn.classList.add('fx-burst');
+
+      var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var rect = themeToggleBtn.getBoundingClientRect();
+      var x = rect.left + rect.width / 2;
+      var y = rect.top + rect.height / 2;
+
+      if (!reduced && typeof document.startViewTransition === 'function') {
+        /* modern path: circular reveal expanding from the toggle */
+        var vt = document.startViewTransition(function () { applyTheme(next, false); });
+        vt.ready.then(function () {
+          var radius = Math.hypot(
+            Math.max(x, window.innerWidth - x),
+            Math.max(y, window.innerHeight - y)
+          );
+          document.documentElement.animate(
+            {
+              clipPath: [
+                'circle(0px at ' + x + 'px ' + y + 'px)',
+                'circle(' + radius + 'px at ' + x + 'px ' + y + 'px)'
+              ]
+            },
+            {
+              duration: 650,
+              easing: 'cubic-bezier(.4, 0, .2, 1)',
+              pseudoElement: '::view-transition-new(root)'
+            }
+          );
+        })['catch'](function () { /* animation aborted — theme still applied */ });
+      } else {
+        /* fallback: cross-fade + ambient glow from the button position */
+        rootEl.style.setProperty('--fx-x', x + 'px');
+        applyTheme(next, true);
+      }
+      try { localStorage.setItem('ga-theme', next); } catch (e) {}
+    });
+  }
+
+  /* ---------- mobile sidebar ---------- */
+  var sidebar = document.getElementById('sidebar');
+  var menuBtn = document.getElementById('menuBtn');
+  menuBtn.addEventListener('click', function () { sidebar.classList.toggle('open'); });
+  sidebar.addEventListener('click', function (e) {
+    if (e.target.tagName === 'A' && window.innerWidth <= 900) sidebar.classList.remove('open');
+  });
+
+  /* ---------- copy buttons ---------- */
+  document.querySelectorAll('.copy-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var pre = btn.closest('.code-window').querySelector('pre');
+      var text = pre.innerText;
+      function done() {
+        btn.textContent = 'Copied!';
+        setTimeout(function () { btn.textContent = 'Copy'; }, 1600);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, done);
+      } else {
+        var ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta);
+        ta.select(); try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta); done();
+      }
+    });
+  });
+
+  /* ---------- lightweight syntax highlighting ---------- */
+  function esc(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function hlYaml(line) {
+    // comment-only line
+    var mComment = line.match(/^(\s*)(#.*)$/);
+    if (mComment) return mComment[1] + '<span class="c-com">' + esc(mComment[2]) + '</span>';
+
+    // key: value
+    var m = line.match(/^(\s*-?\s*)([A-Za-z0-9_.\-\/]+)(:)(?:\s+(.*))?$/);
+    if (m) {
+      var rest = m[4] || '';
+      return m[1] + '<span class="c-key">' + esc(m[2]) + '</span>' + m[3] +
+             (rest ? ' ' + hlValue(rest) : '');
+    }
+    // list item with value "- something"
+    var ml = line.match(/^(\s*-\s+)(.*)$/);
+    if (ml) return ml[1] + hlValue(ml[2]);
+    return hlValue(line);
+  }
+  function hlValue(v) {
+    v = esc(v);
+    // quoted strings FIRST — before any spans are injected, so this
+    // pattern can never match the " quotes inside span attributes
+    v = v.replace(/("[^"]*"|'[^']*')/g, '<span class="c-str">$1</span>');
+    // ${{ ... }} expressions
+    v = v.replace(/\$\{\{[^}]*\}\}/g, function (x) { return '<span class="c-expr">' + x + '</span>'; });
+    // secrets inside expressions already covered; highlight secrets.X separately if bare
+    // action references: owner/repo@ref
+    v = v.replace(/([A-Za-z0-9_.\-]+\/[A-Za-z0-9_.\-]+)@([A-Za-z0-9_.\-]+)/g,
+      '<span class="c-act">$1@$2</span>');
+    // shell commands after "run:" — color common commands
+    v = v.replace(/\b(npm|npx|pip|python|make|docker|git|gh|echo|ls|curl|cat|pytest|node|export)\b/g,
+      '<span class="c-run">$1</span>');
+    // booleans / numbers
+    v = v.replace(/\b(true|false|null)\b/g, '<span class="c-bool">$1</span>');
+    // trailing comments
+    v = v.replace(/(\s)(#.*)$/g, '$1<span class="c-com">$2</span>');
+    return v;
+  }
+  function unesc(s) {
+    /* decode HTML entities (&amp; &lt; &gt; …) the safe way — the browser
+       does the decoding and nothing gets executed */
+    var ta = document.createElement('textarea');
+    ta.innerHTML = s;
+    return ta.value;
+  }
+  document.querySelectorAll('pre').forEach(function (pre) {
+    /* strip the <code>…</code> wrapper before highlighting so the raw
+       tags never get escaped into visible "<code></code>" text.
+       Then DECODE entities so we highlight plain text — otherwise
+       esc() below would double-escape them and the page would show
+       literal "&amp;&amp;" / "&gt;&gt;" / "&lt;&lt;" artifacts. */
+    var html = pre.innerHTML.replace(/^\s*<code>\s*/i, '').replace(/\s*<\/code>\s*$/i, '');
+    var lines = unesc(html).split('\n');
+    pre.innerHTML = lines.map(function (l) {
+      return /^(\s*|[^\n]*)$/.test(l) ? hlYaml(l) : hlYaml(l);
+    }).join('\n');
+  });
+
+  /* ---------- active nav on scroll ---------- */
+  var links = Array.prototype.slice.call(document.querySelectorAll('#sidebar a'));
+  var targets = links.map(function (a) { return document.getElementById(a.getAttribute('href').slice(1)); });
+  function updateActive() {
+    var pos = window.scrollY + 120, idx = 0;
+    for (var i = 0; i < targets.length; i++) {
+      if (targets[i] && targets[i].offsetTop <= pos) idx = i;
+    }
+    links.forEach(function (a, i) { a.classList.toggle('active', i === idx); });
+  }
+  window.addEventListener('scroll', updateActive);
+  updateActive();
+
+  /* ---------- enhanced sidebar: sections, glider, progress ---------- */
+  var glider = document.getElementById('navGlider');
+  var progressBar = document.getElementById('readProgress');
+  var navSections = Array.prototype.slice.call(document.querySelectorAll('#sidebar .nav-section'));
+
+  function setSectionOpen(sec, open) {
+    sec.classList.toggle('open', open);
+    var btn = sec.querySelector('.nav-group');
+    if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    var box = sec.querySelector('.nav-links');
+    if (box) box.style.maxHeight = open ? box.scrollHeight + 'px' : '0px';
+  }
+
+  function refreshOpenHeights() {
+    navSections.forEach(function (sec) {
+      if (sec.classList.contains('open')) {
+        var box = sec.querySelector('.nav-links');
+        if (box) box.style.maxHeight = box.scrollHeight + 'px';
+      }
+    });
+  }
+
+  navSections.forEach(function (sec) {
+    var btn = sec.querySelector('.nav-group');
+    if (btn) btn.addEventListener('click', function () {
+      setSectionOpen(sec, !sec.classList.contains('open'));
+      if (glider) requestAnimationFrame(positionGlider);
+    });
+    setSectionOpen(sec, true);
+  });
+  window.addEventListener('resize', refreshOpenHeights);
+  window.addEventListener('load', refreshOpenHeights);
+
+  function positionGlider() {
+    var active = document.querySelector('#sidebar a.active');
+    if (!active || !glider) return;
+    glider.style.top = (active.offsetTop + 7) + 'px';
+    glider.style.height = (active.offsetHeight - 14) + 'px';
+    glider.style.opacity = 1;
+  }
+
+  function keepActiveVisible(link) {
+    var top = link.offsetTop, bottom = top + link.offsetHeight;
+    if (top < sidebar.scrollTop + 80) {
+      sidebar.scrollTop = Math.max(0, top - 90);
+    } else if (bottom > sidebar.scrollTop + sidebar.clientHeight - 16) {
+      sidebar.scrollTop = bottom - sidebar.clientHeight + 16;
+    }
+  }
+
+  var lastActiveIdx = -1;
+  function onActiveChanged(link) {
+    if (!link) { if (glider) glider.style.opacity = 0; return; }
+    var sec = link.closest('.nav-section');
+    if (sec && !sec.classList.contains('open')) setSectionOpen(sec, true);
+    requestAnimationFrame(function () {
+      positionGlider();
+      keepActiveVisible(link);
+    });
+  }
+
+  /* wrap the scrollspy to drive glider + section auto-open */
+  var baseUpdateActive = updateActive;
+  updateActive = function () {
+    baseUpdateActive();
+    var active = document.querySelector('#sidebar a.active');
+    var idx = links.indexOf(active);
+    if (idx !== lastActiveIdx) {
+      lastActiveIdx = idx;
+      onActiveChanged(active);
+    }
+  };
+  updateActive();
+
+  /* reading progress bar */
+  function updateReadingProgress() {
+    var doc = document.documentElement;
+    var max = doc.scrollHeight - doc.clientHeight;
+    var scrolled = window.scrollY || doc.scrollTop || 0;
+    var pct = max > 0 ? (scrolled / max) * 100 : 0;
+    if (progressBar) progressBar.style.width = pct + '%';
+  }
+  window.addEventListener('scroll', updateReadingProgress, { passive: true });
+  window.addEventListener('resize', updateReadingProgress);
+  window.addEventListener('load', function () { updateReadingProgress(); positionGlider(); });
+  updateReadingProgress();
+
+  /* back-to-top */
+  var navTopBtn = document.getElementById('navTop');
+  if (navTopBtn) navTopBtn.addEventListener('click', function () {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  /* ---------- scroll-reveal animations ---------- */
+  document.documentElement.classList.add('anim-ready');
+
+  var revealEls = document.querySelectorAll(
+    'main h2, main h3, main p, main ul, main ol, main table, ' +
+    '.code-window, .callout, .card, .flow, .hero'
+  );
+
+  /* stagger cards / badges inside shared parents */
+  document.querySelectorAll('.cards').forEach(function (group) {
+    Array.prototype.forEach.call(group.children, function (child, i) {
+      if (revealEls && !child.classList.contains('reveal')) {
+        child.classList.add('reveal');
+        child.classList.add('d' + Math.min((i % 3) + 1, 3));
+      }
+    });
+  });
+
+  if ('IntersectionObserver' in window) {
+    var seen = new WeakSet();
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting && !seen.has(entry.target)) {
+          seen.add(entry.target);
+          entry.target.classList.add('reveal', 'in-view');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+    revealEls.forEach(function (el) {
+      if (!el.classList.contains('reveal')) io.observe(el);
+    });
+    document.querySelectorAll('.cards > .card').forEach(function (c) { io.observe(c); });
+  } else {
+    /* no observer support → just show everything */
+    revealEls.forEach(function (el) { el.classList.add('reveal', 'in-view'); });
+  }
+})();
+</script>
+
+</body>
+</html>

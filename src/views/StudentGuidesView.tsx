@@ -1,6 +1,7 @@
 import { BookOpen } from 'lucide-react'
 import HexField from '@/components/HexField'
 import Reveal from '@/components/Reveal'
+import StudentGuidesCatalog from '@/components/StudentGuidesCatalog'
 import { studentGuides } from '~/data/student-guides'
 import { t, type Lang } from '@/lib/i18n'
 
@@ -23,7 +24,7 @@ export default function StudentGuidesView({ lang }: { lang: Lang }) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-content px-5 py-16 sm:px-8">
+      <section className="student-guides-listing relative mx-auto max-w-content px-5 py-16 sm:px-8">
         {studentGuides.length === 0 ? (
           <Reveal>
             <div className="card flex min-h-72 flex-col items-center justify-center border-dashed px-6 py-14 text-center sm:px-12">
@@ -35,14 +36,9 @@ export default function StudentGuidesView({ lang }: { lang: Lang }) {
             </div>
           </Reveal>
         ) : (
-          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {studentGuides.map((guide) => (
-              <article key={guide.slug} className="card p-6">
-                <h2 className="text-xl font-semibold text-fg">{guide.title}</h2>
-                <p className="mt-3 text-sm leading-relaxed text-muted">{guide.description}</p>
-              </article>
-            ))}
-          </div>
+          <Reveal>
+            <StudentGuidesCatalog guides={studentGuides} lang={lang} labels={c} />
+          </Reveal>
         )}
       </section>
     </>
