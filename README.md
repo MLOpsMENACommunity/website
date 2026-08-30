@@ -98,6 +98,7 @@ Everything editable is plain data — no CMS, no database.
 | Repos and homepage pillars | `data/community.ts` |
 | Key free resources | `data/resources.ts` |
 | Roadmaps (full text) | `content/roadmaps/*.md` |
+| Student guides (full text) | `content/student-guides/*.md` |
 | UI strings, both languages | `src/lib/i18n.ts` |
 | Arabic translations of the data above | `src/lib/content-i18n.ts` |
 
@@ -121,6 +122,47 @@ audience: "Who this is for."
 ```
 
 Ordering comes from the `ORDER` array in `src/lib/roadmaps.ts`.
+
+### Adding a student guide
+
+Guides are plain markdown in `content/student-guides/<slug>.md` — **no frontmatter**, because
+the metadata lives in `data/student-guides.ts` and in the route's `pageMetadata()`.
+
+Use `## NN Title` headings (zero-padded, no punctuation that a slugger would eat). The number
+drives the badge next to the heading, the numbered contents list, and the phase dividers, so
+it is not decoration.
+
+A fenced code block can carry a file label after the language, which becomes the code
+window's title bar:
+
+````markdown
+```yaml .github/workflows/ci.yml
+on: push
+```
+````
+
+Beyond markdown, a guide may embed these presentational blocks as raw HTML. They are styled
+under `.student-guide-prose` in `src/app/globals.css`:
+
+| Block | Shape |
+|---|---|
+| `.guide-stat-strip` | `.guide-stat` > `<b>` + `<span>` — key facts at the top of a guide |
+| `.callout` (`.note`, `.tip`, `.warn`) | `<span class="ct">Title</span>` then prose |
+| `.cards` | `.card` > `.icon` + `<h4>` + `<p>` |
+| `.flow` | `.node` (+ `<small>`) separated by `.arrow` |
+| `ol.guide-steps` | `<li><b>Step title</b>body</li>` — auto-numbered with a connector |
+| `.guide-compare` | `.guide-compare-col.good` / `.bad` > `<h4>` + `<ul>` |
+| `.guide-timeline` | `.guide-timeline-item` > `<span>` + `<strong>` + `<small>` |
+| `.pill` (`.req`, `.opt`) | Inline badge, usable inside table cells |
+
+**Adding a new block class means touching three places**: the CSS, the `REVEAL_SELECTOR`
+list in `src/components/GuideArticle.tsx`, and the `.guide-motion-ready` selectors in
+`globals.css`. Miss one and the block either never fades in or stays invisible.
+
+To register a whole new guide: add a `GuideDefinition` (learning path + phase dividers keyed
+by section number) in `src/lib/student-guides.server.ts`, a view in `src/views/`, an `(en)`
+and an `(ar)` `page.tsx`, an entry in `data/student-guides.ts`, and the path in
+`src/app/sitemap.ts`.
 
 ### Adding a session
 
