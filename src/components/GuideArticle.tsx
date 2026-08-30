@@ -2,12 +2,31 @@
 
 import { useEffect } from 'react'
 
+/* Keep this list in sync with the `.guide-motion-ready` selectors in
+   `globals.css`: a block-level class that is missing from either side either
+   never fades in or stays invisible forever. */
+const REVEAL_SELECTOR = [
+  'h2',
+  'h3',
+  'p',
+  'ul',
+  'ol',
+  'table',
+  '.cards',
+  '.flow',
+  '.callout',
+  '.code-window',
+  '.guide-learning-path',
+  '.guide-phase-marker',
+  '.guide-stat-strip',
+  '.guide-compare',
+  '.guide-timeline',
+].join(', ')
+
 export default function GuideArticle({ html, copiedLabel }: { html: string; copiedLabel: string }) {
   useEffect(() => {
     const article = document.querySelector<HTMLElement>('.student-guide-prose')
-    const revealElements = article
-      ? Array.from(article.querySelectorAll<HTMLElement>('h2, h3, p, ul, ol, table, .cards, .flow, .callout, .code-window'))
-      : []
+    const revealElements = article ? Array.from(article.querySelectorAll<HTMLElement>(REVEAL_SELECTOR)) : []
     article?.classList.add('guide-motion-ready')
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {

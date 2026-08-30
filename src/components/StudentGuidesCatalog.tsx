@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useDeferredValue, useState } from 'react'
-import { ArrowRight, Github, GitPullRequest, Search, Workflow, X } from 'lucide-react'
+import { ArrowRight, Box, Database, Github, GitPullRequest, Network, Search, Workflow, X } from 'lucide-react'
 import type { StudentGuide } from '~/data/student-guides'
 import { localeHref, type Lang } from '@/lib/i18n'
 
@@ -67,15 +67,21 @@ export default function StudentGuidesCatalog({
         </div>
       ) : (
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {filteredGuides.map((guide) => (
-            <Link
+          {filteredGuides.map((guide) => {
+            const isGitHub = guide.slug === 'github-actions'
+            const isDocker = guide.slug === 'docker'
+            const Icon = isDocker ? Box : Github
+            return (
+              <Link
               key={guide.slug}
               href={localeHref(lang, `/student-guides/${guide.slug}`)}
               className={`student-guide-card card card-hover group flex min-h-80 flex-col overflow-hidden p-6 sm:p-8 ${
-                guide.slug === 'github-actions' ? 'github-actions-card md:col-span-2 lg:col-span-3' : ''
+                isGitHub ? 'github-actions-card md:col-span-2 lg:col-span-3' : ''
+              } ${
+                isDocker ? 'docker-guide-card md:col-span-2 lg:col-span-3' : ''
               }`}
             >
-              {guide.slug === 'github-actions' && (
+              {isGitHub && (
                 <div className="github-card-background" aria-hidden="true">
                   <span className="github-flow-node node-one"><Github /></span>
                   <span className="github-flow-node node-two"><Workflow /></span>
@@ -84,10 +90,20 @@ export default function StudentGuidesCatalog({
                   <i className="github-flow-line line-two" />
                 </div>
               )}
+              {isDocker && (
+                <div className="docker-card-background" aria-hidden="true">
+                  <div className="docker-container-stack"><i /><i /><i /><i /><i /><i /></div>
+                  <span className="docker-card-node node-one"><Box /></span>
+                  <span className="docker-card-node node-two"><Network /></span>
+                  <span className="docker-card-node node-three"><Database /></span>
+                  <i className="docker-card-wave wave-one" />
+                  <i className="docker-card-wave wave-two" />
+                </div>
+              )}
               <div className="relative flex h-full flex-col md:max-w-[68%]">
                 <div className="flex items-start justify-between gap-4">
-                  <span className="github-card-icon flex h-14 w-14 items-center justify-center rounded-2xl border border-cyan-400/25 bg-cyan-400/[0.08] text-cyan-400">
-                    <Github className="h-6 w-6" aria-hidden="true" />
+                  <span className={`${isDocker ? 'docker-card-icon' : 'github-card-icon'} flex h-14 w-14 items-center justify-center rounded-2xl border border-cyan-400/25 bg-cyan-400/[0.08] text-cyan-400`}>
+                    <Icon className="h-6 w-6" aria-hidden="true" />
                   </span>
                   <span className="chip">{guide.category}</span>
                 </div>
@@ -103,7 +119,8 @@ export default function StudentGuidesCatalog({
                 </span>
               </div>
             </Link>
-          ))}
+            )
+          })}
         </div>
       )}
     </>

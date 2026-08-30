@@ -43,7 +43,15 @@ function GuideLinks({
   )
 }
 
-export default function GuideNavigation({ headings, labels }: { headings: GuideHeading[]; labels: Labels }) {
+export default function GuideNavigation({
+  headings,
+  labels,
+  title,
+}: {
+  headings: GuideHeading[]
+  labels: Labels
+  title: string
+}) {
   const [activeId, setActiveId] = useState(headings[0]?.id ?? '')
   const [query, setQuery] = useState('')
   const [progress, setProgress] = useState(0)
@@ -133,7 +141,7 @@ export default function GuideNavigation({ headings, labels }: { headings: GuideH
             <BookOpen aria-hidden="true" />
             <div>
               <small>{labels.onThisPage}</small>
-              <strong>GitHub Actions</strong>
+              <strong>{title}</strong>
             </div>
           </div>
           {search('guide-content-search-desktop')}

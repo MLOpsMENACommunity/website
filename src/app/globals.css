@@ -463,6 +463,92 @@
 .github-flow-line.line-two::after { animation-delay: -1.4s; }
 .github-card-icon { box-shadow: 0 16px 30px -18px rgba(44, 172, 209, 0.75); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s; }
 .github-actions-card:hover .github-card-icon { transform: translateY(-3px) rotate(-5deg); box-shadow: 0 20px 38px -16px rgba(44, 172, 209, 0.8); }
+
+/* Docker card: container blocks and a moving network/storage pipeline. */
+.docker-guide-card {
+  border-color: rgba(36, 150, 237, 0.26);
+  background: linear-gradient(105deg, var(--surface) 0%, var(--surface) 48%, rgba(36, 150, 237, 0.07) 76%, rgba(51, 206, 192, 0.05) 100%);
+}
+.docker-guide-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-image: radial-gradient(circle, rgba(36, 150, 237, 0.22) 1px, transparent 1px);
+  background-size: 22px 22px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 38%, #000 78%);
+  mask-image: linear-gradient(90deg, transparent 38%, #000 78%);
+  opacity: 0.75;
+  transition: opacity 0.35s, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+[dir='rtl'] .docker-guide-card::after { -webkit-mask-image: linear-gradient(-90deg, transparent 38%, #000 78%); mask-image: linear-gradient(-90deg, transparent 38%, #000 78%); }
+.docker-guide-card:hover::after { opacity: 1; transform: scale(1.03); }
+.docker-card-background { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.docker-card-background::before {
+  content: '';
+  position: absolute;
+  width: 24rem;
+  height: 24rem;
+  inset-inline-end: -7rem;
+  top: -6rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(36, 150, 237, 0.16), transparent 68%);
+  animation: githubCardPulse 5.5s ease-in-out infinite;
+}
+.docker-container-stack { position: absolute; inset-inline-end: 7%; top: 12%; display: grid; grid-template-columns: repeat(3, 2.5rem); gap: 0.35rem; transform: rotate(-4deg); }
+.docker-container-stack i {
+  width: 2.5rem;
+  height: 2rem;
+  border: 1px solid rgba(36, 150, 237, 0.32);
+  border-radius: 0.45rem;
+  background: rgba(36, 150, 237, 0.09);
+  box-shadow: 0 10px 24px -16px rgba(36, 150, 237, 0.8);
+  animation: dockerBlock 3.8s ease-in-out infinite;
+}
+.docker-container-stack i:nth-child(2) { animation-delay: -0.5s; }
+.docker-container-stack i:nth-child(3) { animation-delay: -1s; }
+.docker-container-stack i:nth-child(4) { animation-delay: -1.5s; }
+.docker-container-stack i:nth-child(5) { animation-delay: -2s; }
+.docker-container-stack i:nth-child(6) { animation-delay: -2.5s; }
+.docker-card-node {
+  position: absolute;
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border: 1px solid rgba(36, 150, 237, 0.3);
+  border-radius: 999px;
+  background: var(--nav-bg);
+  color: #2496ed;
+  box-shadow: 0 14px 30px -18px rgba(36, 150, 237, 0.8);
+  backdrop-filter: blur(12px);
+  animation: githubNodeFloat 4.8s ease-in-out infinite;
+}
+.docker-card-node svg { width: 1.15rem; }
+.docker-card-node.node-one { inset-inline-end: 26%; bottom: 17%; }
+.docker-card-node.node-two { inset-inline-end: 13%; bottom: 26%; animation-delay: -1.6s; }
+.docker-card-node.node-three { inset-inline-end: 5%; bottom: 10%; animation-delay: -3.1s; }
+.docker-card-wave {
+  position: absolute;
+  inset-inline-end: 4%;
+  bottom: 9%;
+  width: 26%;
+  height: 5rem;
+  border-top: 1px solid rgba(36, 150, 237, 0.35);
+  border-radius: 50%;
+  animation: dockerWave 3.2s ease-in-out infinite;
+}
+.docker-card-wave.wave-two { bottom: 5%; transform: scaleX(0.78); animation-delay: -1.6s; }
+.docker-card-icon { box-shadow: 0 16px 30px -18px rgba(36, 150, 237, 0.8); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s; }
+.docker-guide-card:hover .docker-card-icon { transform: translateY(-3px) rotate(5deg); box-shadow: 0 20px 38px -16px rgba(36, 150, 237, 0.85); }
+@keyframes dockerBlock {
+  0%, 100% { transform: translateY(0); background: rgba(36, 150, 237, 0.08); }
+  50% { transform: translateY(-4px); background: rgba(36, 150, 237, 0.16); }
+}
+@keyframes dockerWave {
+  0%, 100% { opacity: 0.25; transform: scaleX(0.7); }
+  50% { opacity: 0.8; transform: scaleX(1); }
+}
 @keyframes githubNodeFloat {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-8px); }
@@ -485,6 +571,10 @@
   .github-flow-node.node-two { inset-inline-end: 12%; top: 48%; }
   .github-flow-node.node-three { inset-inline-end: 3%; bottom: 8%; }
   .github-flow-line { opacity: 0.25; }
+  .docker-guide-card { background: linear-gradient(145deg, var(--surface), rgba(36, 150, 237, 0.07)); }
+  .docker-guide-card::after { -webkit-mask-image: linear-gradient(to bottom, transparent 35%, #000); mask-image: linear-gradient(to bottom, transparent 35%, #000); }
+  .docker-card-background { opacity: 0.28; }
+  .docker-container-stack { inset-inline-end: 2%; }
 }
 
 /* Anyone who asks for less motion gets none of it. */
@@ -607,6 +697,148 @@
 .guide-hero-copy h1 { animation: guideEnter 0.85s 0.22s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .guide-hero-copy p { animation: guideEnter 0.85s 0.32s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .guide-hero-copy .brand-text { background-size: 220% 100%; animation: shimmer 8s ease-in-out infinite; }
+
+/* GitHub Actions hero: the event → workflow → job → step chain from section 03,
+   with a pulse that travels the rail and lights each node as it passes. */
+.gha-pipeline {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1.5rem;
+  margin-top: 2.25rem;
+  animation: guideEnter 0.9s 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.gha-pipeline-node {
+  position: relative;
+  z-index: 1;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--nav-bg);
+  padding: 0.4rem 0.95rem;
+  color: rgb(var(--muted));
+  font-size: 0.71rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  backdrop-filter: blur(10px);
+  animation: ghaNodeGlow 4.8s ease-in-out infinite;
+  animation-delay: calc(var(--pipeline-index, 0) * 1.2s);
+}
+.gha-pipeline-node:not(:last-of-type)::after {
+  content: '';
+  position: absolute;
+  inset-inline-end: -1.55rem;
+  top: 50%;
+  width: 1.55rem;
+  height: 1px;
+  background: var(--line-strong);
+}
+.gha-pipeline-rail {
+  position: absolute;
+  z-index: 0;
+  inset-inline: 0.5rem;
+  top: 50%;
+  height: 1px;
+  overflow: visible;
+}
+.gha-pipeline-rail::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--brand-cyan-bright);
+  box-shadow: 0 0 12px rgba(34, 195, 230, 0.85);
+  animation: githubFlow 4.8s linear infinite;
+}
+@media (max-width: 640px) {
+  .gha-pipeline { gap: 0.5rem; }
+  .gha-pipeline-node:not(:last-of-type)::after { display: none; }
+  .gha-pipeline-rail { display: none; }
+}
+
+.docker-text {
+  background: linear-gradient(100deg, #2496ed, #22c3e6 52%, #33cec0);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 8s ease-in-out infinite;
+}
+.docker-guide-hero::before {
+  content: '';
+  position: absolute;
+  width: 28rem;
+  height: 12rem;
+  inset-inline-end: -3rem;
+  bottom: -8rem;
+  border-radius: 50%;
+  border-top: 1px solid rgba(36, 150, 237, 0.22);
+  box-shadow: 0 -24px 80px rgba(36, 150, 237, 0.06);
+}
+.docker-bubbles i {
+  position: absolute;
+  inset-inline-end: 10%;
+  bottom: 8%;
+  width: 0.45rem;
+  height: 0.45rem;
+  border: 1px solid rgba(36, 150, 237, 0.45);
+  border-radius: 999px;
+  animation: dockerBubble 6s ease-in infinite;
+}
+.docker-bubbles i:nth-child(2) { inset-inline-end: 16%; width: 0.7rem; height: 0.7rem; animation-delay: -1.5s; }
+.docker-bubbles i:nth-child(3) { inset-inline-end: 22%; width: 0.35rem; height: 0.35rem; animation-delay: -3s; }
+.docker-bubbles i:nth-child(4) { inset-inline-end: 28%; width: 0.6rem; height: 0.6rem; animation-delay: -4.5s; }
+
+/* Docker hero: image layers filling one after another, the way a cached build
+   replays. Purely decorative, so the markup is aria-hidden. */
+.docker-layers {
+  display: flex;
+  width: min(24rem, 100%);
+  flex-direction: column;
+  gap: 0.32rem;
+  margin-top: 2.25rem;
+  animation: guideEnter 0.9s 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.docker-layers i {
+  position: relative;
+  display: block;
+  height: 0.5rem;
+  overflow: hidden;
+  border: 1px solid rgba(36, 150, 237, 0.28);
+  border-radius: 999px;
+  background: rgba(36, 150, 237, 0.07);
+}
+.docker-layers i::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2496ed, #22c3e6, #33cec0);
+  transform-origin: left;
+  animation: dockerLayerFill 6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  animation-delay: calc(var(--layer-index, 0) * 0.42s);
+}
+[dir='rtl'] .docker-layers i::after { transform-origin: right; }
+.docker-layers i:nth-child(1) { width: 100%; }
+.docker-layers i:nth-child(2) { width: 76%; }
+.docker-layers i:nth-child(2)::after { --layer-index: 1; }
+.docker-layers i:nth-child(3) { width: 92%; }
+.docker-layers i:nth-child(3)::after { --layer-index: 2; }
+.docker-layers i:nth-child(4) { width: 54%; }
+.docker-layers i:nth-child(4)::after { --layer-index: 3; }
+.docker-layers i:nth-child(5) { width: 68%; }
+.docker-layers i:nth-child(5)::after { --layer-index: 4; }
+
+.docker-guide-page .guide-progress i { background: linear-gradient(90deg, #2496ed, #22c3e6, #33cec0); }
+.docker-guide-page .guide-toc-links a::before { background: linear-gradient(#2496ed, #22c3e6, #33cec0); }
+@keyframes dockerBubble {
+  0% { opacity: 0; transform: translateY(2rem) scale(0.6); }
+  25% { opacity: 0.8; }
+  100% { opacity: 0; transform: translateY(-12rem) scale(1.25); }
+}
 .student-guide-prose > :first-child { margin-top: 0; }
 .student-guide-prose h2 {
   margin-top: 5rem;
@@ -616,13 +848,20 @@
   font-size: 1.75rem;
   font-weight: 700;
 }
+.student-guide-prose > h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.student-guide-prose h2 .heading-title { min-width: 0; }
 .student-guide-prose h2 .num {
   display: inline-flex;
   min-width: 2.45rem;
   height: 1.7rem;
   align-items: center;
   justify-content: center;
-  margin-inline-end: 0.75rem;
+  flex: none;
+  margin-inline-end: 0;
   border: 1px solid rgba(44, 172, 209, 0.28);
   border-radius: 0.55rem;
   background: rgba(44, 172, 209, 0.08);
@@ -746,7 +985,7 @@
 .student-guide-prose th,
 .student-guide-prose td { min-width: 8rem; border: 1px solid var(--line); padding: 0.65rem 0.8rem; text-align: start; vertical-align: top; }
 .student-guide-prose th { background: rgb(var(--surface-2)); color: rgb(var(--fg)); font-weight: 650; }
-.student-guide-prose tr:nth-child(even) td { background: rgba(var(--surface-2), 0.35); }
+.student-guide-prose tr:nth-child(even) td { background: rgb(var(--surface-2) / 0.45); }
 .student-guide-prose .code-window { overflow: hidden; border: 1px solid var(--line); border-radius: 0.85rem; background: #050d1f; box-shadow: 0 20px 45px -30px rgba(5, 13, 31, 0.8); transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s; }
 .student-guide-prose .code-window:hover { border-color: rgba(44, 172, 209, 0.38); box-shadow: 0 24px 55px -28px rgba(44, 172, 209, 0.32); transform: translateY(-1px); }
 .student-guide-prose .code-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); background: #0b1934; padding: 0.55rem 0.8rem; }
@@ -760,6 +999,320 @@
 .student-guide-prose pre { overflow-x: auto; padding: 1rem; color: #cbd5e1; font-family: var(--font-mono), ui-monospace, monospace; font-size: 0.78rem; line-height: 1.65; }
 .student-guide-prose .pill.req { color: rgb(var(--c-coral)); }
 .student-guide-prose .pill.opt { color: rgb(var(--c-teal)); }
+.guide-learning-path {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 4.5rem;
+  border: 1px solid rgba(36, 150, 237, 0.24);
+  border-radius: 1.25rem;
+  background: linear-gradient(135deg, rgba(36, 150, 237, 0.08), var(--surface) 42%, rgba(51, 206, 192, 0.06));
+  padding: 1.5rem;
+  box-shadow: var(--card-shadow);
+}
+.guide-learning-path::before {
+  content: '';
+  position: absolute;
+  width: 14rem;
+  height: 14rem;
+  inset-inline-end: -7rem;
+  top: -8rem;
+  border-radius: 999px;
+  background: rgba(36, 150, 237, 0.1);
+  filter: blur(30px);
+}
+.guide-learning-path .guide-path-eyebrow {
+  color: #2496ed;
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.student-guide-prose .guide-learning-path h2 {
+  margin-top: 0.6rem;
+  border: 0;
+  padding: 0;
+  font-size: 1.55rem;
+}
+.student-guide-prose .guide-learning-path h2::after { display: none; }
+.guide-learning-path > p { max-width: 40rem; margin-block: 0.6rem 1.25rem; color: rgb(var(--muted)); }
+.student-guide-prose .guide-learning-path ol {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.guide-learning-path li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.25rem 0.75rem;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: var(--surface);
+  padding: 0.85rem;
+  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+}
+.guide-learning-path li:hover { border-color: rgba(36, 150, 237, 0.38); box-shadow: 0 14px 32px -24px rgba(36, 150, 237, 0.7); transform: translateY(-2px); }
+.guide-learning-path li b { color: rgb(var(--fg)); font-size: 0.82rem; }
+.guide-learning-path li span { color: #2496ed; font-family: var(--font-mono), monospace; font-size: 0.7rem; font-weight: 700; }
+.guide-learning-path li small { grid-column: 1 / -1; color: rgb(var(--faint)); font-size: 0.7rem; line-height: 1.5; }
+.guide-phase-marker {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.1rem 0.8rem;
+  margin-top: 5rem;
+  border: 1px solid rgba(36, 150, 237, 0.2);
+  border-radius: 0.9rem;
+  background: linear-gradient(90deg, rgba(36, 150, 237, 0.09), rgba(51, 206, 192, 0.04), transparent);
+  padding: 0.9rem 1rem;
+}
+.guide-phase-marker::after {
+  content: '';
+  position: absolute;
+  inset-inline-start: 1.2rem;
+  bottom: -5rem;
+  width: 1px;
+  height: 5rem;
+  background: linear-gradient(rgba(36, 150, 237, 0.35), transparent);
+}
+.guide-phase-marker > span {
+  grid-row: 1 / 3;
+  border: 1px solid rgba(36, 150, 237, 0.28);
+  border-radius: 999px;
+  background: rgba(36, 150, 237, 0.1);
+  padding: 0.35rem 0.65rem;
+  color: #2496ed;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.guide-phase-marker strong { color: rgb(var(--fg)); font-size: 0.9rem; }
+.guide-phase-marker small { color: rgb(var(--faint)); font-size: 0.7rem; }
+.guide-phase-marker + h2 { margin-top: 1.4rem; }
+
+/* ---- Guide content blocks authored as raw HTML in the markdown ----
+   `student-guides.server.ts` lets the guide markdown embed these class names
+   directly. Anything added here must also be listed in the reveal selectors at
+   the bottom of this file and in `GuideArticle.tsx`, or it never fades in. */
+
+/* Key-fact strip that opens a guide. */
+.student-guide-prose .guide-stat-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-block: 0 3rem;
+}
+.guide-stat {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  background: var(--surface);
+  padding: 0.9rem 1rem;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s, box-shadow 0.3s;
+}
+/* A single sheen that crosses the card on hover, matching the nav underline. */
+.guide-stat::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  width: 45%;
+  background: linear-gradient(90deg, transparent, rgba(44, 172, 209, 0.14), transparent);
+  opacity: 0;
+  transform: translateX(-120%);
+  transition: opacity 0.3s;
+}
+.guide-stat:hover { transform: translateY(-3px); border-color: rgba(44, 172, 209, 0.4); box-shadow: var(--card-shadow-hover); }
+.guide-stat:hover::after { opacity: 1; animation: guideSheen 0.9s ease-out; }
+.guide-stat b { display: block; color: rgb(var(--fg)); font-size: 1.4rem; font-weight: 750; line-height: 1.1; }
+.guide-stat span { display: block; margin-top: 0.3rem; color: rgb(var(--faint)); font-size: 0.7rem; line-height: 1.45; }
+
+/* Numbered walkthrough. The counter badge replaces the list marker so the
+   number can carry its own styling and connector line. */
+.student-guide-prose .guide-steps {
+  display: grid;
+  gap: 0.6rem;
+  margin-block: 1.1rem;
+  padding-inline-start: 0;
+  list-style: none;
+  counter-reset: guide-step;
+}
+.student-guide-prose .guide-steps li {
+  position: relative;
+  margin: 0;
+  counter-increment: guide-step;
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  background: var(--surface);
+  padding: 0.85rem 1rem;
+  padding-inline-start: 3.5rem;
+  color: rgb(var(--muted));
+  font-size: 0.86rem;
+  transition: border-color 0.3s, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s;
+}
+.student-guide-prose .guide-steps li::before {
+  content: counter(guide-step, decimal-leading-zero);
+  position: absolute;
+  inset-inline-start: 0.85rem;
+  top: 0.85rem;
+  display: grid;
+  width: 1.9rem;
+  height: 1.6rem;
+  place-items: center;
+  border: 1px solid rgba(44, 172, 209, 0.3);
+  border-radius: 0.5rem;
+  background: rgba(44, 172, 209, 0.09);
+  color: rgb(var(--c-cyan-400));
+  font-family: var(--font-mono), monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  transition: background 0.3s, box-shadow 0.3s, transform 0.3s;
+}
+/* Connector between consecutive steps, so the list reads as a sequence. */
+.student-guide-prose .guide-steps li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  inset-inline-start: 1.78rem;
+  top: 2.45rem;
+  width: 1px;
+  height: calc(100% - 2.45rem + 0.6rem);
+  background: linear-gradient(rgba(44, 172, 209, 0.4), rgba(44, 172, 209, 0));
+}
+.student-guide-prose .guide-steps li:hover { transform: translateX(3px); border-color: rgba(44, 172, 209, 0.38); box-shadow: var(--card-shadow-hover); }
+.student-guide-prose .guide-steps li:hover::before { background: rgba(44, 172, 209, 0.18); box-shadow: 0 0 18px rgba(44, 172, 209, 0.35); transform: translateY(-1px); }
+.student-guide-prose .guide-steps li b { display: block; margin-bottom: 0.2rem; color: rgb(var(--fg)); font-size: 0.88rem; font-weight: 650; }
+[dir='rtl'] .student-guide-prose .guide-steps li:hover { transform: translateX(-3px); }
+
+/* Side-by-side do / do-not columns. */
+.student-guide-prose .guide-compare {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin-block: 1.1rem;
+}
+.guide-compare-col {
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  background: var(--surface);
+  padding: 1rem 1.1rem;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s;
+}
+.guide-compare-col:hover { transform: translateY(-3px); box-shadow: var(--card-shadow-hover); }
+.guide-compare-col.good { border-color: rgb(var(--c-teal) / 0.32); background: linear-gradient(150deg, rgb(var(--c-teal) / 0.07), var(--surface) 55%); }
+.guide-compare-col.bad { border-color: rgb(var(--c-coral) / 0.3); background: linear-gradient(150deg, rgb(var(--c-coral) / 0.07), var(--surface) 55%); }
+.student-guide-prose .guide-compare-col h4 {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-block: 0 0.6rem;
+  font-size: 0.9rem;
+}
+.guide-compare-col h4::before {
+  display: grid;
+  width: 1.35rem;
+  height: 1.35rem;
+  flex: none;
+  place-items: center;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.guide-compare-col.good h4 { color: rgb(var(--c-teal)); }
+.guide-compare-col.good h4::before { content: '✓'; background: rgb(var(--c-teal) / 0.14); color: rgb(var(--c-teal)); }
+.guide-compare-col.bad h4 { color: rgb(var(--c-coral)); }
+.guide-compare-col.bad h4::before { content: '✕'; background: rgb(var(--c-coral) / 0.14); color: rgb(var(--c-coral)); }
+.student-guide-prose .guide-compare-col ul { margin: 0; padding-inline-start: 1.15rem; }
+.student-guide-prose .guide-compare-col li { margin-block: 0.35rem; color: rgb(var(--muted)); font-size: 0.81rem; line-height: 1.6; }
+
+/* Vertical timeline for "what happens when this runs" explanations. */
+.student-guide-prose .guide-timeline {
+  position: relative;
+  display: grid;
+  gap: 0.55rem;
+  margin-block: 1.1rem;
+  padding-inline-start: 1.5rem;
+}
+.student-guide-prose .guide-timeline::before {
+  content: '';
+  position: absolute;
+  inset-block: 0.75rem 1rem;
+  inset-inline-start: 0.3rem;
+  width: 2px;
+  border-radius: 999px;
+  background: linear-gradient(rgba(44, 172, 209, 0.55), rgba(44, 172, 209, 0.05));
+}
+.guide-timeline-item {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: var(--surface);
+  padding: 0.7rem 0.9rem;
+  transition: border-color 0.3s, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.guide-timeline-item::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: -1.36rem;
+  top: 1rem;
+  width: 0.62rem;
+  height: 0.62rem;
+  border: 2px solid rgb(var(--bg));
+  border-radius: 999px;
+  background: rgb(var(--c-cyan-400));
+  animation: guideTimelineDot 3.2s ease-in-out infinite;
+  animation-delay: calc(var(--timeline-index, 0) * 0.4s);
+}
+.guide-timeline-item:nth-child(2)::before { --timeline-index: 1; }
+.guide-timeline-item:nth-child(3)::before { --timeline-index: 2; }
+.guide-timeline-item:nth-child(4)::before { --timeline-index: 3; }
+.guide-timeline-item:nth-child(5)::before { --timeline-index: 4; }
+.guide-timeline-item:nth-child(6)::before { --timeline-index: 5; }
+.guide-timeline-item:hover { border-color: rgba(44, 172, 209, 0.38); transform: translateX(3px); }
+[dir='rtl'] .guide-timeline-item:hover { transform: translateX(-3px); }
+.guide-timeline-item > span {
+  display: inline-block;
+  margin-inline-end: 0.5rem;
+  border: 1px solid rgba(44, 172, 209, 0.26);
+  border-radius: 999px;
+  background: rgba(44, 172, 209, 0.08);
+  padding: 0.1rem 0.5rem;
+  color: rgb(var(--c-cyan-400));
+  font-family: var(--font-mono), monospace;
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+.guide-timeline-item strong { color: rgb(var(--fg)); font-size: 0.86rem; }
+.guide-timeline-item small { display: block; margin-top: 0.25rem; color: rgb(var(--faint)); font-size: 0.75rem; line-height: 1.55; }
+
+/* Flow diagram: nodes lift on hover and the arrows fire left to right so the
+   row reads as a direction rather than a list. */
+.student-guide-prose .flow .node { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s, box-shadow 0.3s; }
+.student-guide-prose .flow .node:hover { transform: translateY(-3px); border-color: rgba(44, 172, 209, 0.5); box-shadow: 0 14px 30px -20px rgba(44, 172, 209, 0.8); }
+.student-guide-prose .flow .arrow:nth-of-type(2) { animation-delay: 0.2s; }
+.student-guide-prose .flow .arrow:nth-of-type(3) { animation-delay: 0.4s; }
+.student-guide-prose .flow .arrow:nth-of-type(4) { animation-delay: 0.6s; }
+[dir='rtl'] .student-guide-prose .flow .arrow { transform: scaleX(-1); }
+
+/* Code window: the traffic-light dots come alive while the block is hovered. */
+.student-guide-prose .code-window:hover .dots i { animation: guideDotPulse 1.5s ease-in-out infinite; }
+.student-guide-prose .code-window:hover .dots i:nth-child(2) { animation-delay: 0.18s; }
+.student-guide-prose .code-window:hover .dots i:nth-child(3) { animation-delay: 0.36s; }
+.student-guide-prose .copy-btn:active { transform: scale(0.94); }
+
+@media (max-width: 860px) {
+  .student-guide-prose .guide-stat-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .student-guide-prose .guide-compare { grid-template-columns: 1fr; }
+  .student-guide-prose .guide-stat-strip { grid-template-columns: 1fr; margin-bottom: 2rem; }
+}
 
 /* Guide contents navigation: a sticky reading companion with scroll state. */
 .guide-desktop-nav {
@@ -917,19 +1470,65 @@
 .student-guide-prose h2[data-current]::after { opacity: 1; transform: scaleX(1); }
 .student-guide-prose h3[data-current] { color: rgb(var(--c-cyan-400)); transform: translateX(0.25rem); }
 .student-guide-prose h3[data-current]::before { box-shadow: 0 0 14px rgba(44, 172, 209, 0.75); transform: scale(1.35); }
-.student-guide-prose.guide-motion-ready > :is(h2, h3, p, ul, ol, table, .cards, .flow, .callout, .code-window) {
+.student-guide-prose.guide-motion-ready > :is(h2, h3, p, ul, ol, table, .cards, .flow, .callout, .code-window, .guide-learning-path, .guide-phase-marker, .guide-stat-strip, .guide-compare, .guide-timeline) {
   opacity: 0;
   transform: translateY(18px);
   transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.student-guide-prose.guide-motion-ready > :is(h2, h3, p, ul, ol, table, .cards, .flow, .callout, .code-window).guide-in-view {
+.student-guide-prose.guide-motion-ready > :is(h2, h3, p, ul, ol, table, .cards, .flow, .callout, .code-window, .guide-learning-path, .guide-phase-marker, .guide-stat-strip, .guide-compare, .guide-timeline).guide-in-view {
   opacity: 1;
   transform: none;
+}
+
+/* Once a container is in view its children arrive one after another, so a grid
+   of nine cards reads as a sequence instead of a single flash. */
+.student-guide-prose.guide-motion-ready .guide-in-view > :is(.card, .guide-stat, .guide-compare-col, .guide-timeline-item, .node) {
+  animation: guideChildIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--child-index, 0) * 55ms);
+}
+.student-guide-prose.guide-motion-ready .guide-in-view > :nth-child(2) { --child-index: 1; }
+.student-guide-prose.guide-motion-ready .guide-in-view > :nth-child(3) { --child-index: 2; }
+.student-guide-prose.guide-motion-ready .guide-in-view > :nth-child(4) { --child-index: 3; }
+.student-guide-prose.guide-motion-ready .guide-in-view > :nth-child(5) { --child-index: 4; }
+.student-guide-prose.guide-motion-ready .guide-in-view > :nth-child(6) { --child-index: 5; }
+.student-guide-prose.guide-motion-ready .guide-in-view > :nth-child(7) { --child-index: 6; }
+.student-guide-prose.guide-motion-ready .guide-in-view > :nth-child(8) { --child-index: 7; }
+.student-guide-prose.guide-motion-ready .guide-in-view > :nth-child(9) { --child-index: 8; }
+.student-guide-prose.guide-motion-ready .guide-in-view > :nth-child(n + 10) { --child-index: 9; }
+/* The guide-steps list animates as one block; its own connector reads the order. */
+.student-guide-prose.guide-motion-ready .guide-steps.guide-in-view > li {
+  animation: guideChildIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--child-index, 0) * 70ms);
 }
 
 @keyframes guideEnter {
   from { opacity: 0; transform: translateY(22px); }
   to { opacity: 1; transform: none; }
+}
+@keyframes guideChildIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes guideSheen {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(320%); }
+}
+@keyframes guideDotPulse {
+  0%, 100% { transform: scale(1); opacity: 0.75; }
+  50% { transform: scale(1.25); opacity: 1; }
+}
+@keyframes guideTimelineDot {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(44, 172, 209, 0.45); transform: scale(1); }
+  50% { box-shadow: 0 0 0 5px rgba(44, 172, 209, 0); transform: scale(1.18); }
+}
+@keyframes ghaNodeGlow {
+  0%, 72%, 100% { border-color: var(--line-strong); color: rgb(var(--muted)); box-shadow: none; }
+  18% { border-color: rgba(44, 172, 209, 0.55); color: rgb(var(--c-cyan-400)); box-shadow: 0 0 26px -8px rgba(44, 172, 209, 0.75); }
+}
+@keyframes dockerLayerFill {
+  0% { transform: scaleX(0); opacity: 0.4; }
+  30%, 68% { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(1); opacity: 0.4; }
 }
 @keyframes guideNavIn {
   from { opacity: 0; transform: translateX(-18px); }
@@ -958,11 +1557,28 @@
   .student-guide-prose pre { font-size: 0.72rem; }
   .guide-orbit-one { right: -13rem; }
   .guide-orbit-two { display: none; }
+  .student-guide-prose .guide-learning-path ol { grid-template-columns: 1fr; }
+  .guide-learning-path { padding: 1.1rem; }
+  .guide-phase-marker { grid-template-columns: 1fr; }
+  .guide-phase-marker > span { grid-row: auto; width: fit-content; margin-bottom: 0.35rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .student-guide-prose.guide-motion-ready > :is(h2, h3, p, ul, ol, table, .cards, .flow, .callout, .code-window) {
+  .student-guide-prose.guide-motion-ready > :is(h2, h3, p, ul, ol, table, .cards, .flow, .callout, .code-window, .guide-learning-path, .guide-phase-marker, .guide-stat-strip, .guide-compare, .guide-timeline) {
     opacity: 1;
     transform: none;
   }
+  .student-guide-prose.guide-motion-ready .guide-in-view > *,
+  .student-guide-prose .code-window:hover .dots i,
+  .guide-stat:hover::after,
+  .guide-timeline-item::before,
+  .gha-pipeline,
+  .gha-pipeline-node,
+  .gha-pipeline-rail::after,
+  .docker-layers,
+  .docker-layers i::after {
+    animation: none;
+  }
+  .docker-layers i::after { transform: none; opacity: 1; }
+  .gha-pipeline-rail { display: none; }
 }
