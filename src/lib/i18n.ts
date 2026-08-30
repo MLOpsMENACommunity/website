@@ -45,6 +45,7 @@ const en = {
     themeToLight: 'Switch to light theme',
     items: {
       roadmaps: 'Roadmaps',
+      studentGuides: 'Student Guides',
       courses: 'Courses',
       sessions: 'Sessions',
       team: 'Team',
@@ -245,6 +246,18 @@ const en = {
       'The full roadmap below is published in English. The overview, phases, and every resource link work the same in both editions.',
   },
 
+  studentGuidesPage: {
+    metaTitle: 'Student Guides',
+    metaDesc:
+      'Practical student guides from the MLOps MENA Community, collected in one place for learners.',
+    eyebrow: 'Student guides',
+    titleBefore: 'Practical guides for',
+    accent: 'your learning journey',
+    lead: 'A dedicated home for clear, practical guidance to help students move forward with confidence.',
+    emptyTitle: 'No guides published yet',
+    emptyLead: 'Student guides will appear here when they are ready.',
+  },
+
   coursesPage: {
     metaTitle: 'Courses',
     metaDesc:
@@ -439,6 +452,7 @@ const ar: typeof en = {
     themeToLight: 'التبديل إلى الوضع الفاتح',
     items: {
       roadmaps: 'خرائط التعلّم',
+      studentGuides: 'أدلة الدارسين',
       courses: 'الدورات',
       sessions: 'الجلسات',
       team: 'الفريق',
@@ -637,6 +651,18 @@ const ar: typeof en = {
     otherPaths: 'مسارات أخرى',
     englishNotice:
       'نص الخريطة الكامل بالأسفل منشور بالإنجليزية. النظرة العامة والمراحل وكل روابط المصادر تعمل بنفس الطريقة في النسختين.',
+  },
+
+  studentGuidesPage: {
+    metaTitle: 'أدلة الدارسين',
+    metaDesc:
+      'أدلة عملية للدارسين من مجتمع MLOps MENA، مجمّعة في مكان واحد لمساعدة المتعلّمين.',
+    eyebrow: 'أدلة الدارسين',
+    titleBefore: 'أدلة عملية من أجل',
+    accent: 'رحلتك التعليمية',
+    lead: 'مساحة مخصّصة لإرشادات واضحة وعملية تساعد الدارسين على التقدّم بثقة.',
+    emptyTitle: 'لم تُنشر أدلة بعد',
+    emptyLead: 'ستظهر أدلة الدارسين هنا فور جاهزيتها.',
   },
 
   coursesPage: {

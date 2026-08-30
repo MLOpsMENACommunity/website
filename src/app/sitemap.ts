@@ -5,7 +5,7 @@ import { site } from '~/site.config'
 export const dynamic = 'force-static'
 
 const staticPages = [
-  '', '/roadmaps', '/courses', '/courses/mlops-practitioner',
+  '', '/roadmaps', '/student-guides', '/courses', '/courses/mlops-practitioner',
   '/sessions', '/team', '/articles', '/mentorship', '/faq', '/privacy-policy',
 ]
 

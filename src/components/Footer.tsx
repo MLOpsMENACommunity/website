@@ -22,6 +22,7 @@ export default function Footer({ lang = 'en' }: { lang?: Lang }) {
 
   const learn = [
     { label: copy.nav.items.roadmaps, href: '/roadmaps' },
+    { label: copy.nav.items.studentGuides, href: '/student-guides' },
     { label: copy.nav.items.courses, href: '/courses' },
     { label: copy.footer.practitioner, href: '/courses/mlops-practitioner' },
     { label: copy.nav.items.sessions, href: '/sessions' },
