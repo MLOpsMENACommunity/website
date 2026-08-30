@@ -14,16 +14,19 @@ type Labels = {
   noResultsLead: string
   openGuide: string
   englishGuide: string
+  statSections: string
 }
 
 export default function StudentGuidesCatalog({
   guides,
   lang,
   labels,
+  sectionsBySlug,
 }: {
   guides: StudentGuide[]
   lang: Lang
   labels: Labels
+  sectionsBySlug: Record<string, number>
 }) {
   const [query, setQuery] = useState('')
   const deferredQuery = useDeferredValue(query.trim().toLocaleLowerCase())
@@ -36,9 +39,9 @@ export default function StudentGuidesCatalog({
 
   return (
     <>
-      <div className="relative mx-auto mb-8 max-w-2xl">
+      <div className="guides-search enter relative mx-auto mb-8 max-w-2xl" style={{ '--enter-delay': '440ms' } as React.CSSProperties}>
         <label htmlFor="guide-search" className="sr-only">{labels.searchLabel}</label>
-        <Search className="pointer-events-none absolute start-5 top-1/2 h-5 w-5 -translate-y-1/2 text-faint" />
+        <Search className="pointer-events-none absolute start-5 top-1/2 h-5 w-5 -translate-y-1/2 text-faint transition-colors" />
         <input
           id="guide-search"
           type="search"
@@ -60,22 +63,24 @@ export default function StudentGuidesCatalog({
       </div>
 
       {filteredGuides.length === 0 ? (
-        <div className="card flex min-h-64 flex-col items-center justify-center border-dashed px-6 py-12 text-center">
+        <div className="card enter flex min-h-64 flex-col items-center justify-center border-dashed px-6 py-12 text-center">
           <Search className="h-7 w-7 text-cyan-400" aria-hidden="true" />
           <h2 className="mt-4 text-xl font-semibold text-fg">{labels.noResultsTitle}</h2>
           <p className="mt-2 max-w-md text-sm leading-relaxed text-muted">{labels.noResultsLead}</p>
         </div>
       ) : (
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {filteredGuides.map((guide) => {
+          {filteredGuides.map((guide, index) => {
             const isGitHub = guide.slug === 'github-actions'
             const isDocker = guide.slug === 'docker'
             const Icon = isDocker ? Box : Github
+            const sections = sectionsBySlug[guide.slug]
             return (
               <Link
               key={guide.slug}
               href={localeHref(lang, `/student-guides/${guide.slug}`)}
-              className={`student-guide-card card card-hover group flex min-h-80 flex-col overflow-hidden p-6 sm:p-8 ${
+              style={{ '--enter-delay': `${550 + index * 120}ms` } as React.CSSProperties}
+              className={`student-guide-card card card-hover group enter flex min-h-80 flex-col overflow-hidden p-6 sm:p-8 ${
                 isGitHub ? 'github-actions-card md:col-span-2 lg:col-span-3' : ''
               } ${
                 isDocker ? 'docker-guide-card md:col-span-2 lg:col-span-3' : ''
@@ -110,6 +115,11 @@ export default function StudentGuidesCatalog({
                 <h2 className="mt-6 text-2xl font-semibold leading-snug text-fg sm:text-3xl">{guide.title}</h2>
                 <p className="mt-3 max-w-2xl flex-1 text-sm leading-relaxed text-muted sm:text-base">{guide.description}</p>
                 <div className="mt-5 flex flex-wrap gap-2">
+                  {sections > 0 && (
+                    <span className="chip guide-section-chip !px-2.5 !py-0.5 text-[10px]">
+                      {sections} {labels.statSections}
+                    </span>
+                  )}
                   {guide.tags.map((tag) => <span key={tag} className="chip !px-2.5 !py-0.5 text-[10px]">{tag}</span>)}
                   {lang === 'ar' && <span className="chip !px-2.5 !py-0.5 text-[10px]">{labels.englishGuide}</span>}
                 </div>

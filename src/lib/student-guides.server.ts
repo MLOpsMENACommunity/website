@@ -223,3 +223,22 @@ export function getGitHubActionsGuideContent() {
 export function getDockerGuideContent() {
   return renderStudentGuide(dockerGuide)
 }
+
+const definitions = [githubActionsGuide, dockerGuide]
+
+/* Counted from the markdown rather than written down anywhere, so the figure on a
+   catalogue card cannot drift from the guide itself. The pattern is exact: every
+   section heading is `## NN Title`. */
+export function getStudentGuideSectionCounts(): Record<string, number> {
+  const counts: Record<string, number> = {}
+
+  for (const definition of definitions) {
+    const markdown = fs.readFileSync(
+      path.join(process.cwd(), 'content', 'student-guides', `${definition.slug}.md`),
+      'utf8',
+    )
+    counts[definition.slug] = markdown.match(/^## \d{2} /gm)?.length ?? 0
+  }
+
+  return counts
+}

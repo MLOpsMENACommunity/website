@@ -379,6 +379,39 @@
 }
 .student-guides-listing::before { width: 18rem; height: 18rem; inset-inline-start: -10rem; top: 8rem; background: rgba(51, 206, 192, 0.08); }
 .student-guides-listing::after { width: 20rem; height: 20rem; inset-inline-end: -12rem; bottom: -4rem; background: rgba(236, 151, 35, 0.07); }
+
+/* Listing hero: a faint grid that drifts, so the header is not a flat block. */
+.guides-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--hex) 1px, transparent 1px),
+    linear-gradient(90deg, var(--hex) 1px, transparent 1px);
+  background-size: 46px 46px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 80% at 20% 0%, #000, transparent 75%);
+  mask-image: radial-gradient(ellipse 70% 80% at 20% 0%, #000, transparent 75%);
+  animation: guidesGridDrift 32s linear infinite;
+}
+
+/* Search field: the icon and ring pick up the brand accent on focus. */
+.guides-search:focus-within > svg { color: rgb(var(--c-cyan-400)); }
+
+/* The derived section count leads the tag row, so it reads as a fact not a tag. */
+.guide-section-chip {
+  border-color: rgba(44, 172, 209, 0.35) !important;
+  background: rgba(44, 172, 209, 0.08) !important;
+  color: rgb(var(--c-cyan-400)) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes guidesGridDrift {
+  from { background-position: 0 0, 0 0; }
+  to { background-position: 46px 46px, 46px 46px; }
+}
+
 .student-guide-card { isolation: isolate; }
 .github-actions-card {
   border-color: rgba(44, 172, 209, 0.24);
@@ -587,6 +620,7 @@
   .brand-text-animated { animation: none; }
   .twinkle { animation: none; }
   .marquee-track { animation: none; }
+  .guides-hero::after { animation: none; }
   .marquee {
     overflow-x: auto;
     -webkit-mask-image: none;
