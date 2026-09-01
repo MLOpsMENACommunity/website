@@ -1,7 +1,7 @@
 {
   "org": "MLOpsMENACommunity",
   "url": "https://github.com/MLOpsMENACommunity",
-  "followers": 35,
+  "followers": 36,
   "publicRepos": 2,
   "stars": 19,
   "repos": [
@@ -11,7 +11,7 @@
       "desc": null,
       "lang": "Python",
       "stars": 17,
-      "forks": 11
+      "forks": 12
     },
     {
       "name": "website",
