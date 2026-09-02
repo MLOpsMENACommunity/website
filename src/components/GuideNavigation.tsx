@@ -47,10 +47,18 @@ export default function GuideNavigation({
   headings,
   labels,
   title,
+  eyebrow,
+  scopeId,
 }: {
   headings: GuideHeading[]
   labels: Labels
   title: string
+  /* Overrides the small label above the title; a levelled guide puts the
+     current level there. */
+  eyebrow?: string
+  /* Id of the element holding the article this navigation describes. A levelled
+     guide has several, only one of them visible. */
+  scopeId?: string
 }) {
   const [activeId, setActiveId] = useState(headings[0]?.id ?? '')
   const [query, setQuery] = useState('')
@@ -65,17 +73,24 @@ export default function GuideNavigation({
   const navigationActiveId = query.trim() ? activeId : activeSection?.id ?? activeId
 
   useEffect(() => {
+    const article = () =>
+      scopeId
+        ? document.getElementById(scopeId)?.querySelector<HTMLElement>('.student-guide-prose') ?? null
+        : document.querySelector<HTMLElement>('.student-guide-prose')
+
     const update = () => {
+      /* Heading ids are unique across every pane, so this only ever resolves to
+         elements inside the one on screen. */
       const elements = headings
         .map((heading) => document.getElementById(heading.id))
         .filter((element): element is HTMLElement => Boolean(element))
       const current = [...elements].reverse().find((element) => element.getBoundingClientRect().top <= 150) ?? elements[0]
       if (current) setActiveId(current.id)
 
-      const article = document.querySelector<HTMLElement>('.student-guide-prose')
-      if (!article) return
-      const start = article.offsetTop - 120
-      const max = article.offsetHeight - window.innerHeight + 180
+      const element = article()
+      if (!element) return
+      const start = element.offsetTop - 120
+      const max = element.offsetHeight - window.innerHeight + 180
       setProgress(Math.max(0, Math.min(100, ((window.scrollY - start) / max) * 100)))
     }
 
@@ -86,13 +101,14 @@ export default function GuideNavigation({
       window.removeEventListener('scroll', update)
       window.removeEventListener('resize', update)
     }
-  }, [headings])
+  }, [headings, scopeId])
 
   useEffect(() => {
-    document.querySelectorAll('.student-guide-prose h2, .student-guide-prose h3').forEach((heading) => {
+    const scope = scopeId ? document.getElementById(scopeId) : document
+    scope?.querySelectorAll('.student-guide-prose h2, .student-guide-prose h3').forEach((heading) => {
       heading.toggleAttribute('data-current', heading.id === activeId)
     })
-  }, [activeId])
+  }, [activeId, scopeId])
 
   const search = (id: string) => (
     <div className="guide-search">
@@ -121,7 +137,7 @@ export default function GuideNavigation({
         </div>
         <button type="button" className="guide-mobile-trigger" onClick={() => setMobileOpen((open) => !open)} aria-expanded={mobileOpen}>
           <span>
-            <small>{labels.onThisPage}</small>
+            <small>{eyebrow ?? labels.onThisPage}</small>
             <strong lang="en" dir="ltr">{activeHeading?.title}</strong>
           </span>
           <ChevronDown aria-hidden="true" />
@@ -140,7 +156,7 @@ export default function GuideNavigation({
           <div className="guide-nav-heading">
             <BookOpen aria-hidden="true" />
             <div>
-              <small>{labels.onThisPage}</small>
+              <small>{eyebrow ?? labels.onThisPage}</small>
               <strong>{title}</strong>
             </div>
           </div>

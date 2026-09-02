@@ -6,7 +6,7 @@ export const metadata: Metadata = pageMetadata({
   lang: 'en',
   path: '/student-guides/github-actions',
   title: 'The Complete GitHub Actions Guide',
-  description: 'A complete GitHub Actions guide in 28 sections: CI/CD fundamentals, workflows, jobs, runners, expressions, secrets, caching, artifacts, matrices, reusable workflows, environments, OIDC and supply-chain security, container builds, ML pipelines, debugging, and full examples.',
+  description: 'A complete GitHub Actions course taught at three levels. Choose Beginner, Mid-level, or Senior, then read the full explanation with worked examples, a fast interview review, or the practical tips and traps for that level.',
 })
 
 export default function EnGitHubActionsGuidePage() {

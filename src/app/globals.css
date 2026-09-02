@@ -1142,6 +1142,10 @@
   gap: 0.7rem;
   margin-block: 0 3rem;
 }
+/* A generated strip states how many facts it carries, so a short one fills its
+   row rather than leaving empty cells. */
+.student-guide-prose .guide-stat-strip[data-count='2'] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.student-guide-prose .guide-stat-strip[data-count='3'] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .guide-stat {
   position: relative;
   overflow: hidden;
@@ -1346,6 +1350,165 @@
 @media (max-width: 640px) {
   .student-guide-prose .guide-compare { grid-template-columns: 1fr; }
   .student-guide-prose .guide-stat-strip { grid-template-columns: 1fr; margin-bottom: 2rem; }
+}
+
+/* ---- Levelled guide: experience level and reading-section switcher ----
+   Two tablists in one sticky bar. Everything that has to sit clear of that bar
+   is derived from `--gha-switcher-h`, so the bar's height is stated once. */
+.gha-levels-shell {
+  --gha-switcher-h: 3.35rem;
+}
+.gha-switcher {
+  position: sticky;
+  top: 4rem;
+  z-index: 35;
+  border-bottom: 1px solid var(--line);
+  background: var(--nav-bg);
+  backdrop-filter: blur(18px);
+}
+/* Brand hairline along the bottom edge, matching the section rules elsewhere. */
+.gha-switcher::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(44, 172, 209, 0.4), transparent);
+}
+.gha-switcher-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  /* One row at every width; the groups scroll sideways on a narrow screen
+     rather than stacking, which would double the sticky chrome. */
+  overflow-x: auto;
+  padding-block: 0.45rem;
+  scrollbar-width: none;
+}
+.gha-switcher-inner::-webkit-scrollbar { display: none; }
+.gha-group {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.15rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgb(var(--surface-2));
+  padding: 0.2rem;
+}
+.gha-switcher-rule { flex: none; width: 1px; height: 1.4rem; background: var(--line-strong); }
+.gha-tab {
+  --gha-accent: var(--c-cyan-400);
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.42rem;
+  border-radius: 999px;
+  padding: 0.42rem 0.8rem;
+  color: rgb(var(--muted));
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color 0.25s, background 0.25s, box-shadow 0.3s;
+}
+.gha-tab > svg { width: 0.95rem; height: 0.95rem; }
+.gha-tab:hover { color: rgb(var(--fg)); }
+.gha-tab:focus-visible { outline: 2px solid rgb(var(--c-cyan-400)); outline-offset: 2px; }
+.gha-tab[aria-selected='true'] {
+  background: rgb(var(--gha-accent) / 0.13);
+  box-shadow: inset 0 0 0 1px rgb(var(--gha-accent) / 0.32);
+  color: rgb(var(--gha-accent));
+}
+/* One hue per level, so the level in play is recognisable at a glance. */
+.gha-tab[data-level='beginner'] { --gha-accent: var(--c-teal); }
+.gha-tab[data-level='mid'] { --gha-accent: var(--c-cyan-400); }
+.gha-tab[data-level='senior'] { --gha-accent: var(--c-amber-400); }
+.gha-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  flex: none;
+  border-radius: 999px;
+  background: rgb(var(--gha-accent));
+  opacity: 0.4;
+  transition: opacity 0.25s, box-shadow 0.3s;
+}
+.gha-tab[aria-selected='true'] .gha-dot { opacity: 1; box-shadow: 0 0 10px rgb(var(--gha-accent) / 0.75); }
+.gha-tab-meta {
+  display: none;
+  color: rgb(var(--faint));
+  font-family: var(--font-mono), monospace;
+  font-size: 0.62rem;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.gha-tab[aria-selected='true'] .gha-tab-meta { color: rgb(var(--gha-accent) / 0.8); }
+@media (min-width: 640px) {
+  .gha-tab-meta { display: inline; }
+}
+
+/* Step through the nine panes in reading order: each level's three treatments,
+   then the next level. */
+.gha-pane-steps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin-top: 3.5rem;
+  border-top: 1px solid var(--line);
+  padding-top: 1.75rem;
+}
+.gha-pane-steps button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  background: var(--surface);
+  padding: 0.85rem 1rem;
+  text-align: end;
+  box-shadow: var(--card-shadow);
+  transition: border-color 0.3s, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s;
+}
+.gha-pane-steps button[data-back='true'] { text-align: start; }
+.gha-pane-steps button:hover {
+  border-color: rgba(44, 172, 209, 0.4);
+  box-shadow: var(--card-shadow-hover);
+  transform: translateY(-2px);
+}
+.gha-pane-steps svg { width: 1rem; height: 1rem; flex: none; color: rgb(var(--c-cyan-400)); }
+.gha-pane-steps small {
+  display: block;
+  color: rgb(var(--faint));
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.gha-pane-steps strong { color: rgb(var(--fg)); font-size: 0.85rem; }
+@media (max-width: 640px) {
+  .gha-pane-steps { grid-template-columns: 1fr; }
+}
+
+/* Only the selected pane is displayed, so a switch is a repaint rather than a
+   fetch. Deliberately no `fill-mode`: with `both`, a pane whose animation had not
+   started yet would be pinned at the `from` state and stay invisible. */
+.gha-pane { animation: ghaPaneIn 0.4s ease-out; }
+@keyframes ghaPaneIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* The sticky reading chrome has to clear the switcher as well as the header. */
+.gha-levels-shell .guide-desktop-nav {
+  top: calc(4rem + var(--gha-switcher-h) + 1.15rem);
+  max-height: calc(100vh - 4rem - var(--gha-switcher-h) - 2.6rem);
+}
+.gha-levels-shell .guide-mobile-nav { top: calc(4rem + var(--gha-switcher-h)); }
+/* Added to the global 6rem `scroll-padding-top`, not a replacement for it, so
+   an anchored heading lands below every pinned bar. */
+.gha-levels-shell .student-guide-prose :is(h2, h3) { scroll-margin-top: calc(var(--gha-switcher-h) + 1.8rem); }
+@media (min-width: 1024px) {
+  .gha-levels-shell .student-guide-prose :is(h2, h3) { scroll-margin-top: calc(var(--gha-switcher-h) - 1.2rem); }
 }
 
 /* Guide contents navigation: a sticky reading companion with scroll state. */
@@ -1606,6 +1769,7 @@
   .student-guide-prose .code-window:hover .dots i,
   .guide-stat:hover::after,
   .guide-timeline-item::before,
+  .gha-pane,
   .gha-pipeline,
   .gha-pipeline-node,
   .gha-pipeline-rail::after,
