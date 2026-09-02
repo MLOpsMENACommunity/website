@@ -6,7 +6,7 @@ export const metadata: Metadata = pageMetadata({
   lang: 'en',
   path: '/student-guides/docker',
   title: 'The Complete Docker Guide',
-  description: 'A practical Docker guide in 26 sections: core container concepts, Dockerfiles, layer caching, Compose, networking, volumes, security, debugging, image optimization, machine-learning images, CI/CD delivery, orchestration, and a troubleshooting reference.',
+  description: 'A complete Docker course taught at three levels. Choose Beginner, Mid-level, or Senior, then read the full explanation with worked examples, a fast interview review, or the practical tips and traps for that level.',
 })
 
 export default function EnDockerGuidePage() {

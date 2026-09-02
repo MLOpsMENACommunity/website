@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { ArrowLeft, Github } from 'lucide-react'
 import GuideLevelTracks from '@/components/GuideLevelTracks'
-import { getGitHubActionsGuideLevels } from '@/lib/student-guides.server'
+import { getGuideLevels } from '@/lib/student-guides.server'
 import { localeHref, t, type Lang } from '@/lib/i18n'
 
 /* The hero pipeline mirrors the mental model taught in section 03:
@@ -10,7 +10,7 @@ const pipeline = ['Event', 'Workflow', 'Job', 'Step']
 
 export default async function GitHubActionsGuideView({ lang }: { lang: Lang }) {
   const c = t(lang).studentGuidesPage
-  const levels = await getGitHubActionsGuideLevels()
+  const levels = await getGuideLevels('github-actions')
   const sections = levels.reduce((total, level) => total + level.sections, 0)
 
   return (
