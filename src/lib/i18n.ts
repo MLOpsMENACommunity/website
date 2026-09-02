@@ -255,7 +255,7 @@ const en = {
     titleBefore: 'Deep-dive guides for',
     accent: 'the MLOps toolchain',
     lead: 'Long-form, numbered guides you can work through end to end — every command runnable, every example copy-paste ready, and every section written for someone starting from zero.',
-    statSections: 'numbered sections',
+    statSections: 'sections',
     emptyTitle: 'No guides published yet',
     emptyLead: 'Student guides will appear here when they are ready.',
     searchLabel: 'Search student guides',
@@ -272,7 +272,25 @@ const en = {
     noSectionResults: 'No sections match your search.',
     readingProgress: 'Reading progress',
     copied: 'Copied!',
+    /* The GitHub Actions guide is read as a grid: an experience level, then how
+       you want to read that level. */
+    levelNav: 'Experience level',
+    trackNav: 'How to read it',
+    sectionsSuffix: 'sections',
+    levels: {
+      beginner: 'Beginner',
+      mid: 'Mid-level',
+      senior: 'Senior',
+    },
+    tracks: {
+      detailed: 'Detailed',
+      interview: 'Interview Review',
+      tips: 'Tips & Tricks',
+    },
+    panePrevious: 'Previous',
+    paneNext: 'Next up',
   },
+
 
   coursesPage: {
     metaTitle: 'Courses',
@@ -678,7 +696,7 @@ const ar: typeof en = {
     titleBefore: 'أدلة متعمّقة لأدوات',
     accent: 'MLOps',
     lead: 'أدلة مطوّلة ومرقّمة يمكنك إكمالها من أولها إلى آخرها — كل أمر قابل للتنفيذ، وكل مثال جاهز للنسخ، وكل قسم مكتوب لمن يبدأ من الصفر.',
-    statSections: 'قسمًا مرقّمًا',
+    statSections: 'قسمًا',
     emptyTitle: 'لم تُنشر أدلة بعد',
     emptyLead: 'ستظهر أدلة الدارسين هنا فور جاهزيتها.',
     searchLabel: 'ابحث في أدلة الدارسين',
@@ -695,7 +713,23 @@ const ar: typeof en = {
     noSectionResults: 'لا توجد أقسام تطابق بحثك.',
     readingProgress: 'تقدّم القراءة',
     copied: 'تم النسخ!',
+    levelNav: 'مستوى الخبرة',
+    trackNav: 'طريقة القراءة',
+    sectionsSuffix: 'قسمًا',
+    levels: {
+      beginner: 'مبتدئ',
+      mid: 'متوسّط',
+      senior: 'متقدّم',
+    },
+    tracks: {
+      detailed: 'شرح مفصّل',
+      interview: 'مراجعة المقابلات',
+      tips: 'نصائح وحِيَل',
+    },
+    panePrevious: 'السابق',
+    paneNext: 'التالي',
   },
+
 
   coursesPage: {
     metaTitle: 'الدورات',

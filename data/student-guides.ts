@@ -11,9 +11,9 @@ export const studentGuides: StudentGuide[] = [
     slug: 'github-actions',
     title: 'The Complete GitHub Actions Guide',
     description:
-      'Learn CI/CD and repository automation across 28 sections: your first workflow, caching and artifacts, matrices, reusable workflows, OIDC and supply-chain security, container builds, ML pipelines, and complete examples.',
+      'A full CI/CD and repository-automation course taught at three levels. Pick Beginner, Mid-level, or Senior, then read the detailed explanation, a fast interview review, or the practical tips and traps.',
     category: 'CI/CD & Automation',
-    tags: ['GitHub Actions', 'CI/CD', 'DevOps', 'Automation', 'Security'],
+    tags: ['GitHub Actions', 'CI/CD', 'DevOps', 'Automation', 'Interview prep'],
   },
   {
     slug: 'docker',

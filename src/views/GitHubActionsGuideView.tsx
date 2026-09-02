@@ -1,8 +1,7 @@
 import Link from 'next/link'
 import { ArrowLeft, Github } from 'lucide-react'
-import GuideArticle from '@/components/GuideArticle'
-import GuideNavigation from '@/components/GuideNavigation'
-import { getGitHubActionsGuideContent } from '@/lib/student-guides.server'
+import GuideLevelTracks from '@/components/GuideLevelTracks'
+import { getGitHubActionsGuideLevels } from '@/lib/student-guides.server'
 import { localeHref, t, type Lang } from '@/lib/i18n'
 
 /* The hero pipeline mirrors the mental model taught in section 03:
@@ -11,7 +10,8 @@ const pipeline = ['Event', 'Workflow', 'Job', 'Step']
 
 export default async function GitHubActionsGuideView({ lang }: { lang: Lang }) {
   const c = t(lang).studentGuidesPage
-  const { html, headings } = await getGitHubActionsGuideContent()
+  const levels = await getGitHubActionsGuideLevels()
+  const sections = levels.reduce((total, level) => total + level.sections, 0)
 
   return (
     <>
@@ -27,8 +27,8 @@ export default async function GitHubActionsGuideView({ lang }: { lang: Lang }) {
           <div className="guide-hero-chips mt-8 flex flex-wrap items-center gap-2">
             <span className="chip border-cyan-400/30 text-cyan-400"><Github className="h-3.5 w-3.5" /> GitHub Actions</span>
             <span className="chip">CI/CD</span>
-            <span className="chip">DevOps</span>
-            <span className="chip">28 sections</span>
+            <span className="chip">{levels.length} levels</span>
+            <span className="chip">{sections} sections</span>
             {lang === 'ar' && <span className="chip">{c.englishGuide}</span>}
           </div>
           <div lang="en" dir="ltr" className="guide-hero-copy">
@@ -36,7 +36,7 @@ export default async function GitHubActionsGuideView({ lang }: { lang: Lang }) {
               The Complete <span className="brand-text">GitHub Actions</span> Guide
             </h1>
             <p className="mt-5 max-w-3xl text-lg leading-relaxed text-muted">
-              Learn GitHub Actions from your first workflow through production-ready CI/CD, reusable automation, container builds, machine-learning pipelines, and deployment controls.
+              Taught at three levels, written three ways. Pick Beginner, Mid-level, or Senior, then read the full explanation, a fast interview review, or the practical tips and traps for that level.
             </p>
             <div className="gha-pipeline" aria-hidden="true">
               {pipeline.map((stage, index) => (
@@ -50,10 +50,7 @@ export default async function GitHubActionsGuideView({ lang }: { lang: Lang }) {
         </div>
       </section>
 
-      <div className="guide-page-layout gha-guide-page mx-auto max-w-content px-5 py-8 sm:px-8 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:gap-10 lg:py-14">
-        <GuideNavigation headings={headings} labels={c} title="GitHub Actions" />
-        <GuideArticle html={html} copiedLabel={c.copied} />
-      </div>
+      <GuideLevelTracks levels={levels} labels={c} />
     </>
   )
 }

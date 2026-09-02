@@ -15,12 +15,12 @@ export type GuideHeading = {
   level: 2 | 3
 }
 
-/* Every long-form guide lives in `content/student-guides/<slug>.md` as plain
-   markdown plus the presentational blocks documented in `globals.css`
-   (`.callout`, `.cards`, `.flow`, `.guide-steps`, `.guide-compare`,
-   `.guide-timeline`, `.guide-stat-strip`). The reading chrome that is identical
-   for every guide — the learning path card and the phase dividers — is
-   described here instead of being repeated in prose. */
+/* Guides are plain markdown plus the presentational blocks documented in
+   `globals.css` (`.callout`, `.cards`, `.flow`, `.guide-steps`, `.guide-compare`,
+   `.guide-timeline`, `.guide-stat-strip`). A single-document guide lives at
+   `content/student-guides/<slug>.md`; a levelled one is a directory of panes.
+   Reading chrome that is identical for every guide — the learning path card and
+   the phase dividers — is described here rather than repeated in prose. */
 type LearningStage = {
   label: string
   range: string
@@ -35,14 +35,44 @@ type GuidePhase = {
   detail: string
 }
 
+/* The card that opens a single-document guide: an eyebrow, a promise, and the
+   stages it is made of. */
+type GuideBrief = {
+  eyebrow: string
+  title: string
+  intro: string
+  stages: LearningStage[]
+}
+
 type GuideDefinition = {
   slug: string
-  learningPath: {
-    title: string
-    intro: string
-    stages: LearningStage[]
-  }
+  learningPath: GuideBrief
   phases: GuidePhase[]
+}
+
+/* ---- Levelled guides ----
+   Read as a 3 × 3 grid: pick an experience level, then pick how you want to read
+   it. Each of the nine panes is its own document under
+   `content/student-guides/<slug>/<level>-<track>.md`, written for that
+   combination rather than sliced out of a shared one. */
+export type GuideLevelId = 'beginner' | 'mid' | 'senior'
+export type GuideTrackId = 'detailed' | 'interview' | 'tips'
+
+const TRACK_IDS: GuideTrackId[] = ['detailed', 'interview', 'tips']
+
+export type GuidePane = {
+  /* Doubles as the panel's DOM id and its location hash, so a level and section
+     choice is linkable and survives a reload. */
+  key: string
+  html: string
+  headings: GuideHeading[]
+}
+
+export type GuideLevel = {
+  id: GuideLevelId
+  /* Headings across all three of this level's panes. */
+  sections: number
+  panes: Record<GuideTrackId, GuidePane>
 }
 
 type CodeNode = {
@@ -131,11 +161,18 @@ function addCodeWindows(html: string) {
   )
 }
 
-function learningPathHtml({ title, intro, stages }: GuideDefinition['learningPath']) {
+function briefHtml({ eyebrow, title, intro, stages }: GuideBrief) {
   const items = stages
     .map((stage) => `<li><b>${stage.label}</b><span>${stage.range}</span><small>${stage.detail}</small></li>`)
     .join('')
-  return `<div class="guide-learning-path"><span class="guide-path-eyebrow">Learning path</span><h2>${title}</h2><p>${intro}</p><ol>${items}</ol></div>`
+  return `<div class="guide-learning-path"><span class="guide-path-eyebrow">${eyebrow}</span><h2>${title}</h2><p>${intro}</p><ol>${items}</ol></div>`
+}
+
+function statStripHtml(facts: { value: string; label: string }[]) {
+  const items = facts.map((fact) => `<div class="guide-stat"><b>${fact.value}</b><span>${fact.label}</span></div>`).join('')
+  /* The count drives the column layout, so a two-fact strip fills its row
+     instead of leaving two empty cells. */
+  return `<div class="guide-stat-strip" data-count="${facts.length}">${items}</div>`
 }
 
 /* Phase dividers are keyed by section number rather than by slug so renaming a
@@ -149,13 +186,20 @@ function addPhaseMarkers(html: string, phases: GuidePhase[]) {
   })
 }
 
-async function renderStudentGuide(definition: GuideDefinition) {
-  const markdown = fs.readFileSync(
-    path.join(process.cwd(), 'content', 'student-guides', `${definition.slug}.md`),
-    'utf8',
-  )
+/* `rehype-slug` only guarantees unique ids inside one document, so panes built
+   from separate files need a namespace of their own. The detailed panes come out
+   of a single document and are deliberately left unprefixed, which keeps every
+   `#01-introduction-to-github-actions` style link that already exists working. */
+function prefixHeadingIds(html: string, prefix: string) {
+  return html.replace(/<h([23]) id="([^"]+)"/gi, (_match, level: string, id: string) => `<h${level} id="${prefix}${id}"`)
+}
 
-  let html = String(
+function readGuideMarkdown(...segments: string[]) {
+  return fs.readFileSync(path.join(process.cwd(), 'content', 'student-guides', ...segments), 'utf8')
+}
+
+async function renderMarkdown(markdown: string) {
+  const html = String(
     await unified()
       .use(remarkParse)
       .use(remarkGfm)
@@ -168,37 +212,24 @@ async function renderStudentGuide(definition: GuideDefinition) {
       .process(markdown),
   )
 
-  html = addCodeWindows(html)
-  html = normalizeNumberedHeadings(html)
-  html = learningPathHtml(definition.learningPath) + addPhaseMarkers(html, definition.phases)
-
-  return { html, headings: headingsFromHtml(html) }
+  return normalizeNumberedHeadings(addCodeWindows(html))
 }
 
-const githubActionsGuide: GuideDefinition = {
-  slug: 'github-actions',
-  learningPath: {
-    title: 'From first workflow to production delivery',
-    intro:
-      'Read the guide in order once, then use the navigation and search as a practical reference while you build real pipelines.',
-    stages: [
-      { label: 'Foundations', range: '01-07', detail: 'Concepts, your first workflow, events, jobs, and steps' },
-      { label: 'Real pipelines', range: '08-14', detail: 'Actions, runners, expressions, secrets, caching, and artifacts' },
-      { label: 'Advanced automation', range: '15-22', detail: 'Matrices, services, reuse, environments, security, and Docker' },
-      { label: 'Production', range: '23-28', detail: 'ML pipelines, debugging, full examples, and a cheat sheet' },
-    ],
-  },
-  phases: [
-    { at: '01', label: 'Phase 1', title: 'Foundations', detail: 'Understand the platform and ship your first green run' },
-    { at: '08', label: 'Phase 2', title: 'Real pipelines', detail: 'Compose actions, data, and caching into useful CI' },
-    { at: '15', label: 'Phase 3', title: 'Advanced automation', detail: 'Scale, reuse, and secure your workflows' },
-    { at: '23', label: 'Phase 4', title: 'Production delivery', detail: 'Operate pipelines you can trust and debug' },
-  ],
+async function renderStudentGuide(definition: GuideDefinition) {
+  const html = await renderMarkdown(readGuideMarkdown(`${definition.slug}.md`))
+  const withChrome = briefHtml(definition.learningPath) + addPhaseMarkers(html, definition.phases)
+
+  return { html: withChrome, headings: headingsFromHtml(withChrome) }
 }
+
+/* The GitHub Actions guide is written per level. Nothing is hidden from anyone —
+   the level only decides which of the three parallel treatments you read. */
+const githubActionsLevels: GuideLevelId[] = ['beginner', 'mid', 'senior']
 
 const dockerGuide: GuideDefinition = {
   slug: 'docker',
   learningPath: {
+    eyebrow: 'Learning path',
     title: 'From first container to production',
     intro: 'Follow the guide in order once, then use the navigation and search as a practical reference.',
     stages: [
@@ -216,29 +247,64 @@ const dockerGuide: GuideDefinition = {
   ],
 }
 
-export function getGitHubActionsGuideContent() {
-  return renderStudentGuide(githubActionsGuide)
+const GITHUB_ACTIONS_SLUG = 'github-actions'
+
+function githubActionsPaneFiles() {
+  return githubActionsLevels.flatMap((level) => TRACK_IDS.map((track) => `${level}-${track}.md`))
+}
+
+function topLevelSections(headings: GuideHeading[]) {
+  return headings.filter((heading) => heading.level === 2).length
+}
+
+async function guidePane(level: GuideLevelId, track: GuideTrackId): Promise<GuidePane> {
+  const key = `${level}-${track}`
+  const rendered = await renderMarkdown(readGuideMarkdown(GITHUB_ACTIONS_SLUG, `${key}.md`))
+  /* Every pane is its own document, so `rehype-slug` only guarantees uniqueness
+     within one. The pane key namespaces them and keeps each anchor linkable. */
+  const html = prefixHeadingIds(rendered, `${key}-`)
+  return { key, html, headings: headingsFromHtml(html) }
+}
+
+export async function getGitHubActionsGuideLevels(): Promise<GuideLevel[]> {
+  return Promise.all(
+    githubActionsLevels.map(async (id) => {
+      const [detailed, interview, tips] = await Promise.all(TRACK_IDS.map((track) => guidePane(id, track)))
+
+      /* The detailed pane opens on its own two numbers, both counted from the
+         pane itself so they cannot drift from the writing. */
+      const facts = [
+        { value: String(topLevelSections(detailed.headings)), label: 'sections' },
+        { value: String(detailed.html.match(/class="code-window"/g)?.length ?? 0), label: 'examples' },
+      ]
+
+      return {
+        id,
+        sections: [detailed, interview, tips].reduce((total, pane) => total + topLevelSections(pane.headings), 0),
+        panes: {
+          detailed: { ...detailed, html: statStripHtml(facts) + detailed.html },
+          interview,
+          tips,
+        },
+      }
+    }),
+  )
 }
 
 export function getDockerGuideContent() {
   return renderStudentGuide(dockerGuide)
 }
 
-const definitions = [githubActionsGuide, dockerGuide]
-
 /* Counted from the markdown rather than written down anywhere, so the figure on a
-   catalogue card cannot drift from the guide itself. The pattern is exact: every
-   section heading is `## NN Title`. */
+   catalogue card cannot drift from the guide itself. */
 export function getStudentGuideSectionCounts(): Record<string, number> {
-  const counts: Record<string, number> = {}
+  const count = (markdown: string) => markdown.match(/^## /gm)?.length ?? 0
 
-  for (const definition of definitions) {
-    const markdown = fs.readFileSync(
-      path.join(process.cwd(), 'content', 'student-guides', `${definition.slug}.md`),
-      'utf8',
-    )
-    counts[definition.slug] = markdown.match(/^## \d{2} /gm)?.length ?? 0
+  return {
+    [GITHUB_ACTIONS_SLUG]: githubActionsPaneFiles().reduce(
+      (total, file) => total + count(readGuideMarkdown(GITHUB_ACTIONS_SLUG, file)),
+      0,
+    ),
+    docker: count(readGuideMarkdown('docker.md')),
   }
-
-  return counts
 }
