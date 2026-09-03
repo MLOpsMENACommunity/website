@@ -22,11 +22,36 @@ Up to this point the questions have been about making a model reproduce and depl
 
 I am starting with the trust model, because every other decision in this track depends on it.
 
-## The trust model
+## The trust model: who can move an alias
 
 The sentence that reframes MLflow security: **moving an alias changes production, and by default nothing stops anyone with tracking credentials from doing it.**
 
 That is the inverse of the usual worry. People arrive asking "who can see the experiments?" The sharper question is "who can make a model live?"
+
+<div class="guide-arch" style="--arch-cols:3">
+  <div class="arch-lane" style="--lane-cols:3">
+    <span class="arch-label">write paths — ranked by blast radius, not by frequency</span>
+    <div class="arch-node"><b>Create runs, log models</b><small>Researchers. Harmless: a run is a record</small></div>
+    <div class="arch-node" data-kind="worker"><b>Register a version</b><small>Immutable, numbered, linked to its run</small></div>
+    <div class="arch-node" data-kind="danger"><b>Move an alias</b><small><b>This is a production deploy.</b> One call, no review, no record by default</small></div>
+  </div>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <div class="arch-lane" style="--lane-cols:3">
+    <span class="arch-label">credentials, one per purpose</span>
+    <div class="arch-node"><b><code>ci-pr</code></b><small>Create runs in <code>*/ci</code> only. Cannot register or alias</small></div>
+    <div class="arch-node" data-kind="worker"><b><code>ci-main</code></b><small>Register and alias, from a reviewed workflow that writes an audit tag</small></div>
+    <div class="arch-node"><b><code>serving</code></b><small>Read the registry and artifacts. No write of any kind</small></div>
+  </div>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down" data-flow="optional"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <div class="arch-node" data-kind="danger"><b>Coarse authorisation</b><small>Per-experiment and per-model permissions — not roles, and unauthenticated by default</small></div>
+  <div class="arch-node" data-kind="danger"><b>Clients touch storage directly</b><small>Everyone needs bucket credentials unless you enable proxied access</small></div>
+  <div class="arch-node" data-kind="danger"><b>A pickle is executable</b><small>Loading a model runs code, in whatever runs your batch job</small></div>
+  <p class="arch-note"><b>The dangerous default:</b> an unauthenticated server reachable from the office network, whose aliases drive production serving. Anyone who can reach it can promote any version — including one they logged themselves — with nothing recording who did it. Auth in front, alias writes restricted to a gated job, and an audit tag on every promotion.</p>
+</div>
 
 | Actor | Needs | Must not have |
 |---|---|---|

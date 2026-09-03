@@ -116,7 +116,7 @@ Put together, CI/CD is a machine that watches your repository and does the borin
   <em>a list of five to ten steps, most of them mechanical. That list is the pipeline you are going to build by the end of this page.</em>
 </div>
 
-## Where workflow files live
+## Where workflow files live, and why the path is fixed
 
 Instructions for Actions go in files called **workflows**, and the location is exact. Get it wrong and GitHub silently ignores the file — no error, nothing in the Actions tab, no hint that anything is missing.
 
@@ -147,7 +147,7 @@ Any file in that folder ending `.yml` or `.yaml` becomes an active workflow the 
   <em>the folders now exist in your repository, and the Actions tab still shows nothing — because a workflow with no trigger can never run. You have created the container, not the content.</em>
 </div>
 
-## YAML, in five minutes
+## YAML in five minutes, for workflow authors
 
 Workflow files are written in **YAML**, a text format designed to be read by people rather than to be efficient for machines. Almost everything you will write is covered by six rules.
 
@@ -254,18 +254,40 @@ And `${{ ... }}` is an **expression** — GitHub substitutes a real value there 
   <em>four runs — a green one, a green one with a timestamp, one that only runs when you click, and a red one. Causing that red cross deliberately is the single most useful thing on this page: reading a failure log calmly is the skill everything else depends on.</em>
 </div>
 
-## The six building blocks
+## The six building blocks, nested
 
 Every workflow you will ever read is built from six nested concepts. Getting this hierarchy solid is worth more than memorising a hundred YAML keys.
 
-<div class="flow">
-  <div class="node">EVENT<small>push / PR / cron</small></div>
-  <span class="arrow">&rarr;</span>
-  <div class="node">WORKFLOW<small>one YAML file</small></div>
-  <span class="arrow">&rarr;</span>
-  <div class="node">JOB<small>one machine</small></div>
-  <span class="arrow">&rarr;</span>
-  <div class="node">STEP<small>one command</small></div>
+<div class="guide-arch" style="--arch-cols:3">
+  <div class="arch-lane" style="--lane-cols:3">
+    <span class="arch-label">events — anything that happens in the repository</span>
+    <div class="arch-node" data-kind="entry"><b><code>push</code></b><small>A branch or tag moved</small></div>
+    <div class="arch-node" data-kind="entry"><b><code>pull_request</code></b><small>Opened, synchronised, reopened</small></div>
+    <div class="arch-node" data-kind="entry"><b><code>schedule</code> · <code>workflow_dispatch</code></b><small>Cron, or a button</small></div>
+  </div>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <div class="arch-lane" style="--lane-cols:1">
+    <span class="arch-label">workflow — one YAML file in .github/workflows/</span>
+    <div class="arch-node"><b>Declares its triggers, then its jobs</b><small>One file per pipeline. Several files can watch the same event</small></div>
+  </div>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <div class="arch-lane" style="--lane-cols:3">
+    <span class="arch-label">jobs — parallel by default, each on its own runner</span>
+    <div class="arch-node" data-kind="worker"><b><code>test</code></b><small>Steps run in order, sharing one filesystem</small></div>
+    <div class="arch-node" data-kind="worker"><b><code>lint</code></b><small>Starts at the same time as <code>test</code></small></div>
+    <div class="arch-node" data-kind="worker"><b><code>deploy</code></b><small><code>needs: [test, lint]</code> — the only way to order</small></div>
+  </div>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down" data-flow="optional"></i>
+  <div class="arch-node"><b>Steps</b><small><code>run</code> a command, or <code>uses</code> an action</small></div>
+  <div class="arch-node" data-kind="external"><b>Runner</b><small>The machine: GitHub-hosted or self-hosted</small></div>
+  <div class="arch-node" data-kind="store"><b>Artifacts · cache</b><small>The only way files cross a job boundary</small></div>
+  <p class="arch-note"><b>The line that matters:</b> steps share a machine, jobs do not. Everything else in this guide follows from that one fact — <code>runs-on</code> belongs to a job, parallelism is free, and handing files between jobs needs artifacts.</p>
 </div>
 
 An **event** is something that happened in your repository. A **workflow** is a file saying which events it cares about and what to do. A **job** is a named group of work running on one machine. A **step** is a single task inside a job. A **runner** is the machine itself. An **action** is a reusable step someone has already written and published.
@@ -426,7 +448,7 @@ The practical effect is that pipeline shape is a design choice. Three independen
   <em>the first version takes about 20 seconds in total; the second takes about 60. The run graph at the top of the page draws the difference, so you can now see exactly what <code>needs</code> costs you.</em>
 </div>
 
-## Steps: `run` versus `uses`
+## Steps: `run` a command versus `uses` an action
 
 Every step is either a shell command or a prebuilt component. That is the entire taxonomy.
 
@@ -514,7 +536,7 @@ An action is referenced as `owner/repo@ref`, and the `ref` decides what code you
   <em>you can now read any action's documentation and know exactly what to write. Finding the SHA is the habit that becomes mandatory at Senior level.</em>
 </div>
 
-## Runners
+## Runners: the machine each job gets
 
 `runs-on` picks the machine. Three labels cover nearly everything: `ubuntu-latest`, `windows-latest`, and `macos-latest`. Ubuntu is the fastest and cheapest, and the default choice unless you have a specific reason otherwise.
 
@@ -539,7 +561,7 @@ The distinction is worth knowing even though you will not need self-hosted runne
   <em>Ubuntu already has everything, which is why you rarely install Docker or Git yourself. The Windows run also shows you why <code>shell:</code> exists.</em>
 </div>
 
-## Expressions and contexts
+## Expressions and contexts: reading the run
 
 Expressions live inside `${{ }}` and read from **contexts** — read-only objects describing the current run. This is how a workflow becomes aware of its own circumstances.
 
@@ -632,7 +654,7 @@ The four status functions — `success()`, `failure()`, `cancelled()`, `always()
   <em>the skipped step appears greyed out with a "skipped" marker rather than an error — which is exactly why this bug is hard to spot. And the <code>failure()</code> step runs only in the red run, which is the pattern you will use for notifications.</em>
 </div>
 
-## Environment variables
+## Environment variables, and their three scopes
 
 Variables have three scopes, and the most specific one wins:
 
@@ -691,7 +713,7 @@ There is also `$GITHUB_STEP_SUMMARY`, which accepts Markdown and renders it on t
   <em>the export version prints nothing, the <code>$GITHUB_ENV</code> version prints <code>bar</code> from the next step onwards but not in the writing step, and your run page now has a rendered table on it. Those three behaviours explain most "my variable is empty" confusion.</em>
 </div>
 
-## Secrets
+## Secrets, and what they cannot protect
 
 Secrets are encrypted values you set in **Settings → Secrets and variables → Actions**. You read them with `${{ secrets.NAME }}`, and once stored you cannot read them back in the interface — only overwrite them.
 
@@ -740,7 +762,7 @@ That `permissions:` block is worth noticing now even though Senior covers it pro
   <em>the check prints "present". The echo prints <code>***</code> — masking worked. Then try <code>echo "$TEST_SECRET" | base64</code> and watch the masking fail completely, which is why "never print it" is the actual rule.</em>
 </div>
 
-## Caching
+## Caching: making the second run fast
 
 The runner is new every time, which means your dependencies download every time. On a real project that is often most of the run. Caching fixes it, and for mainstream languages it is a single line:
 
@@ -787,7 +809,7 @@ The mechanism underneath is a **key**: a string that identifies the cached conte
   <em>the first cached run is no faster — it has nothing to restore — but the second is dramatically faster, and the step log says "Cache restored from key…". One line, permanently.</em>
 </div>
 
-## Artifacts
+## Artifacts: files that outlive the runner
 
 The machine is destroyed when the job ends, so anything you want to keep must be uploaded before that happens.
 
@@ -844,7 +866,7 @@ One sentence for interviews: *a cache is an optimisation you must be able to los
   <em>run two produces no artifact at all — the failure stopped the job first. Run three produces the artifact despite the red cross. That is the whole reason <code>if: always()</code> exists.</em>
 </div>
 
-## Passing data between jobs
+## Passing data between jobs, deliberately
 
 Jobs are separate machines, so nothing crosses automatically. Strings travel as **outputs**; files travel as **artifacts**.
 
@@ -934,7 +956,7 @@ That produces three parallel jobs, each with `matrix.python` set to a different 
   <em>with fail-fast on, the other two jobs are cancelled mid-run. With it off, all three report. You now know which one you want while debugging.</em>
 </div>
 
-## Guards every workflow should have
+## Guards every workflow should have from day one
 
 Two small settings prevent a surprising amount of pain.
 
@@ -970,7 +992,7 @@ The timeout is the one people skip and later regret. The default is six hours pe
   <em>the timed-out job is marked failed with a clear "cancelled after 1 minute" message rather than hanging. And the tolerated failure shows a warning marker while the job still succeeds — note that the job is green even though a step failed.</em>
 </div>
 
-## Reading a failed run
+## Reading a failed run, in order
 
 Debugging is a skill, and it has an order.
 

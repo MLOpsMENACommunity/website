@@ -16,9 +16,34 @@ This is part three of three. It closes the series by taking **every topic from B
 | Debugging | Fleet observability metrics and incident playbooks |
 | — **new** — | Container builds · custom actions · ML delivery · migration · review checklist |
 
-## The trust model
+## The trust model: whose code, which secrets, what token
 
 Every workflow run has three properties that together determine your exposure: **whose code executes**, **whether secrets are present**, and **what the token can do**. Most real GitHub Actions vulnerabilities are those three lining up badly.
+
+<div class="guide-arch" style="--arch-cols:3">
+  <div class="arch-lane" style="--lane-cols:3">
+    <span class="arch-label">safe by design — github withholds the dangerous parts</span>
+    <div class="arch-node"><b><code>pull_request</code> from a fork</b><small>Runs <em>fork</em> code · <b>no secrets</b> · read-only token</small></div>
+    <div class="arch-node"><b><code>push</code> · same-repo PR</b><small>Runs <em>your</em> code · secrets · token as configured</small></div>
+    <div class="arch-node" data-kind="store"><b>Artifacts</b><small>The safe bridge between an untrusted build and a privileged publish</small></div>
+  </div>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down" data-flow="optional"></i>
+  <div class="arch-lane" style="--lane-cols:3">
+    <span class="arch-label">privileged triggers — they undo that protection on purpose</span>
+    <div class="arch-node" data-kind="danger"><b><code>pull_request_target</code></b><small>Base-repo code · <b>secrets</b> · writable token</small></div>
+    <div class="arch-node" data-kind="danger"><b><code>workflow_run</code></b><small>Base-repo code · secrets · writable token</small></div>
+    <div class="arch-node" data-kind="danger"><b><code>issue_comment</code></b><small>Base-repo code · secrets · writable token</small></div>
+  </div>
+  <i class="arch-edge" data-dir="down" data-flow="optional"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <div class="arch-node" data-kind="danger"><b>+ checkout <code>head.sha</code></b><small>Untrusted code, in a job holding your secrets</small></div>
+  <div class="arch-node" data-kind="worker"><b>Read event metadata only</b><small>Label, comment, triage — never check out the head</small></div>
+  <div class="arch-node" data-kind="worker"><b>Split privilege</b><small>Unprivileged job builds; privileged job publishes the artifact</small></div>
+  <p class="arch-note"><b>The pattern to internalise:</b> the top lane is safe because secrets are absent, and the middle lane exists because a maintainer needed to label a PR. Combining a privileged trigger with a checkout of fork code is how real repositories have been compromised — the two safe shapes below are the alternatives.</p>
+</div>
 
 | Trigger | Executes code from | Secrets | Token |
 |---|---|---|---|

@@ -21,11 +21,36 @@ Up to this point the questions have been about making a run reproduce. From here
 
 I am starting with the trust model, because every other decision in this track depends on it.
 
-## The trust model
+## The trust model: enqueue is code execution
 
 The single most important sentence about ClearML security: **enqueueing a task is arbitrary code execution on your agents.** A task carries a repository, a commit, a diff, a package list, and an entry point. An agent claims it and runs it. Anyone who can enqueue can run code on your GPU fleet, with whatever credentials that fleet holds.
 
 That reframes the whole access question. It is not "who can see the experiments" — it is "who can execute".
+
+<div class="guide-arch" style="--arch-cols:3">
+  <div class="arch-lane" style="--lane-cols:3">
+    <span class="arch-label">who can enqueue — this is the execution surface</span>
+    <div class="arch-node"><b>Researcher</b><small>Enqueue to <code>cpu</code>/<code>gpu</code>. Never to serving or production queues</small></div>
+    <div class="arch-node" data-kind="worker"><b>CI on a protected branch</b><small>Enqueue to <code>ci</code> only. No production cloud credentials</small></div>
+    <div class="arch-node" data-kind="danger"><b>CI on a fork PR</b><small><b>Nothing</b>, or an isolated ephemeral queue holding no other access</small></div>
+  </div>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down" data-flow="optional"></i>
+  <div class="arch-lane" style="--lane-cols:3">
+    <span class="arch-label">queues as the security boundary — one agent pool per trust level</span>
+    <div class="arch-node" data-kind="store"><b><code>services</code></b><small>Platform team + schedulers · registry read/write</small></div>
+    <div class="arch-node" data-kind="store"><b><code>cpu</code> · <code>gpu</code></b><small>Researchers · data read, artifact write</small></div>
+    <div class="arch-node" data-kind="store"><b><code>ci-untrusted</code></b><small>Ephemeral hosts · <b>no credentials at all</b></small></div>
+  </div>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <div class="arch-node" data-kind="danger"><b>Keys are workspace-wide</b><small>One leaked researcher pair reads every experiment, dataset pointer, and model — and can enqueue</small></div>
+  <div class="arch-node" data-kind="danger"><b>The diff is on the server</b><small>An untracked <code>.env</code> in your tree lands in the task record, and in your backups</small></div>
+  <div class="arch-node" data-kind="danger"><b>Agents hold ambient creds</b><small>Any task landing on a worker inherits that worker's cloud access</small></div>
+  <p class="arch-note"><b>The three rows at the bottom compose into one risk:</b> a workspace-wide key plus an agent with production credentials means whoever holds that key can run code with that access. Queue-level isolation is therefore a security control rather than tidiness — and fork pull requests are the case where it matters most.</p>
+</div>
 
 | Actor | Needs | Must not have |
 |---|---|---|

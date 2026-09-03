@@ -49,7 +49,7 @@ You need remarkably little to follow along: Python, Docker, and a terminal. The 
   <em>usually "nobody finds out until someone notices a wrong number", and "the next job runs anyway on stale data". Those two answers are the entire value proposition of an orchestrator, and it is worth having them in your own words before you write a line of Airflow.</em>
 </div>
 
-## The architecture, in five components
+## The architecture: five components, two planes
 
 You will hit error messages that only make sense if you know which component is complaining, so learn the shape now.
 
@@ -61,17 +61,33 @@ You will hit error messages that only make sense if you know which component is 
 | **Metadata database** | Every DAG run, task instance, connection, variable | The UI is slow, or state looks wrong |
 | **Webserver** | The UI and REST API | You cannot see anything, but pipelines still run |
 
-<div class="flow">
-  <div class="node">DAG FOLDER<small>your .py files</small></div>
-  <span class="arrow">&rarr;</span>
-  <div class="node">SCHEDULER<small>parse + schedule</small></div>
-  <span class="arrow">&rarr;</span>
-  <div class="node">METADATA DB<small>state of everything</small></div>
-  <span class="arrow">&rarr;</span>
-  <div class="node">WORKER<small>runs the task</small></div>
+<div class="guide-arch" style="--arch-cols:3">
+  <div class="arch-lane" style="--lane-cols:1">
+    <span class="arch-label">what you write</span>
+    <div class="arch-node" data-kind="entry"><b><code>dags/</code> — plain Python files</b><small>Re-parsed every ~30s. The scheduler <em>executes</em> each file to find DAG objects</small></div>
+  </div>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <div class="arch-lane" style="--lane-cols:3">
+    <span class="arch-label">control plane</span>
+    <div class="arch-node" data-kind="worker"><b>Scheduler</b><small>Parses DAGs, decides which task instances are ready, queues them</small></div>
+    <div class="arch-node" data-kind="store"><b>Metadata database</b><small><em>The source of truth.</em> Every run, task instance, connection, variable</small></div>
+    <div class="arch-node"><b>Webserver</b><small>A window onto the database. Stop it and pipelines keep running</small></div>
+  </div>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down" data-flow="optional"></i>
+  <div class="arch-lane" style="--lane-cols:3">
+    <span class="arch-label">execution plane</span>
+    <div class="arch-node" data-kind="worker"><b>Executor</b><small>Hands queued tasks to workers. Tasks stuck in <code>queued</code> point here</small></div>
+    <div class="arch-node" data-kind="worker"><b>Worker</b><small>Runs your task code. Failures and OOM kills happen here</small></div>
+    <div class="arch-node" data-kind="external"><b>Triggerer</b><small>Deferred tasks. Ignore it until Mid level</small></div>
+  </div>
+  <p class="arch-note"><b>Two facts to carry forward:</b> the scheduler executes your DAG files continuously, so slow top-level code slows the entire scheduler — and the database, not the file, records what happened. When the UI shows a task your file no longer defines, both are correct; they answer different questions.</p>
 </div>
 
-Two things about this diagram matter immediately.
+Two things about this picture matter immediately.
 
 **The scheduler re-reads your DAG files continuously.** By default every thirty seconds it scans the folder for changes, and it *executes* each file to find DAG objects. Slow top-level code therefore slows down the whole scheduler, which is the single most common cause of "why is Airflow so sluggish" — and the reason for a rule we will state properly in a moment.
 
@@ -90,7 +106,7 @@ There is a sixth component you will meet at Mid level, the **triggerer**, which 
   <em>the UI disappears but the scheduler keeps working — runs continue while you cannot see them. That separation is worth proving to yourself, because it reframes the webserver as a window rather than the engine.</em>
 </div>
 
-## Your first DAG
+## Your first DAG, line by line
 
 Enough theory. Create a file called `hello_dag.py` in your `dags/` folder.
 
@@ -161,7 +177,7 @@ And `start >> say_hello >> show_date` sets the dependencies. That `>>` is Airflo
   <em>a green run, a readable log, and a parallel branch. The deliberate cycle produces an import error in the UI rather than a broken run, which is the acyclic guarantee doing its job.</em>
 </div>
 
-## Tasks, operators, and dependencies
+## Tasks, operators, and the dependency graph
 
 Three words that get used loosely and mean different things.
 
@@ -216,7 +232,7 @@ from airflow.models.baseoperator import chain, cross_downstream
   <em>a diamond in the Graph view, and a downstream task marked <code>upstream_failed</code> rather than run. That state is Airflow's core promise: a failure upstream stops the work that depended on it.</em>
 </div>
 
-## The TaskFlow API
+## The TaskFlow API: DAGs that read like Python
 
 Everything above is the classic operator style, and you will read a lot of it. For Python work, modern Airflow has a cleaner form.
 
@@ -297,7 +313,7 @@ They mix freely in one DAG, which is what you will actually do:
   <em>a dependency graph inferred purely from function calls, and a mixed DAG where both styles coexist. Step four shows the flip side — a task whose result nobody consumes still runs, because the call itself created it.</em>
 </div>
 
-## Scheduling, and the interval model
+## Scheduling: the interval model, precisely
 
 This is where almost everyone gets confused, and it is worth slowing down because every later concept depends on it.
 
@@ -363,7 +379,7 @@ BashOperator(
   <em>three runs appear immediately with catchup on, and in each log the logical date differs from the wall clock. Seeing <code>logical=2024-05-01 now=2024-05-04</code> in a backfilled run is the moment the interval model becomes obvious rather than confusing.</em>
 </div>
 
-## Retries, timeouts, and default arguments
+## Retries, timeouts, and `default_args`
 
 A pipeline that fails permanently on a transient network blip is not production-ready. Airflow's retry handling is a few parameters, and setting them is the difference between a pipeline you trust and one you babysit.
 
@@ -431,7 +447,7 @@ with DAG(
   <em>a task that retries visibly, one that is killed on timeout, and one that eventually succeeds and marks the run green. That last case is what retries are for, and watching it work is what makes you trust them.</em>
 </div>
 
-## Passing data with XCom
+## Passing data with XCom, and its limits
 
 Tasks are separate processes, often on separate machines. XCom — cross-communication — is how they pass small values.
 
@@ -504,7 +520,7 @@ BashOperator(
   <em>a visible XCom value in the UI, then a painfully slow one, then a clean version that passes a path. Doing the wrong version once makes the "metadata, not data" rule permanent.</em>
 </div>
 
-## Connections and Variables
+## Connections and Variables: config outside the DAG
 
 Credentials do not belong in your DAG file. Airflow has two stores for configuration, and they have different jobs.
 
@@ -569,7 +585,7 @@ retries = Variable.get("max_retries", default_var=3)
   <em>a working database task with no credentials in your code, and a measurable parse-time increase from one misplaced <code>Variable.get()</code>. That measurement is the most convincing argument against top-level code you will find.</em>
 </div>
 
-## Templating and Jinja
+## Templating with Jinja: values resolved at run time
 
 That `{{ ds }}` is Jinja. Airflow renders templated fields at run time, which is how a task knows which interval it is working on.
 
@@ -626,7 +642,7 @@ Two things to know about templating:
   <em>a rendered template you can read before the task runs, a literal <code>{{ ds }}</code> in an untemplated field, and SQL that is safe to rerun. That last property is the foundation everything else in Airflow relies on.</em>
 </div>
 
-## Sensors: waiting for something
+## Sensors: waiting without wasting a worker
 
 Sometimes a task cannot start until something external exists — a file lands, a table is populated, an upstream team finishes. A **sensor** is an operator that waits.
 
@@ -694,7 +710,7 @@ def wait_for_rows():
   <em>a sensor that occupies a slot in one mode and releases it in the other, and a timeout that fails cleanly rather than waiting forever. That state difference in the UI is the whole argument for <code>reschedule</code>.</em>
 </div>
 
-## Branching and conditional execution
+## Branching and trigger rules
 
 Not every run should do the same thing. Airflow's branching operator picks a path at run time.
 
@@ -766,7 +782,7 @@ cleanup = BashOperator(
   <em>a working branch, then the silent skip cascade when the trigger rule is missing, then a cleanup task that survives a failure. Steps three and four together cover most of what trigger rules are for.</em>
 </div>
 
-## Reading the UI
+## Reading the UI: Grid, Graph, and logs
 
 The interface is your primary debugging tool, and knowing which view answers which question saves real time.
 
@@ -822,7 +838,7 @@ And the four actions on a task instance that you will use constantly:
   <em>a tour of every state you will meet, a Gantt chart naming your bottleneck, and a clear-and-rerun you performed yourself. The parse-duration number in step five is worth remembering — you will compare against it later.</em>
 </div>
 
-## The CLI and backfills
+## The CLI and backfills: running history on purpose
 
 The UI is convenient; the CLI is what you use when you need to be precise, and it is how you run a backfill.
 

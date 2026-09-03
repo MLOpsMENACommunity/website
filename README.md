@@ -153,11 +153,42 @@ under `.student-guide-prose` in `src/app/globals.css`:
 | `.guide-stat-strip` | `.guide-stat` > `<b>` + `<span>` — key facts at the top of a guide |
 | `.callout` (`.note`, `.tip`, `.warn`) | `<span class="ct">Title</span>` then prose |
 | `.cards` | `.card` > `.icon` + `<h4>` + `<p>` |
-| `.flow` | `.node` (+ `<small>`) separated by `.arrow` |
+| `.flow` | `.node` (+ `<small>`) separated by `.arrow` — one row, no branching |
+| `.guide-arch` | A grid for architecture that branches or layers. See below |
 | `ol.guide-steps` | `<li><b>Step title</b>body</li>` — auto-numbered with a connector |
 | `.guide-compare` | `.guide-compare-col.good` / `.bad` > `<h4>` + `<ul>` |
 | `.guide-timeline` | `.guide-timeline-item` > `<span>` + `<strong>` + `<small>` |
+| `.guide-try` | `<span class="ct">Try it</span>` + `<ol>` + `<em>` — deliberately the same violet in every guide |
 | `.pill` (`.req`, `.opt`) | Inline badge, usable inside table cells |
+
+`.guide-arch` is for the diagram `.flow` cannot express — a fan-out, a control plane over an
+execution plane, a trust boundary. Columns come from `--arch-cols`, and `.arch-lane` groups
+nodes into a labelled band with its own `--lane-cols`:
+
+```html
+<div class="guide-arch" style="--arch-cols:3">
+  <div class="arch-lane" style="--lane-cols:2">
+    <span class="arch-label">control plane</span>
+    <div class="arch-node" data-kind="entry"><b>Title</b><small>detail</small></div>
+    <div class="arch-node" data-kind="store"><b>Title</b><small>detail</small></div>
+  </div>
+  <i class="arch-edge" data-dir="down"></i>
+  <div class="arch-node" data-kind="danger"><b>Title</b><small>detail</small></div>
+  <p class="arch-note"><b>Why it matters:</b> the sentence the graph exists to make.</p>
+</div>
+```
+
+`data-kind` is `entry`, `store`, `worker`, `external`, or `danger`, and each renders
+differently so a reader can tell a bucket from a worker. `arch-edge` takes
+`data-dir="right|left|up|down"` plus an optional `data-flow="optional"` for a dashed edge.
+Everything inherits `--guide-accent`, so the graph is in the tool's colour automatically.
+
+Per-tool theming lives in two places. `--guide-accent` is set by the `<slug>-guide-page`
+class that `GuideLevelTracks` applies from its `slug` prop, and the whole
+`.student-guide-prose` block reads it — so callouts, cards, step numbers, headings, and the
+TOC follow the tool rather than a shared cyan. Tool marks come from
+`src/components/ToolLogo.tsx` as inline SVG inheriting `currentColor`; they are geometric
+interpretations rather than reproductions of the trademarked wordmarks.
 
 **Adding a new block class means touching three places**: the CSS, the `REVEAL_SELECTOR`
 list in `src/components/GuideArticle.tsx`, and the `.guide-motion-ready` selectors in

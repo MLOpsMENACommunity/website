@@ -195,6 +195,36 @@ Three consequences worth stating:
 
 Mid taught you the components. At scale you need to know **which one saturates**, because the symptom is always "Airflow is slow" and the cause is one of four very different things.
 
+<div class="guide-arch" style="--arch-cols:4">
+  <div class="arch-lane" style="--lane-cols:4">
+    <span class="arch-label">saturation order — each one presents as "airflow is slow"</span>
+    <div class="arch-node" data-kind="entry"><b>1 · DAG parsing</b><small>New DAGs appear slowly; scheduler CPU pinned</small></div>
+    <div class="arch-node" data-kind="worker"><b>2 · Scheduler loop</b><small>Tasks sit in <code>scheduled</code> before reaching <code>queued</code></small></div>
+    <div class="arch-node" data-kind="danger"><b>3 · Metadata database</b><small>Everything slow; UI pages time out. <b>The usual real ceiling</b></small></div>
+    <div class="arch-node"><b>4 · Worker capacity</b><small>Tasks sit in <code>queued</code></small></div>
+  </div>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <div class="arch-lane" style="--lane-cols:4">
+    <span class="arch-label">diagnose before you scale</span>
+    <div class="arch-node"><b><code>airflow dags report</code></b><small>Per-file parse duration</small></div>
+    <div class="arch-node"><b>Loop duration metric</b><small><code>scheduler_heartbeat</code></small></div>
+    <div class="arch-node"><b>Slow query log</b><small>Connection count, write volume</small></div>
+    <div class="arch-node"><b>Queue depth</b><small>Worker CPU and slots</small></div>
+  </div>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <div class="arch-node" data-kind="worker"><b>Fix top-level code</b><small><code>min_file_process_interval</code>, <code>.airflowignore</code></small></div>
+  <div class="arch-node" data-kind="worker"><b>More schedulers</b><small>Active-active, row-level locking</small></div>
+  <div class="arch-node" data-kind="worker"><b><code>db clean</code> first</b><small>Retention beats a bigger instance</small></div>
+  <div class="arch-node" data-kind="worker"><b>More workers, pools</b><small><code>worker_concurrency</code></small></div>
+  <p class="arch-note"><b>Read the order literally.</b> Adding workers when the database is the ceiling makes things worse, because more workers means more heartbeats and state writes. Diagnose which lane you are in before changing anything — and note that three of the four fixes are configuration or retention, not more hardware.</p>
+</div>
+
 | Bottleneck | Symptom | Diagnose with | Fix |
 |---|---|---|---|
 | **DAG parsing** | New DAGs appear slowly; scheduler CPU pinned | `airflow dags report`, DAG Processing page | Fix top-level code; more parsing processes; `.airflowignore` |

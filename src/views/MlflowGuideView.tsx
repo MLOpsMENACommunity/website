@@ -1,6 +1,7 @@
 import Link from 'next/link'
-import { ArrowLeft, LineChart } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import GuideLevelTracks from '@/components/GuideLevelTracks'
+import ToolLogo from '@/components/ToolLogo'
 import { getGuideLevels } from '@/lib/student-guides.server'
 import { localeHref, t, type Lang } from '@/lib/i18n'
 
@@ -25,16 +26,19 @@ export default async function MlflowGuideView({ lang }: { lang: Lang }) {
             <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" /> {c.backToGuides}
           </Link>
           <div className="guide-hero-chips mt-8 flex flex-wrap items-center gap-2">
-            <span className="chip border-cyan-400/30 text-cyan-400"><LineChart className="h-3.5 w-3.5" /> MLflow</span>
+            <span className="chip guide-hero-tool"><ToolLogo slug="mlflow" /> MLflow</span>
             <span className="chip">Tracking &amp; registry</span>
             <span className="chip">{levels.length} levels</span>
             <span className="chip">{sections} sections</span>
             {lang === 'ar' && <span className="chip">{c.englishGuide}</span>}
           </div>
           <div lang="en" dir="ltr" className="guide-hero-copy">
-            <h1 className="mt-5 max-w-4xl text-4xl font-bold leading-[1.1] sm:text-5xl lg:text-6xl">
-              The Complete <span className="mlflow-text">MLflow</span> Guide
-            </h1>
+            <div className="guide-hero-head">
+              <span className="guide-hero-logo" aria-hidden="true"><ToolLogo slug="mlflow" /></span>
+              <h1 className="text-4xl font-bold leading-[1.1] sm:text-5xl lg:text-6xl">
+                The Complete <span className="mlflow-text">MLflow</span> Guide
+              </h1>
+            </div>
             <p className="mt-5 max-w-3xl text-lg leading-relaxed text-muted">
               Taught at three levels, written three ways. Pick Beginner, Mid-level, or Senior, then read the full explanation, a fast interview review, or the practical tips and traps for that level.
             </p>
@@ -50,7 +54,7 @@ export default async function MlflowGuideView({ lang }: { lang: Lang }) {
         </div>
       </section>
 
-      <GuideLevelTracks levels={levels} labels={c} />
+      <GuideLevelTracks levels={levels} labels={c} slug="mlflow" />
     </>
   )
 }

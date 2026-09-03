@@ -21,9 +21,34 @@ Up to this point the questions have been about making a pipeline reproduce. From
 
 I am starting with the trust model, because every other decision in this track depends on it.
 
-## The trust model
+## The trust model: the bucket decides, not DVC
 
 A DVC remote is a storage bucket. Everything about who can do what to your data is decided in the storage provider, not in DVC — and DVC's design means the consequences differ from what people expect.
+
+<div class="guide-arch" style="--arch-cols:3">
+  <div class="arch-lane" style="--lane-cols:3">
+    <span class="arch-label">principals — and the permission each one actually needs</span>
+    <div class="arch-node"><b>Developer</b><small>Read everywhere · write on a <em>dev</em> prefix only</small></div>
+    <div class="arch-node" data-kind="worker"><b>CI on a protected branch</b><small>Read + write for <code>dvc push</code>. Never delete</small></div>
+    <div class="arch-node" data-kind="danger"><b>CI on a fork PR</b><small><b>Read only.</b> Any write is an open door</small></div>
+  </div>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down" data-flow="optional"></i>
+  <div class="arch-lane" style="--lane-cols:3">
+    <span class="arch-label">the remote — three prefixes, three policies</span>
+    <div class="arch-node" data-kind="store"><b><code>ml-data-prod/dvc/</code></b><small>read: everyone · write: CI on main · <b>delete: nobody</b></small></div>
+    <div class="arch-node" data-kind="store"><b><code>ml-data-dev/dvc/</code></b><small>read+write: developers · delete: lifecycle only</small></div>
+    <div class="arch-node" data-kind="store"><b><code>ml-data-public/dvc/</code></b><small>read: anonymous and fork CI · write: CI on main</small></div>
+  </div>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <div class="arch-node" data-kind="danger"><b>Write ⇒ silent overwrite</b><small>An object at a hash path can be replaced. Every commit referencing it now resolves to wrong bytes, with no error</small></div>
+  <div class="arch-node" data-kind="worker"><b><code>verify true</code></b><small>Re-hash on download, so corruption is refused instead of restored</small></div>
+  <div class="arch-node" data-kind="danger"><b><code>gc --cloud</code></b><small>Permanent deletion, scoped by whatever the running client can see</small></div>
+  <p class="arch-note"><b>Why write matters more than it looks:</b> content addressing makes an identical push a no-op, which reads as harmless — but the same permission lets a client put different bytes at that hash. Bucket versioning is what makes that survivable, and it is the highest-priority change on this page.</p>
+</div>
 
 | Actor | Needs | Should not have |
 |---|---|---|

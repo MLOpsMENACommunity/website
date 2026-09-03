@@ -2,7 +2,7 @@ This is part one of three. It covers **everything you need to do real work with 
 
 Each section ends with a **Try it** task. Do them as you go — they take a few minutes each, and these ideas only stick once you have watched `dvc repro` skip a stage it did not need to run.
 
-## The problem DVC solves
+## The problem DVC solves: code in Git, data elsewhere
 
 Git is excellent at versioning text and hopeless at versioning data. Commit a 2 GB training set and you have permanently added 2 GB to every clone of that repository, forever, because Git stores full history. Change one row and you add another 2 GB.
 
@@ -87,7 +87,7 @@ git commit -m "Initialise DVC"
   <em>a clean initialisation with three or four staged files, and a <code>.gitignore</code> that already excludes the cache. <code>dvc doctor</code> prints your platform, version, and which remote drivers are available — worth knowing about now, because it is the first thing to run when something behaves oddly.</em>
 </div>
 
-## Your first tracked dataset
+## Your first tracked dataset, in four commands
 
 This is the core loop. Four commands, and afterwards your data is versioned.
 
@@ -158,7 +158,7 @@ ls .dvc/cache/files/md5/8f/2c4b19e0a7d3f1c6b8a2e4d7091f3b
   <em>a few hundred bytes in Git standing in for however large your file is. Seeing those two numbers side by side is the moment the design clicks.</em>
 </div>
 
-## How the cache actually works
+## Inside the cache: content addressing and links
 
 Understanding this saves you from a whole category of confusion later, and it takes two minutes.
 
@@ -201,7 +201,7 @@ dvc config core.check_link_support true
   <em>two cache entries for two versions, but only one for two identical files under different names. That deduplication is free, and it is why adding the same dataset in three projects on one machine costs you one copy with a shared cache.</em>
 </div>
 
-## Going back in time
+## Going back in time: two commands, in order
 
 This is the payoff, and it is worth doing on purpose early so you trust it.
 
@@ -262,7 +262,7 @@ dvc status
   <em>the intermediate state where the pointer and the file disagree, which <code>dvc status</code> names precisely. Seeing that state once means you will recognise it instantly, and <code>dvc install</code> means you rarely have to.</em>
 </div>
 
-## Remote storage
+## Remote storage: where the bytes actually live
 
 So far everything lives on your machine. A remote is where the bytes go so a colleague — or a CI runner, or a training box — can get them.
 
@@ -297,12 +297,22 @@ dvc status -c                # compare local cache against the remote
 
 Those four are the whole workflow, and the mental model mirrors Git exactly:
 
-<div class="flow">
-  <div class="node">WORKSPACE<small>your files</small></div>
-  <span class="arrow">&rarr;</span>
-  <div class="node">CACHE<small>.dvc/cache</small></div>
-  <span class="arrow">&rarr;</span>
-  <div class="node">REMOTE<small>S3, GCS, SSH</small></div>
+<div class="guide-arch" style="--arch-cols:4">
+  <div class="arch-lane" style="--lane-cols:2">
+    <span class="arch-label">versioned in git — small, diffable, reviewable</span>
+    <div class="arch-node" data-kind="entry"><b>Code &amp; <code>dvc.yaml</code></b><small>Scripts, stages, params</small></div>
+    <div class="arch-node" data-kind="entry"><b><code>*.dvc</code> · <code>dvc.lock</code></b><small>Hash, size, path — a few hundred bytes</small></div>
+  </div>
+  <div class="arch-node"><b>Workspace</b><small>The files you actually open</small></div>
+  <i class="arch-edge" data-dir="right"></i>
+  <div class="arch-node" data-kind="store"><b><code>.dvc/cache</code></b><small>Content-addressed, local, gitignored</small></div>
+  <i class="arch-edge" data-dir="right"></i>
+  <div class="arch-node" data-kind="external"><b>Remote</b><small>S3 · GCS · Azure · SSH</small></div>
+  <div class="arch-node" data-kind="store"><b>Hash addresses the bytes</b><small><code>files/md5/8f/2c4b…</code> — the same layout in cache and remote</small></div>
+  <div class="arch-node" data-kind="worker"><b><code>dvc add</code> · <code>checkout</code></b><small>Workspace ↔ cache</small></div>
+  <div class="arch-node" data-kind="worker"><b><code>dvc push</code> · <code>pull</code> · <code>fetch</code></b><small>Cache ↔ remote</small></div>
+  <div class="arch-node" data-kind="danger"><b><code>dvc gc --cloud</code></b><small>Deletes on the remote. Not recoverable</small></div>
+  <p class="arch-note"><b>Read it as two hops:</b> a pointer in Git names a hash, the cache holds that hash locally, and the remote holds it for everyone else. <code>git push</code> ships the pointer; <code>dvc push</code> ships the bytes. Do one without the other and a colleague gets a reference to data they cannot fetch.</p>
 </div>
 
 | Git | DVC | Moves |
@@ -329,7 +339,7 @@ Those four are the whole workflow, and the mental model mirrors Git exactly:
   <em>your file comes back from the remote after you deleted both it and the local cache. That is the moment DVC stops being an abstraction and starts being useful — and the remote's directory layout being identical to the cache is not a coincidence.</em>
 </div>
 
-## Local versus committed configuration
+## Two config files: committed versus local
 
 There are two config files, and knowing which is which prevents both leaked secrets and "it works on my machine".
 
@@ -368,7 +378,7 @@ dvc config --local core.jobs 8                  # more parallel transfers on a f
   <em>two files, one committed and one ignored, with the ignore rule already written for you. Knowing this split exists is what stops a credential ending up in your history six months from now.</em>
 </div>
 
-## Tracking directories
+## Tracking directories, and the `.dir` object
 
 Datasets are rarely one file. `dvc add` works on directories, and the behaviour is slightly different in a way worth knowing.
 
@@ -541,7 +551,7 @@ dvc status                   # which stages are out of date, and why
   <em>a change to a late stage affects only that stage, while a change to an early one cascades downstream. Watching that cascade is what turns "DVC caches things" into "DVC understands my pipeline".</em>
 </div>
 
-## Parameters
+## Parameters: config DVC can see
 
 Hard-coded hyperparameters make a stage un-reproducible: you changed `n_estimators` from 100 to 200, DVC saw no dependency change, and skipped the stage. `params` fixes that.
 
@@ -606,7 +616,7 @@ dvc params diff HEAD~3       # or against any revision
   <em>DVC reporting the specific parameter that changed rather than a vague "modified". That precision in <code>dvc status</code> is what makes a long pipeline debuggable.</em>
 </div>
 
-## Metrics and plots
+## Metrics and plots: results that diff in Git
 
 A pipeline that produces a model but no numbers is a pipeline you cannot reason about. DVC has two output kinds for exactly this.
 
@@ -675,7 +685,7 @@ The `cache: false` on those outputs is deliberate and worth understanding: metri
   <em>a table showing exactly how your numbers moved between two commits, and an overlaid chart of two revisions. That diff is the artifact you paste into a pull request, and it is the single most persuasive thing DVC produces.</em>
 </div>
 
-## Experiments
+## Experiments: cheap runs, no commits
 
 Committing every attempt pollutes your history. `dvc exp` gives you a lightweight way to run many variations, compare them, and keep only the ones worth keeping.
 
@@ -756,7 +766,7 @@ dvc exp gc --workspace                # garbage-collect experiments not referenc
   <em>three runs compared in one table, one promoted into a real commit, and the rest discarded without leaving a trace in your history. That workflow is why you should stop committing every attempt.</em>
 </div>
 
-## Reading someone else's data without cloning
+## Reading another repo's data: `get` versus `import`
 
 Two commands let you use a DVC repository as a data source, which is how datasets get shared across projects.
 
@@ -803,7 +813,7 @@ dvc update datasets/train.parquet.dvc         # pull the newer upstream version
   <em><code>get</code> leaves you with an anonymous file, while <code>import</code> leaves you with a versioned dependency that names its source and revision. That distinction is the difference between copying data and depending on it.</em>
 </div>
 
-## Cleaning up: garbage collection
+## Garbage collection: reclaiming the cache safely
 
 The cache accumulates every version of everything you have ever added. That is the feature; it is also why your disk fills up.
 
@@ -847,7 +857,7 @@ dvc cache dir /mnt/big/cache # move it, e.g. off a small root disk
   <em><code>--workspace</code> proposes deleting the two older versions; <code>--all-commits</code> proposes deleting nothing, because every version is still reachable from a commit. Understanding that difference before you run it for real is the point of this exercise.</em>
 </div>
 
-## Reading a broken pipeline
+## Reading a broken pipeline, in order
 
 Debugging DVC has an order, and following it beats guessing.
 

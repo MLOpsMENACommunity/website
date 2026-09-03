@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import { useDeferredValue, useState } from 'react'
-import { ArrowRight, Box, CalendarClock, Database, FlaskConical, GitBranch, Github, GitPullRequest, Layers, LineChart, Network, Package, Rocket, Search, Server, Workflow, X } from 'lucide-react'
+import { ArrowRight, Database, GitPullRequest, Layers, LineChart, Network, Package, Rocket, Search, Server, Workflow, X } from 'lucide-react'
 import type { StudentGuide } from '~/data/student-guides'
+import ToolLogo, { type ToolSlug } from './ToolLogo'
 import { localeHref, type Lang } from '@/lib/i18n'
 
 type Labels = {
@@ -77,7 +78,6 @@ export default function StudentGuidesCatalog({
             const isAirflow = guide.slug === 'airflow'
             const isClearML = guide.slug === 'clearml'
             const isMlflow = guide.slug === 'mlflow'
-            const Icon = isDocker ? Box : isDvc ? GitBranch : isAirflow ? Workflow : isClearML ? FlaskConical : isMlflow ? LineChart : Github
             const sections = sectionsBySlug[guide.slug]
             return (
               <Link
@@ -100,7 +100,7 @@ export default function StudentGuidesCatalog({
             >
               {isGitHub && (
                 <div className="github-card-background" aria-hidden="true">
-                  <span className="github-flow-node node-one"><Github /></span>
+                  <span className="github-flow-node node-one"><ToolLogo slug="github-actions" /></span>
                   <span className="github-flow-node node-two"><Workflow /></span>
                   <span className="github-flow-node node-three"><GitPullRequest /></span>
                   <i className="github-flow-line line-one" />
@@ -110,7 +110,7 @@ export default function StudentGuidesCatalog({
               {isDocker && (
                 <div className="docker-card-background" aria-hidden="true">
                   <div className="docker-container-stack"><i /><i /><i /><i /><i /><i /></div>
-                  <span className="docker-card-node node-one"><Box /></span>
+                  <span className="docker-card-node node-one"><ToolLogo slug="docker" /></span>
                   <span className="docker-card-node node-two"><Network /></span>
                   <span className="docker-card-node node-three"><Database /></span>
                   <i className="docker-card-wave wave-one" />
@@ -120,7 +120,7 @@ export default function StudentGuidesCatalog({
               {isDvc && (
                 <div className="dvc-card-background" aria-hidden="true">
                   <div className="dvc-commit-graph"><i /><i /><i /><i /><i /></div>
-                  <span className="dvc-card-node node-one"><GitBranch /></span>
+                  <span className="dvc-card-node node-one"><ToolLogo slug="dvc" /></span>
                   <span className="dvc-card-node node-two"><Layers /></span>
                   <span className="dvc-card-node node-three"><Database /></span>
                   <i className="dvc-card-line line-one" />
@@ -130,7 +130,7 @@ export default function StudentGuidesCatalog({
               {isAirflow && (
                 <div className="airflow-card-background" aria-hidden="true">
                   <div className="airflow-card-graph"><i /><i /><i /><i /><i /><i /></div>
-                  <span className="airflow-card-node node-one"><CalendarClock /></span>
+                  <span className="airflow-card-node node-one"><ToolLogo slug="airflow" /></span>
                   <span className="airflow-card-node node-two"><Workflow /></span>
                   <span className="airflow-card-node node-three"><Layers /></span>
                   <i className="airflow-card-line line-one" />
@@ -140,7 +140,7 @@ export default function StudentGuidesCatalog({
               {isClearML && (
                 <div className="clearml-card-background" aria-hidden="true">
                   <div className="clearml-card-trace"><i /><i /><i /><i /><i /><i /><i /></div>
-                  <span className="clearml-card-node node-one"><FlaskConical /></span>
+                  <span className="clearml-card-node node-one"><ToolLogo slug="clearml" /></span>
                   <span className="clearml-card-node node-two"><Server /></span>
                   <span className="clearml-card-node node-three"><LineChart /></span>
                   <i className="clearml-card-line line-one" />
@@ -150,7 +150,7 @@ export default function StudentGuidesCatalog({
               {isMlflow && (
                 <div className="mlflow-card-background" aria-hidden="true">
                   <div className="mlflow-card-curve"><i /><i /><i /><i /><i /><i /><i /><i /></div>
-                  <span className="mlflow-card-node node-one"><LineChart /></span>
+                  <span className="mlflow-card-node node-one"><ToolLogo slug="mlflow" /></span>
                   <span className="mlflow-card-node node-two"><Package /></span>
                   <span className="mlflow-card-node node-three"><Rocket /></span>
                   <i className="mlflow-card-line line-one" />
@@ -159,8 +159,8 @@ export default function StudentGuidesCatalog({
               )}
               <div className="relative flex h-full flex-col md:max-w-[68%]">
                 <div className="flex items-start justify-between gap-4">
-                  <span className={`${isDocker ? 'docker-card-icon' : isDvc ? 'dvc-card-icon' : isAirflow ? 'airflow-card-icon' : isClearML ? 'clearml-card-icon' : isMlflow ? 'mlflow-card-icon' : 'github-card-icon'} flex h-14 w-14 items-center justify-center rounded-2xl border border-cyan-400/25 bg-cyan-400/[0.08] text-cyan-400`}>
-                    <Icon className="h-6 w-6" aria-hidden="true" />
+                  <span className={`guide-card-logo ${isDocker ? 'docker-card-icon' : isDvc ? 'dvc-card-icon' : isAirflow ? 'airflow-card-icon' : isClearML ? 'clearml-card-icon' : isMlflow ? 'mlflow-card-icon' : 'github-card-icon'}`}>
+                    <ToolLogo slug={guide.slug as ToolSlug} />
                   </span>
                   <span className="chip">{guide.category}</span>
                 </div>
