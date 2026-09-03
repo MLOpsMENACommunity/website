@@ -32,6 +32,22 @@ export const studentGuides: StudentGuide[] = [
     category: 'Data & Reproducibility',
     tags: ['DVC', 'Data versioning', 'Pipelines', 'Experiments', 'Interview prep'],
   },
+  {
+    slug: 'airflow',
+    title: 'The Complete Airflow Guide',
+    description:
+      'A full workflow orchestration course taught at three levels. Pick Beginner, Mid-level, or Senior, then read the detailed explanation, a fast interview review, or the practical tips and traps.',
+    category: 'Orchestration & Scheduling',
+    tags: ['Airflow', 'Orchestration', 'DAGs', 'Scheduling', 'Interview prep'],
+  },
+  {
+    slug: 'clearml',
+    title: 'The Complete ClearML Guide',
+    description:
+      'A full experiment tracking and MLOps platform course taught at three levels. Pick Beginner, Mid-level, or Senior, then read the detailed explanation, a fast interview review, or the practical tips and traps.',
+    category: 'Experiment Tracking & MLOps',
+    tags: ['ClearML', 'Experiment tracking', 'Model registry', 'Agents', 'Interview prep'],
+  },
 ]
 
 export function getStudentGuide(slug: string) {

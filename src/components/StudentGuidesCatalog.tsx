@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useDeferredValue, useState } from 'react'
-import { ArrowRight, Box, Database, GitBranch, Github, GitPullRequest, Layers, Network, Search, Workflow, X } from 'lucide-react'
+import { ArrowRight, Box, CalendarClock, Database, FlaskConical, GitBranch, Github, GitPullRequest, Layers, LineChart, Network, Search, Server, Workflow, X } from 'lucide-react'
 import type { StudentGuide } from '~/data/student-guides'
 import { localeHref, type Lang } from '@/lib/i18n'
 
@@ -74,7 +74,9 @@ export default function StudentGuidesCatalog({
             const isGitHub = guide.slug === 'github-actions'
             const isDocker = guide.slug === 'docker'
             const isDvc = guide.slug === 'dvc'
-            const Icon = isDocker ? Box : isDvc ? GitBranch : Github
+            const isAirflow = guide.slug === 'airflow'
+            const isClearML = guide.slug === 'clearml'
+            const Icon = isDocker ? Box : isDvc ? GitBranch : isAirflow ? Workflow : isClearML ? FlaskConical : Github
             const sections = sectionsBySlug[guide.slug]
             return (
               <Link
@@ -87,6 +89,10 @@ export default function StudentGuidesCatalog({
                 isDocker ? 'docker-guide-card md:col-span-2 lg:col-span-3' : ''
               } ${
                 isDvc ? 'dvc-guide-card md:col-span-2 lg:col-span-3' : ''
+              } ${
+                isAirflow ? 'airflow-guide-card md:col-span-2 lg:col-span-3' : ''
+              } ${
+                isClearML ? 'clearml-guide-card md:col-span-2 lg:col-span-3' : ''
               }`}
             >
               {isGitHub && (
@@ -118,9 +124,29 @@ export default function StudentGuidesCatalog({
                   <i className="dvc-card-line line-two" />
                 </div>
               )}
+              {isAirflow && (
+                <div className="airflow-card-background" aria-hidden="true">
+                  <div className="airflow-card-graph"><i /><i /><i /><i /><i /><i /></div>
+                  <span className="airflow-card-node node-one"><CalendarClock /></span>
+                  <span className="airflow-card-node node-two"><Workflow /></span>
+                  <span className="airflow-card-node node-three"><Layers /></span>
+                  <i className="airflow-card-line line-one" />
+                  <i className="airflow-card-line line-two" />
+                </div>
+              )}
+              {isClearML && (
+                <div className="clearml-card-background" aria-hidden="true">
+                  <div className="clearml-card-trace"><i /><i /><i /><i /><i /><i /><i /></div>
+                  <span className="clearml-card-node node-one"><FlaskConical /></span>
+                  <span className="clearml-card-node node-two"><Server /></span>
+                  <span className="clearml-card-node node-three"><LineChart /></span>
+                  <i className="clearml-card-line line-one" />
+                  <i className="clearml-card-line line-two" />
+                </div>
+              )}
               <div className="relative flex h-full flex-col md:max-w-[68%]">
                 <div className="flex items-start justify-between gap-4">
-                  <span className={`${isDocker ? 'docker-card-icon' : isDvc ? 'dvc-card-icon' : 'github-card-icon'} flex h-14 w-14 items-center justify-center rounded-2xl border border-cyan-400/25 bg-cyan-400/[0.08] text-cyan-400`}>
+                  <span className={`${isDocker ? 'docker-card-icon' : isDvc ? 'dvc-card-icon' : isAirflow ? 'airflow-card-icon' : isClearML ? 'clearml-card-icon' : 'github-card-icon'} flex h-14 w-14 items-center justify-center rounded-2xl border border-cyan-400/25 bg-cyan-400/[0.08] text-cyan-400`}>
                     <Icon className="h-6 w-6" aria-hidden="true" />
                   </span>
                   <span className="chip">{guide.category}</span>
