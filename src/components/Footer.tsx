@@ -31,7 +31,7 @@ export default function Footer({ lang = 'en' }: { lang?: Lang }) {
 
   const about = [
     { label: copy.footer.meetTeam, href: '/team' },
-    { label: copy.footer.mentorship, href: '/mentorship' },
+    { label: copy.footer.services, href: '/services' },
     { label: copy.nav.items.faq, href: '/faq' },
     { label: copy.common.contactUs, href: '/#contact' },
     // Reachable from every page: LinkedIn, Google and Meta all check that the

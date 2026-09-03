@@ -25,7 +25,7 @@ export const faqs = [
   },
   {
     q: 'Is the community really free?',
-    a: 'Yes. Sessions, roadmaps, articles, study groups, and community support cost nothing and always will. Our courses are delivered with our educational partner Zomra.',
+    a: 'Yes. Sessions, roadmaps, articles, study groups, and community support cost nothing, and our courses are delivered with our educational partner Zomra. We are not a charity, though: alongside the community we run a services business — training, talent outsourcing, software delivery and consultation for companies — and that paid work is what pays for the free side. It never moves community content behind a paywall.',
     scope: 'general',
   },
   {
