@@ -32,6 +32,14 @@ export const studentGuides: StudentGuide[] = [
     category: 'Data & Reproducibility',
     tags: ['DVC', 'Data versioning', 'Pipelines', 'Experiments', 'Interview prep'],
   },
+  {
+    slug: 'airflow',
+    title: 'The Complete Airflow Guide',
+    description:
+      'A full workflow orchestration course taught at three levels. Pick Beginner, Mid-level, or Senior, then read the detailed explanation, a fast interview review, or the practical tips and traps.',
+    category: 'Orchestration & Scheduling',
+    tags: ['Airflow', 'Orchestration', 'DAGs', 'Scheduling', 'Interview prep'],
+  },
 ]
 
 export function getStudentGuide(slug: string) {

@@ -30,7 +30,7 @@ const TRACK_IDS: GuideTrackId[] = ['detailed', 'interview', 'tips']
 
 /* Every guide on the site is levelled. Listed here so the catalogue counts and
    the sitemap cannot drift from what actually exists on disk. */
-export const GUIDE_SLUGS = ['docker', 'github-actions', 'dvc'] as const
+export const GUIDE_SLUGS = ['docker', 'github-actions', 'dvc', 'airflow'] as const
 
 export type GuidePane = {
   /* Doubles as the panel's DOM id and its location hash, so a level and section

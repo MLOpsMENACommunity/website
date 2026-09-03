@@ -1,20 +1,5 @@
 Part two of three. A cumulative review of **Beginner and Mid-level material**, organised by topic rather than by level, in about thirty-five minutes. Fast review first, common questions at the end. Senior reviews all three.
 
-## Where this picks up
-
-| Topic you already answer | What an interviewer expects here |
-|---|---|
-| "DVC stores a pointer in Git" | The cache layout, MD5, `.dir` objects, and why hashing dominates |
-| "The cache is content-addressed" | Link types measured, and the hardlink corruption failure |
-| "`dvc.yaml` has stages" | `foreach`, `matrix`, `vars`, and multi-file pipelines |
-| "`outs` tracks outputs" | `persist`, `cache: false`, `push: false`, `remote:` |
-| "Data comes from a remote" | Multiple remotes, `jobs`, `verify`, `version_aware` |
-| "`dvc import` shares data" | `import-url`, external deps, `--no-download`, `dvc update --rev` |
-| "Experiments are cheap" | Queues, `--temp` isolation, sharing via Git refs, disk cost |
-| "Metrics diff across commits" | DVCLive per-step logging and plot templates |
-| "`dvc status` tells me what changed" | `data status --granular`, `repro -v`, and lock-file conflicts |
-| — **new** — | DVC in CI · monorepo layout · the `dvc status` gate |
-
 ## Foundations, in one screen
 
 <div class="flow">
