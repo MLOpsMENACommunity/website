@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useDeferredValue, useState } from 'react'
-import { ArrowRight, Box, CalendarClock, Database, FlaskConical, GitBranch, Github, GitPullRequest, Layers, LineChart, Network, Search, Server, Workflow, X } from 'lucide-react'
+import { ArrowRight, Box, CalendarClock, Database, FlaskConical, GitBranch, Github, GitPullRequest, Layers, LineChart, Network, Package, Rocket, Search, Server, Workflow, X } from 'lucide-react'
 import type { StudentGuide } from '~/data/student-guides'
 import { localeHref, type Lang } from '@/lib/i18n'
 
@@ -76,7 +76,8 @@ export default function StudentGuidesCatalog({
             const isDvc = guide.slug === 'dvc'
             const isAirflow = guide.slug === 'airflow'
             const isClearML = guide.slug === 'clearml'
-            const Icon = isDocker ? Box : isDvc ? GitBranch : isAirflow ? Workflow : isClearML ? FlaskConical : Github
+            const isMlflow = guide.slug === 'mlflow'
+            const Icon = isDocker ? Box : isDvc ? GitBranch : isAirflow ? Workflow : isClearML ? FlaskConical : isMlflow ? LineChart : Github
             const sections = sectionsBySlug[guide.slug]
             return (
               <Link
@@ -93,6 +94,8 @@ export default function StudentGuidesCatalog({
                 isAirflow ? 'airflow-guide-card md:col-span-2 lg:col-span-3' : ''
               } ${
                 isClearML ? 'clearml-guide-card md:col-span-2 lg:col-span-3' : ''
+              } ${
+                isMlflow ? 'mlflow-guide-card md:col-span-2 lg:col-span-3' : ''
               }`}
             >
               {isGitHub && (
@@ -144,9 +147,19 @@ export default function StudentGuidesCatalog({
                   <i className="clearml-card-line line-two" />
                 </div>
               )}
+              {isMlflow && (
+                <div className="mlflow-card-background" aria-hidden="true">
+                  <div className="mlflow-card-curve"><i /><i /><i /><i /><i /><i /><i /><i /></div>
+                  <span className="mlflow-card-node node-one"><LineChart /></span>
+                  <span className="mlflow-card-node node-two"><Package /></span>
+                  <span className="mlflow-card-node node-three"><Rocket /></span>
+                  <i className="mlflow-card-line line-one" />
+                  <i className="mlflow-card-line line-two" />
+                </div>
+              )}
               <div className="relative flex h-full flex-col md:max-w-[68%]">
                 <div className="flex items-start justify-between gap-4">
-                  <span className={`${isDocker ? 'docker-card-icon' : isDvc ? 'dvc-card-icon' : isAirflow ? 'airflow-card-icon' : isClearML ? 'clearml-card-icon' : 'github-card-icon'} flex h-14 w-14 items-center justify-center rounded-2xl border border-cyan-400/25 bg-cyan-400/[0.08] text-cyan-400`}>
+                  <span className={`${isDocker ? 'docker-card-icon' : isDvc ? 'dvc-card-icon' : isAirflow ? 'airflow-card-icon' : isClearML ? 'clearml-card-icon' : isMlflow ? 'mlflow-card-icon' : 'github-card-icon'} flex h-14 w-14 items-center justify-center rounded-2xl border border-cyan-400/25 bg-cyan-400/[0.08] text-cyan-400`}>
                     <Icon className="h-6 w-6" aria-hidden="true" />
                   </span>
                   <span className="chip">{guide.category}</span>

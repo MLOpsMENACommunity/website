@@ -1,12 +1,15 @@
 import type { MetadataRoute } from 'next'
 import { getRoadmaps } from '@/lib/roadmaps'
+import { studentGuides } from '~/data/student-guides'
 import { site } from '~/site.config'
 
 export const dynamic = 'force-static'
 
 const staticPages = [
   '', '/roadmaps', '/student-guides', '/courses', '/courses/mlops-practitioner',
-  '/student-guides/github-actions', '/student-guides/docker', '/sessions', '/team', '/articles', '/services', '/faq', '/privacy-policy',
+  /* Derived from the catalogue, so a new guide cannot be listed there and forgotten here. */
+  ...studentGuides.map((guide) => `/student-guides/${guide.slug}`),
+  '/sessions', '/team', '/articles', '/services', '/faq', '/privacy-policy',
 ]
 
 export default function sitemap(): MetadataRoute.Sitemap {

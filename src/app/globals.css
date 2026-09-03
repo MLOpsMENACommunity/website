@@ -862,6 +862,101 @@
   0%, 100% { transform: scale(1); background: rgb(var(--c-coral) / 0.1); }
   50% { transform: scale(1.4); background: rgb(var(--c-coral) / 0.3); }
 }
+
+/* MLflow card: a metric curve rising past run → model → deploy nodes. */
+.mlflow-guide-card {
+  border-color: rgb(var(--c-cyan-400) / 0.28);
+  background: linear-gradient(105deg, var(--surface) 0%, var(--surface) 48%, rgb(var(--c-cyan-400) / 0.08) 76%, rgba(236, 151, 35, 0.05) 100%);
+}
+.mlflow-guide-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-image: linear-gradient(rgb(var(--c-cyan-400) / 0.14) 1px, transparent 1px);
+  background-size: 100% 22px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 38%, #000 78%);
+  mask-image: linear-gradient(90deg, transparent 38%, #000 78%);
+  opacity: 0.72;
+  transition: opacity 0.35s, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+[dir='rtl'] .mlflow-guide-card::after { -webkit-mask-image: linear-gradient(-90deg, transparent 38%, #000 78%); mask-image: linear-gradient(-90deg, transparent 38%, #000 78%); }
+.mlflow-guide-card:hover::after { opacity: 1; transform: scale(1.03); }
+.mlflow-card-background { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.mlflow-card-background::before {
+  content: '';
+  position: absolute;
+  width: 24rem;
+  height: 24rem;
+  inset-inline-end: -7rem;
+  top: -6rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgb(var(--c-cyan-400) / 0.15), transparent 68%);
+  animation: githubCardPulse 5.5s ease-in-out infinite;
+}
+/* A learning curve: bars of rising height, the way a metric chart fills in. */
+.mlflow-card-curve { position: absolute; inset-inline-end: 8%; top: 12%; display: flex; align-items: flex-end; gap: 0.35rem; height: 4.5rem; }
+.mlflow-card-curve i {
+  display: block;
+  width: 0.6rem;
+  border-radius: 0.2rem 0.2rem 0 0;
+  border: 1px solid rgb(var(--c-cyan-400) / 0.35);
+  background: rgb(var(--c-cyan-400) / 0.1);
+  box-shadow: 0 10px 24px -16px rgb(var(--c-cyan-400) / 0.85);
+  animation: mlflowRise 4.8s ease-in-out infinite;
+}
+.mlflow-card-curve i:nth-child(1) { height: 18%; }
+.mlflow-card-curve i:nth-child(2) { height: 30%; animation-delay: -0.5s; }
+.mlflow-card-curve i:nth-child(3) { height: 44%; animation-delay: -1s; }
+.mlflow-card-curve i:nth-child(4) { height: 55%; animation-delay: -1.5s; }
+.mlflow-card-curve i:nth-child(5) { height: 68%; animation-delay: -2s; }
+.mlflow-card-curve i:nth-child(6) { height: 76%; animation-delay: -2.5s; }
+.mlflow-card-curve i:nth-child(7) { height: 88%; animation-delay: -3s; }
+.mlflow-card-curve i:nth-child(8) { height: 96%; animation-delay: -3.5s; }
+.mlflow-card-node {
+  position: absolute;
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border: 1px solid rgb(var(--c-cyan-400) / 0.32);
+  border-radius: 999px;
+  background: var(--nav-bg);
+  color: rgb(var(--c-cyan-400));
+  box-shadow: 0 14px 30px -18px rgb(var(--c-cyan-400) / 0.85);
+  backdrop-filter: blur(12px);
+  animation: githubNodeFloat 4.8s ease-in-out infinite;
+}
+.mlflow-card-node svg { width: 1.15rem; }
+.mlflow-card-node.node-one { inset-inline-end: 28%; bottom: 14%; }
+.mlflow-card-node.node-two { inset-inline-end: 16%; bottom: 30%; animation-delay: -1.6s; }
+.mlflow-card-node.node-three { inset-inline-end: 4%; bottom: 12%; animation-delay: -3.1s; }
+.mlflow-card-line {
+  position: absolute;
+  height: 1px;
+  background: linear-gradient(90deg, rgb(var(--c-cyan-400) / 0.42), rgba(236, 151, 35, 0.3));
+  overflow: visible;
+}
+.mlflow-card-line::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgb(var(--c-cyan-400));
+  box-shadow: 0 0 12px rgb(var(--c-cyan-400) / 0.9);
+  animation: githubFlow 4.8s linear infinite;
+}
+.mlflow-card-line.line-one { inset-inline-end: 19%; bottom: 20%; width: 10%; }
+.mlflow-card-line.line-two { inset-inline-end: 7%; bottom: 26%; width: 9%; }
+.mlflow-card-line.line-two::after { animation-delay: -1.4s; }
+.mlflow-card-icon { box-shadow: 0 16px 30px -18px rgb(var(--c-cyan-400) / 0.85); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s; }
+.mlflow-guide-card:hover .mlflow-card-icon { transform: translateY(-3px) rotate(5deg); box-shadow: 0 20px 38px -16px rgb(var(--c-cyan-400) / 0.9); }
+@keyframes mlflowRise {
+  0%, 100% { transform: scaleY(0.85); background: rgb(var(--c-cyan-400) / 0.08); }
+  50% { transform: scaleY(1); background: rgb(var(--c-cyan-400) / 0.26); }
+}
 @keyframes dockerBlock {
   0%, 100% { transform: translateY(0); background: rgba(36, 150, 237, 0.08); }
   50% { transform: translateY(-4px); background: rgba(36, 150, 237, 0.16); }
@@ -908,6 +1003,10 @@
   .clearml-guide-card::after { -webkit-mask-image: linear-gradient(to bottom, transparent 35%, #000); mask-image: linear-gradient(to bottom, transparent 35%, #000); }
   .clearml-card-background { opacity: 0.28; }
   .clearml-card-trace { inset-inline-end: 3%; }
+  .mlflow-guide-card { background: linear-gradient(145deg, var(--surface), rgb(var(--c-cyan-400) / 0.07)); }
+  .mlflow-guide-card::after { -webkit-mask-image: linear-gradient(to bottom, transparent 35%, #000); mask-image: linear-gradient(to bottom, transparent 35%, #000); }
+  .mlflow-card-background { opacity: 0.28; }
+  .mlflow-card-curve { inset-inline-end: 3%; }
 }
 
 /* Anyone who asks for less motion gets none of it. */
@@ -1511,6 +1610,123 @@
   .clearml-rail { gap: 0.5rem; }
   .clearml-rail-node:not(:last-of-type)::after { display: none; }
   .clearml-rail-line { display: none; }
+}
+
+/* MLflow hero: the run → model → registry → serve chain from part one, plus a
+   metric curve climbing the way a Metrics tab fills in. Decorative only. */
+.mlflow-text {
+  background: linear-gradient(100deg, #22c3e6, #33cec0 52%, #ec9723);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 8s ease-in-out infinite;
+}
+.mlflow-guide-hero::before {
+  content: '';
+  position: absolute;
+  width: 28rem;
+  height: 12rem;
+  inset-inline-end: -3rem;
+  bottom: -8rem;
+  border-radius: 50%;
+  border-top: 1px solid rgb(var(--c-cyan-400) / 0.22);
+  box-shadow: 0 -24px 80px rgb(var(--c-cyan-400) / 0.06);
+}
+/* A rising metric curve: bars whose heights climb, pulsing in sequence. */
+.mlflow-curve {
+  position: absolute;
+  inset-inline-end: 8%;
+  bottom: 12%;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.45rem;
+  height: 5rem;
+  pointer-events: none;
+}
+.mlflow-curve i {
+  display: block;
+  width: 0.5rem;
+  border-radius: 0.18rem 0.18rem 0 0;
+  border: 1px solid rgb(var(--c-cyan-400) / 0.3);
+  background: rgb(var(--c-cyan-400) / 0.08);
+  animation: mlflowStep 5.6s ease-in-out infinite;
+}
+.mlflow-curve i:nth-child(1) { height: 20%; }
+.mlflow-curve i:nth-child(2) { height: 33%; animation-delay: -0.8s; }
+.mlflow-curve i:nth-child(3) { height: 45%; animation-delay: -1.6s; }
+.mlflow-curve i:nth-child(4) { height: 58%; animation-delay: -2.4s; }
+.mlflow-curve i:nth-child(5) { height: 70%; animation-delay: -3.2s; }
+.mlflow-curve i:nth-child(6) { height: 82%; animation-delay: -4s; }
+.mlflow-curve i:nth-child(7) { height: 94%; animation-delay: -4.8s; }
+.mlflow-rail {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1.5rem;
+  margin-top: 2.25rem;
+  animation: guideEnter 0.9s 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.mlflow-rail-node {
+  position: relative;
+  z-index: 1;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--nav-bg);
+  padding: 0.4rem 0.95rem;
+  color: rgb(var(--muted));
+  font-size: 0.71rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  backdrop-filter: blur(10px);
+  animation: mlflowNodeGlow 5.2s ease-in-out infinite;
+  animation-delay: calc(var(--rail-index, 0) * 1.3s);
+}
+.mlflow-rail-node:not(:last-of-type)::after {
+  content: '';
+  position: absolute;
+  inset-inline-end: -1.55rem;
+  top: 50%;
+  width: 1.55rem;
+  height: 1px;
+  background: var(--line-strong);
+}
+.mlflow-rail-line {
+  position: absolute;
+  z-index: 0;
+  inset-inline: 0.5rem;
+  top: 50%;
+  height: 1px;
+  overflow: visible;
+}
+.mlflow-rail-line::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgb(var(--c-cyan-400));
+  box-shadow: 0 0 12px rgb(var(--c-cyan-400) / 0.9);
+  animation: githubFlow 5.2s linear infinite;
+}
+.mlflow-guide-page .guide-progress i { background: linear-gradient(90deg, #22c3e6, #33cec0, #ec9723); }
+.mlflow-guide-page .guide-toc-links a::before { background: linear-gradient(#22c3e6, #33cec0, #ec9723); }
+@keyframes mlflowStep {
+  0%, 100% { opacity: 0.4; transform: scaleY(0.85); background: rgb(var(--c-cyan-400) / 0.06); }
+  50% { opacity: 1; transform: scaleY(1); background: rgb(var(--c-cyan-400) / 0.24); }
+}
+@keyframes mlflowNodeGlow {
+  0%, 100% { border-color: var(--line-strong); color: rgb(var(--muted)); }
+  50% { border-color: rgb(var(--c-cyan-400) / 0.55); color: rgb(var(--fg)); }
+}
+@media (max-width: 640px) {
+  .mlflow-curve { display: none; }
+  .mlflow-rail { gap: 0.5rem; }
+  .mlflow-rail-node:not(:last-of-type)::after { display: none; }
+  .mlflow-rail-line { display: none; }
 }
 .student-guide-prose > :first-child { margin-top: 0; }
 .student-guide-prose h2 {
@@ -2462,7 +2678,12 @@
   .clearml-rail-node,
   .clearml-rail-line::after,
   .clearml-traces i,
-  .clearml-card-trace i {
+  .clearml-card-trace i,
+  .mlflow-rail,
+  .mlflow-rail-node,
+  .mlflow-rail-line::after,
+  .mlflow-curve i,
+  .mlflow-card-curve i {
     animation: none;
   }
   .docker-layers i::after { transform: none; opacity: 1; }
@@ -2470,4 +2691,5 @@
   .dvc-rail-line { display: none; }
   .airflow-rail-line { display: none; }
   .clearml-rail-line { display: none; }
+  .mlflow-rail-line { display: none; }
 }
