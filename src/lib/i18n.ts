@@ -276,7 +276,6 @@ const en = {
        you want to read that level. */
     levelNav: 'Experience level',
     trackNav: 'How to read it',
-    sectionsSuffix: 'sections',
     levels: {
       beginner: 'Beginner',
       mid: 'Mid-level',
@@ -715,7 +714,6 @@ const ar: typeof en = {
     copied: 'تم النسخ!',
     levelNav: 'مستوى الخبرة',
     trackNav: 'طريقة القراءة',
-    sectionsSuffix: 'قسمًا',
     levels: {
       beginner: 'مبتدئ',
       mid: 'متوسّط',

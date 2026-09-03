@@ -68,6 +68,16 @@ matrix:
   Inside <code>if:</code> the <code>${{ }}</code> wrapper is <b>optional</b> because the value is already evaluated as an expression — everywhere else it is required, and mixing the two styles in one condition produces confusing partial evaluation. And <code>&amp;&amp;</code>/<code>||</code> return <b>operands, not booleans</b>, which is why <code>${{ inputs.tag || github.sha }}</code> works as a default-value idiom.
 </div>
 
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Print three contexts side by side in one step: <code>toJSON(github.event_name)</code>, <code>toJSON(runner)</code>, and <code>toJSON(needs)</code>.</li>
+    <li>Use the default-value idiom: add a <code>workflow_dispatch</code> input <code>tag</code> and echo <code>${{ inputs.tag || github.sha }}</code>, once with the input filled and once empty.</li>
+    <li>Try <code>contains(fromJSON('["main","develop"]'), github.ref_name)</code> as an <code>if</code> on a step, from two different branches.</li>
+  </ol>
+  <em>the <code>||</code> idiom falls back to the SHA when the input is blank — proof that these operators return operands rather than booleans. And <code>needs</code> is an empty object in a job with no dependencies, which is worth knowing before you debug an empty value.</em>
+</div>
+
 ## Step results: `outcome` versus `conclusion`
 
 Beginner used `if: failure()`. The precise mechanics matter once you tolerate failures deliberately.
@@ -101,6 +111,16 @@ The same distinction exists at job level as `needs.<job>.result`, which is `succ
 <div class="callout warn">
   <span class="ct"><code>always()</code> is stronger than people expect</span>
   It runs even when the workflow is <b>cancelled</b>, which means an <code>always()</code> step can keep a run alive that someone is trying to stop. For cleanup that should respect cancellation, prefer <code>if: !cancelled()</code>.
+</div>
+
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Add a step with <code>id: flaky</code>, <code>continue-on-error: true</code>, and <code>run: exit 1</code>.</li>
+    <li>Follow it with a step printing both values: <code>echo "outcome=${{ steps.flaky.outcome }} conclusion=${{ steps.flaky.conclusion }}"</code>.</li>
+    <li>Now add a step with <code>if: always()</code> and cancel the run from the Actions tab while it is going.</li>
+  </ol>
+  <em><code>outcome=failure conclusion=success</code>, and the job is green. The cancelled run still executes the <code>always()</code> step — which is exactly why <code>!cancelled()</code> exists for cleanup that should stop.</em>
 </div>
 
 ## The four special files
@@ -143,6 +163,16 @@ Multi-line values need a delimiter, or the file format breaks:
   A value written to <code>$GITHUB_ENV</code> is <b>not</b> readable in the step that wrote it — only from the next step onwards. And none of these four cross a <b>job</b> boundary; that needs job outputs or artifacts.
 </div>
 
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Write one step that appends to all four files, then later steps that read each back.</li>
+    <li>Include a multi-line value using the <code>EOF</code> delimiter form, then print it.</li>
+    <li>Add a second job with <code>needs</code> and try to read the <code>$GITHUB_ENV</code> value there.</li>
+  </ol>
+  <em>the first three work from the next step onwards, the summary renders on the run page, and the second job sees nothing. That last result is the boundary you will design around for the rest of this level.</em>
+</div>
+
 ## Environment variables: precedence and defaults
 
 Three scopes, most specific wins — and there is a fourth source you did not declare.
@@ -179,6 +209,17 @@ GitHub also injects a set of default variables into every step:
 # The whole event payload is on disk
 - run: jq '.pull_request.labels[].name' "$GITHUB_EVENT_PATH"
 ```
+
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Set the same variable at workflow, job, and step level with three different values, then echo it from the step.</li>
+    <li>Print the injected defaults: <code>echo "$GITHUB_REF_NAME $GITHUB_RUN_ATTEMPT $RUNNER_OS"</code>.</li>
+    <li>Dump the raw event: <code>jq '.repository.full_name, .ref' "$GITHUB_EVENT_PATH"</code>.</li>
+    <li>Re-run the same job and watch <code>GITHUB_RUN_ATTEMPT</code> change.</li>
+  </ol>
+  <em>the step-level value wins, and you have found the event payload on disk — often faster to explore with <code>jq</code> than through expressions.</em>
+</div>
 
 ## Secrets and variables
 
@@ -226,6 +267,17 @@ jobs:
 <div class="callout warn">
   <span class="ct">Masking is a safety net, not a mechanism</span>
   GitHub redacts <b>known</b> secret values from logs. It cannot redact a value you transformed — base64-encode a secret and print it and the redaction fails. Never print secrets, and pass them via <code>env</code> so they never appear in a command line.
+</div>
+
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Create a repository <b>variable</b> <code>REGION=eu-west-1</code> and a repository <b>secret</b> <code>TOKEN=abc123</code>.</li>
+    <li>Echo both. Note which one is redacted.</li>
+    <li>Create an <b>environment</b> called <code>staging</code> with its own <code>REGION=us-east-1</code>, add <code>environment: staging</code> to the job, and echo it again.</li>
+    <li>Try <code>echo "$TOKEN" | rev</code> and look at the log.</li>
+  </ol>
+  <em>the variable prints, the secret shows <code>***</code>, the environment value overrides the repository one, and the reversed secret is printed in full. That last line is the proof that masking is a safety net rather than a mechanism.</em>
 </div>
 
 ## Caching: designing the key
@@ -302,6 +354,17 @@ There are exactly two ways to get this wrong, and they fail in opposite directio
   Cache the <b>download</b> directory, not <code>node_modules</code> or a virtualenv. Restoring an installed tree brings platform-specific binaries and half-resolved state with it, and produces failures that make no sense against the diff.
 </div>
 
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Add <code>actions/cache</code> with a good key and print <code>steps.deps.outputs.cache-hit</code>. Run twice.</li>
+    <li>Now change the key to include <code>${{ github.sha }}</code> and run twice more.</li>
+    <li>Change it to a fixed string like <code>deps-cache</code>, edit your lockfile, and run again.</li>
+    <li>Open <b>Actions → Caches</b> and look at what has accumulated.</li>
+  </ol>
+  <em>the good key misses then hits. The SHA key misses both times. The fixed key hits even though the lockfile changed — silently shipping stale dependencies. Seeing all three once makes key design obvious forever.</em>
+</div>
+
 ## Artifacts: retention, collisions, and emptiness
 
 ```yaml
@@ -340,6 +403,16 @@ Downloading is the mirror image, and can reach across runs:
     run-id: ${{ github.event.workflow_run.id }}
     github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
+
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Run a two-cell matrix where both cells upload an artifact with the <b>same</b> name.</li>
+    <li>Fix it by suffixing with <code>${{ matrix.python }}</code>.</li>
+    <li>Point <code>path:</code> at a directory that does not exist, first without and then with <code>if-no-files-found: error</code>.</li>
+  </ol>
+  <em>the duplicate name produces a conflict error in v4 rather than merging. And the missing path silently succeeds until you add <code>if-no-files-found: error</code> — which is why it belongs on every upload.</em>
+</div>
 
 ## The job dependency graph
 
@@ -384,6 +457,16 @@ Two things to note. `needs.<job>.result` is `success`, `failure`, `cancelled`, o
 <div class="callout warn">
   <span class="ct">Job outputs are small and not secret</span>
   They are size-limited and stored in plain text in the run metadata. Pass identifiers, versions, and JSON manifests — never a credential, and never a file. Files need artifacts.
+</div>
+
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Build the fan-out/fan-in example: a <code>setup</code> job emitting JSON, a matrix <code>build</code> consuming it, and a <code>report</code> job with <code>if: always()</code>.</li>
+    <li>Print <code>needs.build.result</code> in the report job.</li>
+    <li>Make one matrix cell fail, then re-run and inspect the reported result.</li>
+  </ol>
+  <em>the report job runs despite the failure, and <code>needs.build.result</code> is a single aggregated <code>failure</code> for the whole matrix — not one result per cell. That aggregation surprises people the first time they rely on it.</em>
 </div>
 
 ## Matrix in depth
@@ -464,6 +547,17 @@ jobs:
       - run: make build SERVICE=${{ matrix.service }}
 ```
 
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Build a 2 × 2 matrix, then add one <code>include</code> and one <code>exclude</code>. Count the resulting jobs before you run it, then check.</li>
+    <li>Attach <code>experimental: true</code> via <code>include</code> and wire up <code>continue-on-error</code>.</li>
+    <li>Add a third axis temporarily and look at how many jobs appear.</li>
+    <li>Set an explicit <code>name:</code> and note how the Actions tab changes.</li>
+  </ol>
+  <em>four jobs, minus one, plus one. The third axis produces a wall of jobs that makes the "keep it to two axes" advice self-evident, and the explicit name is what keeps branch protection working.</em>
+</div>
+
 ## Service containers
 
 Mocking a database in integration tests is a compromise. `services` starts real containers on the job's network before your steps run.
@@ -507,6 +601,16 @@ jobs:
   Without it the container counts as started the instant Docker returns, so your first test connects before Postgres accepts connections. That is the whole explanation for <b>"fails on the first run, passes on the re-run"</b> — which teams then dismiss as flakiness.
 </div>
 
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Add a Postgres service <b>without</b> a health check and have the first step connect immediately.</li>
+    <li>Run it several times.</li>
+    <li>Add the <code>--health-cmd</code> options and run several times again.</li>
+  </ol>
+  <em>the first version fails intermittently — the classic "fails on the first run, passes on the re-run". With the health check it never does. You have just reproduced and fixed the most common source of CI flakiness.</em>
+</div>
+
 ## Container jobs
 
 You can also run the **job itself** inside a container, which pins the entire toolchain rather than installing it per run.
@@ -533,6 +637,16 @@ jobs:
 <div class="callout warn">
   <span class="ct">The hostname changes</span>
   With no <code>container:</code>, services are reachable at <code>localhost</code>. Once the job runs <em>inside</em> a container, they are reachable at the <b>service name</b> — <code>postgres:5432</code>. Moving a job into a container silently breaks every connection string that said <code>localhost</code>.
+</div>
+
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Take a working job with a Postgres service and add <code>container: { image: python:3.11-slim }</code>.</li>
+    <li>Run it without changing the connection string.</li>
+    <li>Change <code>localhost</code> to <code>postgres</code> and run again.</li>
+  </ol>
+  <em>the first run fails with a connection error even though nothing else changed. That hostname switch is invisible in a diff and costs people an afternoon — now it will cost you nothing.</em>
 </div>
 
 ## Reusable workflows
@@ -609,6 +723,17 @@ jobs:
 
 That doubled path — `my-org/.github/.github/workflows/…` — is correct and surprises everyone exactly once: the first `.github` is the **repository** name, the second is the folder inside it.
 
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Create a <code>reusable-ci.yml</code> in the same repository with one <code>input</code> and one <code>output</code>, then call it from another workflow with <code>uses: ./.github/workflows/reusable-ci.yml</code>.</li>
+    <li>Read its output in a following job via <code>needs</code>.</li>
+    <li>Add <code>permissions: { contents: read }</code> to the caller and <code>packages: write</code> to the callee, then run it.</li>
+    <li>Now pass a secret two ways: explicitly, then with <code>secrets: inherit</code>.</li>
+  </ol>
+  <em>the local path form works for practice without publishing anything. The permissions experiment fails — the callee cannot exceed the caller's token, which is the constraint that explains most reusable-workflow permission errors.</em>
+</div>
+
 ## Composite actions
 
 The step-level equivalent: a reusable sequence that runs inside the caller's job.
@@ -676,6 +801,17 @@ steps:
 
 Forgetting `shell:` is the most common reason a new composite action refuses to load, and the error does not say so.
 
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Create <code>.github/actions/setup/action.yml</code> as above but <b>omit</b> <code>shell: bash</code> on one <code>run</code> step.</li>
+    <li>Reference it with <code>- uses: ./.github/actions/setup</code> and run.</li>
+    <li>Add the missing <code>shell:</code> and run again.</li>
+    <li>Read one of its <code>outputs</code> in the calling workflow.</li>
+  </ol>
+  <em>the first run fails to even load the action, with a message that does not mention <code>shell</code>. This is the single most common reason a new composite action refuses to work.</em>
+</div>
+
 ## Environments and approvals
 
 An **environment** is a named deployment target with its own configuration and protection rules.
@@ -709,6 +845,17 @@ Configured in **Settings → Environments**, an environment gives you:
   Put it on the <b>environment</b>, not the repository. Ordinary test jobs then cannot read it at all, because only a job that declares <code>environment: production</code> — and passed its approval gate — gets it.
 </div>
 
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Create an environment called <code>production</code> and add yourself as a required reviewer.</li>
+    <li>Add <code>environment: production</code> to a deploy job and trigger the workflow.</li>
+    <li>Watch the job pause, then approve it.</li>
+    <li>Add a secret to the environment and try to read it from a job that does <b>not</b> declare the environment.</li>
+  </ol>
+  <em>the job waits before its first step and records who approved it. The environment secret is empty in the other job — the mechanism for keeping a production credential away from ordinary CI.</em>
+</div>
+
 ## Concurrency
 
 Beginner added `timeout-minutes` as a guard. Concurrency is the other one, and it is usually the single biggest saving available on a busy repository.
@@ -735,6 +882,16 @@ jobs:
 </div>
 
 Because they need different keys, a real pipeline declares both, at different scopes.
+
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Add workflow-level concurrency keyed on <code>github.ref</code> with <code>cancel-in-progress: true</code>, and a job that sleeps 60 seconds.</li>
+    <li>Push twice in quick succession and watch the first run.</li>
+    <li>Now add a deploy job with its own group and <code>cancel-in-progress: false</code>, and push twice again.</li>
+  </ol>
+  <em>the first CI run is cancelled the moment the second starts — that is the saving. The deploy job instead <b>queues</b>, which is what you want for a release. Seeing both makes the group-key decision concrete.</em>
+</div>
 
 ## Path filters and the required-check trap
 
@@ -763,6 +920,17 @@ jobs:
     steps:
       - run: echo "No code changed; nothing to test."
 ```
+
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Make your <code>test</code> job a required status check in branch protection.</li>
+    <li>Add <code>paths-ignore: ['**/*.md']</code> to the <code>pull_request</code> trigger.</li>
+    <li>Open a pull request that changes only the README.</li>
+    <li>Add the same-named stub workflow and re-open the pull request.</li>
+  </ol>
+  <em>the doc-only pull request sits on "Expected — waiting for status" forever, unmergeable, with no error anywhere. The stub reports immediately and unblocks it. Worth causing once on purpose.</em>
+</div>
 
 ## Triggers in depth
 
@@ -816,6 +984,16 @@ curl -X POST \
 | `workflow_run` | Runs in the **base** repository context with a writable token — see Senior |
 | `repository_dispatch` | Needs a token with `contents: write`; payload arrives as `client_payload` |
 
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Build a two-workflow chain: the first uploads an artifact, the second uses <code>workflow_run</code> and downloads it with <code>run-id</code>.</li>
+    <li>Gate the second on <code>github.event.workflow_run.conclusion == 'success'</code>, then make the first one fail.</li>
+    <li>Add a <code>repository_dispatch</code> trigger and fire it with the <code>curl</code> command above.</li>
+  </ol>
+  <em>the chained workflow runs only after success, and the dispatch fires from outside GitHub entirely. Note the second workflow runs against the <b>default branch</b> version of itself — the detail that matters for security at Senior level.</em>
+</div>
+
 ## Debugging, one level deeper
 
 <div class="guide-timeline">
@@ -837,6 +1015,17 @@ curl -X POST \
     echo "cache hit    : ${{ steps.deps.outputs.cache-hit }}"
     df -h && free -m
 ```
+
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Add a step that dumps <code>toJSON(github.event)</code> and run it on both a push and a pull request.</li>
+    <li>Re-run one job with <b>Enable debug logging</b> ticked and compare the log length.</li>
+    <li>Add the <code>if: failure()</code> diagnostics step and force a failure.</li>
+    <li>Delete a cache entry from <b>Actions → Caches</b> and re-run.</li>
+  </ol>
+  <em>the event payloads are strikingly different between the two triggers, which explains most condition bugs. And the diagnostics step gives you runner image, ref, and cache state for free on every future failure.</em>
+</div>
 
 ## Putting it all together
 
@@ -941,6 +1130,17 @@ jobs:
           echo "build  : ${{ needs.build.result }}"
           echo "deploy : ${{ needs.deploy.result }}"
 ```
+
+<div class="guide-try">
+  <span class="ct">Try it — the one that matters</span>
+  <ol>
+    <li>Take this pipeline into a real project and get it green.</li>
+    <li>Confirm the concurrency cancellation works by pushing twice quickly.</li>
+    <li>Confirm the deploy job pauses for approval and that the report job runs even when something fails.</li>
+    <li>Then remove one safeguard at a time — the health check, the cache key, the unique artifact name — and observe exactly what breaks.</li>
+  </ol>
+  <em>a production-shaped pipeline you built rather than copied, plus first-hand knowledge of what each safeguard prevents. That last step turns this from a recipe into understanding.</em>
+</div>
 
 ## What continues in Senior
 

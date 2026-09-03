@@ -11,7 +11,6 @@ type Labels = {
   trackNav: string
   levels: Record<GuideLevelId, string>
   tracks: Record<GuideTrackId, string>
-  sectionsSuffix: string
   panePrevious: string
   paneNext: string
   onThisPage: string
@@ -155,9 +154,6 @@ export default function GuideLevelTracks({ levels, labels }: { levels: GuideLeve
                 >
                   <i className="guide-level-dot" aria-hidden="true" />
                   {labels.levels[level.id]}
-                  <em className="guide-level-tab-meta">
-                    {level.sections} {labels.sectionsSuffix}
-                  </em>
                 </button>
               )
             })}

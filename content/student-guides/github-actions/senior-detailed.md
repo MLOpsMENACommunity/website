@@ -83,6 +83,16 @@ jobs:
       - run: ./upload-preview.sh      # consumes the artifact, never executes it
 ```
 
+<div class="guide-try">
+  <span class="ct">Try it — in a throwaway repository</span>
+  <ol>
+    <li>Add a <code>pull_request</code> workflow that echoes whether a secret is set, then open a pull request <b>from a fork</b> and confirm it is empty.</li>
+    <li>Open a pull request from a branch in the same repository and confirm the secret <b>is</b> present.</li>
+    <li>Print <code>github.event_name</code> and <code>github.ref</code> in both cases.</li>
+  </ol>
+  <em>the fork run has no secret and a read-only token; the same-repo run has both. Having watched GitHub withhold the credential yourself makes the whole table above concrete rather than memorised.</em>
+</div>
+
 ## Script injection
 
 You have used expressions since Beginner. At this level the concern flips: event data is **attacker-controlled text**, and interpolating it into a shell is interpolating it into source code.
@@ -114,6 +124,16 @@ The same applies to `actions/github-script` and to any action input you build fr
   with:
     script: console.log(process.env.TITLE)
 ```
+
+<div class="guide-try">
+  <span class="ct">Try it — on a repository you own, nowhere else</span>
+  <ol>
+    <li>Add a step with the vulnerable form: <code>run: echo "Title: ${{ github.event.pull_request.title }}"</code>.</li>
+    <li>Open a pull request titled <code>test"; echo INJECTED; #</code> and read the log.</li>
+    <li>Switch to the <code>env</code> form and re-run with the same title.</li>
+  </ol>
+  <em>the vulnerable version prints <code>INJECTED</code> — your title became a command. The <code>env</code> version prints the title as literal text. Five minutes here is worth more than any amount of reading about injection.</em>
+</div>
 
 ## Permissions: least privilege
 
@@ -165,6 +185,17 @@ Two limits drive real architecture:
   run: gh release create v1.0.0 --repo my-org/other-repo
 ```
 
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Write a job with no <code>permissions</code> block that uses <code>GITHUB_TOKEN</code> to create a label via the API. Confirm it succeeds.</li>
+    <li>Add <code>permissions: { contents: read }</code> at workflow level and re-run.</li>
+    <li>Add <code>issues: write</code> to just that job and re-run again.</li>
+    <li>Check your organisation's default token permission setting.</li>
+  </ol>
+  <em>step two fails with a 403 — declaring one scope zeroed everything else, which is the entire mechanism. Step three passes. You have now seen least privilege enforced rather than described.</em>
+</div>
+
 ## OIDC: deployment without stored credentials
 
 Beginner and Mid stored cloud keys as secrets. At this level you remove them entirely — the runner requests a short-lived signed token, and the cloud exchanges it for temporary credentials.
@@ -199,6 +230,17 @@ jobs:
 </div>
 
 Verify the constraint rather than trusting it. Open a pull request from a throwaway branch with a workflow that tries to assume the role. It should be refused. If it succeeds, your condition is too broad and the approval gate is decorative.
+
+<div class="guide-try">
+  <span class="ct">Try it — the verification is the point</span>
+  <ol>
+    <li>Set up a cloud role whose trust policy is deliberately broad: <code>repo:YOUR-ORG/*:*</code>. Assume it from a workflow and run <code>sts get-caller-identity</code>.</li>
+    <li>Now push a branch called <code>attacker-test</code> with the same workflow and confirm it <b>also</b> succeeds.</li>
+    <li>Tighten the <code>sub</code> claim to <code>repo:YOUR-ORG/YOUR-REPO:environment:production</code> and add <code>environment: production</code> to the job.</li>
+    <li>Run from <code>attacker-test</code> again.</li>
+  </ol>
+  <em>the broad policy lets any branch assume the role — that is the misconfiguration in production systems today. After tightening, the throwaway branch is refused. Never ship an OIDC role without running step four.</em>
+</div>
 
 ## Supply chain
 
@@ -238,6 +280,17 @@ Two less obvious surfaces worth raising unprompted:
 **Caches are a write surface.** A pull request branch can poison a cache that a later `main` run restores. Never restore something and then execute it without verification — which is why you cache dependency *downloads* rather than installed, executable trees.
 
 **Self-hosted runners on public repositories are dangerous**, because any fork pull request can execute code on a machine that persists between jobs.
+
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Run the audit one-liner over a real repository: list every third-party <code>uses:</code> that is not pinned to a 40-character SHA.</li>
+    <li>Pin one of them, keeping the version in a trailing comment.</li>
+    <li>Add the <code>dependabot.yml</code> with grouped updates and wait for the first pull request.</li>
+    <li>Check your organisation's <b>Actions permissions</b> setting for an allow-list.</li>
+  </ol>
+  <em>most repositories have several unpinned third-party actions. The Dependabot pull request is what makes pinning sustainable — pinning without it is just a frozen, unpatched dependency.</em>
+</div>
 
 ## Container builds and layer caching
 
@@ -289,6 +342,17 @@ steps:
 | `provenance` + attestation | Proves which workflow and commit produced the image |
 
 `linux/arm64` under emulation is several times slower than native. For anything on the critical path, build each architecture on its own native runner and merge the manifests.
+
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Build a multi-stage image in CI with <code>cache-to: type=gha,mode=min</code>. Run twice and note the build time.</li>
+    <li>Change to <code>mode=max</code> and run twice more.</li>
+    <li>Open a pull request and confirm <code>push:</code> evaluates false so nothing is published.</li>
+    <li>Inspect the pushed image's provenance attestation.</li>
+  </ol>
+  <em><code>mode=min</code> barely helps because only the final stage is cached; <code>mode=max</code> exports the intermediate layers and the second build is dramatically faster. And the pull request builds without publishing, which is the boundary that stops a fork pushing to your registry.</em>
+</div>
 
 ## Authoring your own actions
 
@@ -348,6 +412,18 @@ JavaScript actions start fastest and behave identically on all three operating s
 
 Version a published action the way the ecosystem expects: release `v1.2.3` and keep a mutable `v1` tag pointing at the newest compatible release.
 
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Write a JavaScript action that reads one input, sets one output, and writes to the job summary via <code>core.summary</code>.</li>
+    <li>Bundle it with <code>ncc build src/index.js -o dist</code> and commit <code>dist/</code>.</li>
+    <li>Reference it locally with <code>uses: ./.github/actions/my-action</code> and read its output.</li>
+    <li>Now delete <code>dist/</code> and run again.</li>
+    <li>Tag it <code>v1.0.0</code>, then create a <code>v1</code> tag pointing at the same commit.</li>
+  </ol>
+  <em>without the committed bundle the action fails to start — dependencies are never installed for you. The double tag is the convention every published action follows, and now you know why.</em>
+</div>
+
 ## Reusable workflows as a platform
 
 Mid showed the mechanism. At this level you are running it as a product for other teams.
@@ -366,6 +442,17 @@ Mid showed the mechanism. At this level you are running it as a product for othe
   A team needs one small change, cannot get it upstream quickly, and forks. Six months later there are eleven forks and no standard. The fix is not policy — it is <b>turnaround time</b> on upstream changes. If a reasonable request takes two weeks, forking is the rational choice and you will lose.
 </div>
 
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Publish a reusable workflow in one repository, tag it <code>v1.0.0</code>, and add a moving <code>v1</code> tag.</li>
+    <li>Call it from a second repository pinned to <code>@v1</code>.</li>
+    <li>Make a breaking change, release <code>v1.1.0</code>, and move <code>v1</code> to it. Watch the consumer break without changing.</li>
+    <li>Revert by moving <code>v1</code> back, then redo it as <code>v2</code> with the consumer opting in.</li>
+  </ol>
+  <em>step three is the incident you are trying to prevent — one tag move breaking every consumer at once. Step four is the discipline that prevents it, and feeling the difference is more persuasive than any policy document.</em>
+</div>
+
 ## Runners: strategy and cost
 
 | Situation | Choice | Why |
@@ -379,6 +466,16 @@ Mid showed the mechanism. At this level you are running it as a product for othe
 If you run self-hosted, the non-negotiables are: **ephemeral** — one job per runner, then destroy the VM or container; scoped to specific repositories rather than the whole organisation; in a network segment that cannot reach production directly; and never schedulable by a fork-triggered workflow.
 
 On cost: Windows minutes bill at roughly twice Linux and macOS at roughly ten times. A matrix that includes macOS "for completeness" can quietly become most of your bill, and larger hosted runners are almost always cheaper than the engineering time to operate your own fleet.
+
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Run the same job on <code>ubuntu-latest</code>, <code>windows-latest</code>, and <code>macos-latest</code> and record each duration.</li>
+    <li>Multiply by the billing factors — Windows ×2, macOS ×10 — to get the true relative cost.</li>
+    <li>Open <b>Settings → Billing → Actions</b> and find which workflow consumes the most minutes.</li>
+  </ol>
+  <em>a macOS job that takes the same wall-clock time costs roughly ten times as much. The billing page usually reveals one workflow nobody knew was expensive — often a matrix that grew an axis.</em>
+</div>
 
 ## Observability
 
@@ -411,6 +508,17 @@ On cost: Windows minutes bill at roughly twice Linux and macOS at roughly ten ti
 ```
 
 Be careful with debugging actions that open an interactive shell on a runner. They are genuinely useful and they are also a live session on a machine holding your secrets — restrict them to jobs that have none.
+
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Run the <code>gh api</code> command above against a busy repository and read the p95 per workflow.</li>
+    <li>Count how many runs have <code>run_attempt &gt; 1</code> — that is your re-run rate, a proxy for flakiness.</li>
+    <li>Compute queue time as the gap between <code>created_at</code> and <code>run_started_at</code>.</li>
+    <li>Put all of it into a scheduled workflow that writes to the step summary.</li>
+  </ol>
+  <em>four numbers you did not have before. The re-run rate is usually the surprising one, and it is the number that turns "CI feels flaky" into a fundable piece of work.</em>
+</div>
 
 ## Machine-learning delivery
 
@@ -509,6 +617,17 @@ jobs:
 
 Four decisions there are the whole lesson. Validation runs on a cheap runner before an expensive one is provisioned. The gate is a **comparison against production**, not a hard-coded threshold, so it survives a changing dataset. Metrics go to the step summary so the approver does not download a zip. And promotion is a separate job behind an environment, which buys the approval, the scoped credentials, and a deployment record naming the commit and the run.
 
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Build the four-job shape with stubs: <code>validate</code> exits non-zero on a bad input file, <code>train</code> just sleeps and emits a run id, <code>gate</code> compares two numbers, <code>promote</code> sits behind an environment.</li>
+    <li>Feed it a deliberately malformed dataset and confirm it fails in <code>validate</code>, before any expensive job starts.</li>
+    <li>Make the candidate metric worse than the baseline and confirm <code>gate</code> blocks promotion.</li>
+    <li>Write the comparison to the step summary and approve the promotion from the run page.</li>
+  </ol>
+  <em>the pipeline refuses bad data cheaply and refuses a worse model politely, with the numbers visible to whoever approves. That shape is the whole architectural argument — Actions orchestrates and records; it does not train.</em>
+</div>
+
 ## Migrating from an existing CI system
 
 You will be asked this. The answer that lands is a sequence, not a tool comparison.
@@ -522,6 +641,17 @@ You will be asked this. The answer that lands is a sequence, not a tool comparis
 </ol>
 
 The important judgement: **do not port the old pipeline verbatim.** A great deal of Jenkinsfile logic exists to work around a persistent workspace and shared mutable state — problems Actions does not have. Reimplementing those workarounds imports complexity you no longer need.
+
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Take one real job from an existing CI system and list what it needs: triggers, credentials, network reach, and required-check status.</li>
+    <li>Port it to Actions as a <b>non-required</b> check running in parallel with the original.</li>
+    <li>Compare results over a few days, then flip branch protection to the new check.</li>
+    <li>Note anything in the original that exists only to reset a dirty workspace — and delete it rather than porting it.</li>
+  </ol>
+  <em>the parallel period is what makes migration safe, and that last step is where most of the simplification comes from: a large share of legacy CI logic exists to work around persistent state that Actions does not have.</em>
+</div>
 
 ## The review checklist
 
@@ -543,6 +673,17 @@ Most incidents are prevented at review time, not at runtime. This is the whole s
 <div class="callout note">
   <span class="ct">Make the checklist enforceable</span>
   CODEOWNERS on <code>.github/workflows/**</code> routes every workflow change to the team that owns CI. Combined with an organisation policy allowing only selected actions, the checklist stops depending on whoever happens to pick up the review.
+</div>
+
+<div class="guide-try">
+  <span class="ct">Try it</span>
+  <ol>
+    <li>Apply the checklist to a workflow you did not write — ideally in a repository you have just inherited.</li>
+    <li>Write down every row that fails.</li>
+    <li>Fix the two highest-risk findings and open a pull request.</li>
+    <li>Add CODEOWNERS on <code>.github/workflows/**</code> so future changes route to your team.</li>
+  </ol>
+  <em>almost every unreviewed workflow fails at least three rows — usually a missing <code>permissions</code> floor, an unpinned third-party action, and no <code>timeout-minutes</code>. CODEOWNERS is what stops the list regrowing.</em>
 </div>
 
 ## The complete picture
@@ -643,6 +784,17 @@ jobs:
             echo "- by: @${{ github.actor }}"
           } >> "$GITHUB_STEP_SUMMARY"
 ```
+
+<div class="guide-try">
+  <span class="ct">Try it — the final exercise</span>
+  <ol>
+    <li>Build this pipeline end to end on a real project: reusable CI, an image built with provenance, and an OIDC deploy behind an environment.</li>
+    <li>Verify each control actively: try to deploy from a non-<code>main</code> branch, try to push an image from a fork pull request, and try to assume the deploy role from a throwaway branch.</li>
+    <li>Confirm the deployed reference is a digest, not a tag.</li>
+    <li>Then hand it to a colleague and ask them to run the review checklist against it.</li>
+  </ol>
+  <em>three refusals and one green deploy. A control you have never seen refuse anything is decoration — this exercise is the difference between a pipeline that looks hardened and one that is.</em>
+</div>
 
 ## Where the series leaves you
 
