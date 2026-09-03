@@ -1,25 +1,35 @@
-The problems at this level are rarely about syntax. They are about an image sixty people deploy, a base image nobody has rebuilt in four months, and a container that took a host down with it. Start with the error table, then the practices and playbooks underneath it.
+Part three of three. The problems at this level are rarely about syntax. They are about an image sixty people deploy, a base image nobody has rebuilt in four months, and a container that took a host down with it. Start with the error table, then the practices, verification, and playbooks underneath it.
 
 ## Common errors at this level
 
-These cause incidents rather than failed builds.
+Cumulative — everything from Beginner and Mid still applies. These cause incidents rather than failed builds.
 
 | Symptom | Real cause | Fix |
 |---|---|---|
 | A container escape reached the host | Process running as root with default capabilities | Non-root `USER`, `--cap-drop ALL`, `no-new-privileges` |
-| A build container controlled the daemon | `/var/run/docker.sock` mounted in | Use a rootless builder or a remote BuildKit instance |
+| A build container controlled the daemon | `/var/run/docker.sock` mounted in | Rootless builder, or a remote BuildKit instance |
+| `--privileged` left in a compose file | Added to debug something, never removed | Remove it; if genuinely needed, document why |
 | Secret found in a shipped image | `ARG`/`ENV`/`COPY` then deleted in a later layer | BuildKit secret mounts; rebuild and **rotate** |
+| Rotation happened after the cleanup | Deleting the tag treated as containment | Rotate first — the image is already cached elsewhere |
 | Base image vulnerabilities piling up | Image built months ago, never rebuilt | Scheduled rebuilds, digest-pinned bases, Dependabot |
 | Scan gate is routinely bypassed | Failing on unfixable findings | Gate on **fixable** HIGH/CRITICAL only |
+| A poisoned build cache produced a bad image | Untrusted branches sharing a cache with trusted ones | Scope caches per branch or trust level |
 | One container took the host down | No memory, CPU, or PID limits | `-m`, `--cpus`, `--pids-limit` on everything |
+| The OOM killer took the wrong process | Unlimited container, kernel chose by score | Limits everywhere, not just on the guilty container |
 | Container OOM-killed at 512 MB doing nothing | Runtime read host memory, not the cgroup | Container-aware JVM, or set `--max-old-space-size` |
+| Service slow with no errors and no restarts | CPU quota throttling, which does not fail | Raise `--cpus`, or profile the workload |
+| A dependency blip restarted every instance | Liveness check testing a downstream | Liveness = self only; readiness = dependencies |
 | "exec format error" in staging | Apple Silicon `arm64` image on `amd64` host | buildx multi-arch, or `--platform linux/amd64` |
+| Multi-arch builds take forty minutes | QEMU emulation on one runner | Build natively per arch, merge manifests |
 | Nobody can say what version is running | Deployed a mutable tag | Immutable `:sha-…` tag or a digest |
 | Production runs code CI never tested | Image rebuilt per environment | Build once, promote the same digest |
 | Requests dropped on every deploy | Shell-form `CMD`, so SIGTERM never reached the app | Exec form, `exec "$@"`, drain on SIGTERM |
 | Host disk full, many unrelated failures | Unrotated JSON logs and build cache | Daemon `max-size`/`max-file`, `docker builder prune` |
-| GPU container cannot see the GPU | NVIDIA Container Toolkit missing, or driver/runtime mismatch | Install the toolkit; match CUDA runtime to host driver |
+| A daemon restart took every service down | `live-restore` not enabled | Set it, and test a daemon restart |
+| GPU container cannot see the GPU | NVIDIA Container Toolkit missing, or driver mismatch | Install the toolkit; match CUDA runtime to host driver |
 | Pushing a retrained model rebuilds gigabytes | Weights baked into a layer | Mount weights from a volume or object store |
+| PyTorch DataLoader workers die randomly | 64 MB default shared memory | Raise `--shm-size` |
+| Eleven forks of the shared base image | Upstream requests took too long | Fix turnaround time, not policy |
 
 ## The practices that pay off most
 
@@ -30,7 +40,22 @@ These cause incidents rather than failed builds.
   <div class="card"><div class="icon">🚧</div><h4>Limits on everything</h4><p>Memory, CPU, and PIDs. A container should hit a ceiling before the host does.</p></div>
   <div class="card"><div class="icon">🏷️</div><h4>Deploy digests, promote artifacts</h4><p>Build once, tag with the commit SHA, promote that exact image. Never rebuild for production.</p></div>
   <div class="card"><div class="icon">✍️</div><h4>Sign and verify</h4><p>SBOM, provenance, cosign signature, and an admission policy that refuses anything unsigned.</p></div>
+  <div class="card"><div class="icon">🔬</div><h4>Test that controls refuse</h4><p>A security control you have never watched block something is decoration. Try the operation you meant to prevent.</p></div>
+  <div class="card"><div class="icon">📈</div><h4>Measure image age</h4><p>The oldest deployed image is usually a better exposure signal than any scan report.</p></div>
 </div>
+
+## Practice cards
+
+<ol class="guide-steps">
+  <li><b>Watch a capability refuse something</b>Run <code>ping</code> from a default container, then from one with <code>--cap-drop ALL</code>. If it still works, the flag is not being applied where you think.</li>
+  <li><b>Survive a read-only filesystem</b>Add <code>--read-only</code> and fix everything that breaks by declaring the writable path with <code>tmpfs</code>, not by removing the flag. Then list your service's writable paths from memory.</li>
+  <li><b>Leak a secret three ways, then stop</b><code>ARG</code>, <code>ENV</code>, and <code>COPY</code>-then-<code>rm</code>. Find each with <code>docker history --no-trunc</code> and <code>docker save | tar -tv</code>. Then do it correctly with a secret mount and confirm both checks are clean.</li>
+  <li><b>Break a signature</b>Sign an image with cosign and verify it. Rebuild with one byte changed, push, and verify again.</li>
+  <li><b>Compare the two scan gates</b>Run Trivy with and without <code>--ignore-unfixed</code>. Decide which report a team would actually act on.</li>
+  <li><b>Prove userns-remap works</b>Write a file to a bind mount from a root container, note the host-side owner, enable <code>userns-remap</code>, and repeat.</li>
+  <li><b>Time QEMU against native</b>Build one architecture natively and the other under emulation. The ratio is the argument for per-arch runners.</li>
+  <li><b>Fill a disk on purpose</b>On a disposable host, generate unrotated logs until the disk is full and count how many unrelated things break. Then set daemon rotation.</li>
+</ol>
 
 ## The hardening pass every image should get
 
@@ -65,7 +90,12 @@ docker run -d \
 
 <div class="callout tip">
   <span class="ct">Make the safe path the default path</span>
-  Publish an internal base image that already has the non-root user, the pinned base, and the sensible defaults. Teams inherit hardening by writing <code>FROM ghcr.io/org/python-base:3.11</code> — which is far more effective than a checklist, because it requires no discipline.
+  Publish an internal base image that already has the non-root user, the pinned base, and the sensible defaults. Teams inherit hardening by writing <code>FROM ghcr.io/org/python-base:3.11</code> — far more effective than a checklist, because it requires no discipline from anyone.
+</div>
+
+<div class="callout warn">
+  <span class="ct">Three flags to challenge in every review</span>
+  <code>--privileged</code> disables almost all isolation. A mounted <code>/var/run/docker.sock</code> gives the container control of the daemon, which is root-equivalent on the host. <code>--net=host</code> removes network isolation. Each is occasionally justified and each needs a written reason — never a debugging convenience left in the file.
 </div>
 
 ## Verifying, not assuming
@@ -75,13 +105,16 @@ Every control above should be checked rather than trusted.
 ```bash
 # Is there a secret in a layer?
 docker history --no-trunc myapp | grep -iE 'token|secret|password|key'
-docker save myapp | tar -xO --wildcards '*/layer.tar' | tar -tv | grep -i env
+docker save myapp | tar -tv | head -40
 
 # Is it actually non-root?
 docker run --rm myapp id
 
 # Which capabilities does it really hold?
-docker run --rm --cap-drop ALL myapp capsh --print 2>/dev/null || echo 'no capsh'
+docker run --rm myapp sh -c 'apk add -q libcap 2>/dev/null; capsh --print' | head -3
+
+# Is the root filesystem really read-only?
+docker exec api sh -c 'touch /probe 2>&1 || echo "read-only, as intended"'
 
 # Which architecture, and which digest?
 docker image inspect myapp --format '{{.Architecture}} {{index .RepoDigests 0}}'
@@ -89,7 +122,7 @@ docker image inspect myapp --format '{{.Architecture}} {{index .RepoDigests 0}}'
 # Did the OOM killer take it?
 docker inspect api --format '{{.State.ExitCode}} {{.State.OOMKilled}}'
 
-# Does the OIDC-style trust chain hold — is the image signed?
+# Is the image signed?
 cosign verify ghcr.io/org/app@sha256:9b2c... || echo 'unsigned'
 ```
 
@@ -97,6 +130,18 @@ cosign verify ghcr.io/org/app@sha256:9b2c... || echo 'unsigned'
   <span class="ct">Test that the control actually blocks something</span>
   After adding <code>--cap-drop ALL</code>, try the operation you meant to prevent — <code>ping</code> needs <code>NET_RAW</code>, <code>mount</code> needs <code>SYS_ADMIN</code>. If it still succeeds, the flag is not being applied where you think. A security control you have never seen refuse anything is decoration.
 </div>
+
+Automate the mechanical checks so they do not depend on anyone remembering:
+
+```yaml .github/workflows/image-checks.yml
+- run: hadolint Dockerfile
+- run: trivy config --exit-code 1 .
+- run: |
+    docker history --no-trunc "$IMAGE" \
+      | grep -iE 'token|secret|password|api[_-]key' && { echo "secret in a layer"; exit 1; } || true
+- run: |
+    test "$(docker run --rm "$IMAGE" id -u)" != "0" || { echo "image runs as root"; exit 1; }
+```
 
 ## Keeping images fresh
 
@@ -153,18 +198,20 @@ An image built four months ago is almost always a bigger problem than anything i
 
 ### A secret was found in a published image
 
-**Rotate first.** The image is already pulled and cached in places you do not control; assume the credential is compromised regardless of how quickly you delete the tag. Then revoke, remove the tag and any cached copies you can reach, find the instruction that introduced it, and close the class — BuildKit secret mounts plus a `docker history` grep in CI so it cannot recur silently.
+**Rotate first.** The image is already pulled and cached in places you do not control — CI runners, developer machines, registry mirrors, layer caches — so assume the credential is compromised regardless of how quickly you delete the tag. Then revoke, remove the tag and any cached copies you can reach, find the instruction that introduced it, and close the class: BuildKit secret mounts plus a `docker history` grep in CI so it cannot recur silently.
 
-Deleting the image first and rotating later optimises for the wrong thing.
+Deleting the image first and rotating later optimises for appearances over exposure.
 
 ### One container took the host down
 
-Check limits before code. A container with no memory limit will happily consume all host RAM, and the OOM killer may kill something else entirely. Confirm with `docker inspect` and host `dmesg`, then apply `-m`, `--cpus`, and `--pids-limit` to **everything** on the host — not just the guilty container, because the next one will be different.
+Check limits before code. A container with no memory limit will happily consume all host RAM, and the OOM killer may kill something else entirely — your database rather than the leaking worker. Confirm with `docker inspect` and the host's `dmesg`, then apply `-m`, `--cpus`, and `--pids-limit` to **everything** on that host, not just the guilty container, because the next one will be different.
+
+If the symptom was slowness rather than a kill, suspect CPU throttling instead: an over-quota container is throttled, not failed, so there is no error to find.
 
 ### Everything went red at once
 
 <div class="guide-timeline">
-  <div class="guide-timeline-item"><span>0m</span><strong>Blast radius</strong><small>One container or all of them? Everything at once means host, daemon, base image, or registry — not your diff.</small></div>
+  <div class="guide-timeline-item"><span>0m</span><strong>Blast radius</strong><small>One container or all of them? Everything at once means host, daemon, base image, registry, or disk — not your diff.</small></div>
   <div class="guide-timeline-item"><span>2m</span><strong>Exit code and OOM flag</strong><small>137 + <code>OOMKilled: true</code> is a limit. 143 is a clean stop. 127 is a missing binary, usually the wrong image.</small></div>
   <div class="guide-timeline-item"><span>4m</span><strong>Which digest is running?</strong><small>Compare digests, not tags. With a mutable tag, the running code may not be the code you are reading.</small></div>
   <div class="guide-timeline-item"><span>6m</span><strong>Host resources</strong><small>Disk, inodes, memory. A full disk presents as a dozen unrelated failures.</small></div>
@@ -175,54 +222,69 @@ Check limits before code. A container with no memory limit will happily consume 
 ```bash
 docker events --since 30m --filter container=api
 docker inspect api --format '{{.State.ExitCode}} {{.State.OOMKilled}} {{.State.Error}}'
+docker inspect api --format '{{.Image}} {{index .RepoDigests 0}}'
 docker system df -v
 docker run --rm -it --network container:api nicolaka/netshoot
 ```
 
 ### An image you depend on was compromised
 
-Find every deployment referencing it and at what digest. Revoke every credential those containers could reach — not only the ones you believe were used. Replace with a vetted digest or an internal mirror. Then close the class: digest pinning, an internal registry mirror, signature verification at admission, and scheduled rebuilds.
+Find every deployment referencing it and at which digest. Revoke every credential those containers could reach — not only the ones you believe were used. Replace with a vetted digest or an internal mirror. Then close the class: digest pinning, a registry mirror so an upstream change is not immediately yours, signature verification at admission, and scheduled rebuilds.
+
+### A restart storm followed a dependency blip
+
+The liveness check is testing something it does not own. A check that fails when a downstream database is briefly unavailable will restart every instance simultaneously, turning a small problem into an outage — and the restarts often make the downstream worse. Split it: liveness reflects only this process, readiness reflects dependencies and controls traffic.
 
 ## Running Docker as a platform
 
-**Publish base images, not documentation.** A hardened `FROM` line is adopted; a wiki page is not.
+**Publish base images, not documentation.** A hardened `FROM` line gets adopted; a wiki page does not.
 
-**Version base images with a moving major tag.** Consumers use `python-base:3.11`; you release `3.11.7-2` and move the pointer. Canary one low-risk service on the exact patch first — otherwise one bad base image release breaks every team simultaneously.
+**Version base images with a moving major tag.** Consumers use `python-base:3.11`; you release `3.11.7-2` and move the pointer. Canary one low-risk service on the exact patch tag first — otherwise one bad base image release breaks every team simultaneously, which is a memorable way to lose their trust.
 
-**Own the registry policy.** Immutable tags where the registry supports it, retention rules so old images are pruned, and an admission policy that refuses unsigned or unscanned images.
+**Own the registry policy.** Immutable tags where the registry supports them, retention rules so old images are pruned, an internal mirror so an upstream outage is not your outage, and an admission policy that refuses unsigned or unscanned images.
 
-**Measure image health.** Median and p95 image size, age of the oldest deployed image, count of fixable HIGH/CRITICAL findings, and build duration. Without numbers, "our images are fine" is an opinion.
+**Measure image health.** Without numbers, "our images are fine" is an opinion:
+
+| Metric | Why it matters |
+|---|---|
+| Median and p95 image size | Size is deploy latency, on every deploy |
+| Age of the oldest deployed image | Usually a better exposure signal than a scan report |
+| Count of fixable HIGH/CRITICAL findings | The actionable subset, not the total |
+| Build duration, p50 and p95 | Where your teams' time actually goes |
+| Percentage of deploys by digest | How answerable "what is running?" is |
 
 <div class="callout warn">
   <span class="ct">The failure mode of a shared base image</span>
-  A team needs one package added, cannot get it upstream quickly, and forks. Six months later there are eleven variants and no standard. The fix is turnaround time on upstream requests, not policy — if a reasonable change takes two weeks, forking is the rational choice and you will lose.
+  A team needs one package added, cannot get it upstream quickly, and forks. Six months later there are eleven variants and no standard. The fix is turnaround time on upstream requests, not policy — if a reasonable change takes two weeks, forking is the rational choice and you will lose. Treat the base image as a product with a service level, or do not treat it as a standard.
 </div>
 
 ## Cost and performance levers worth knowing
 
 | Lever | Effect | Note |
 |---|---|---|
-| Registry or GHA build cache with `mode=max` | Minutes per CI build | `mode=min` barely helps a multi-stage build |
+| Registry or CI build cache with `mode=max` | Minutes per build | `mode=min` barely helps a multi-stage build |
 | Native per-arch runners instead of QEMU | Several times faster | Merge manifests afterwards |
 | Multi-stage + `-slim` | Faster pulls on every deploy | Size is deploy latency, not vanity |
 | Cache mounts for package managers | Fast warm rebuilds | And nothing added to the image |
 | Prebuilt base with dependencies | Removes install time entirely | Rebuild it nightly |
 | Daemon log rotation | Prevents disk-full incidents | `max-size` and `max-file` |
+| `live-restore` | A daemon upgrade stops being an outage | Test it before you rely on it |
 
 ```json /etc/docker/daemon.json
 {
   "log-driver": "json-file",
   "log-opts": { "max-size": "10m", "max-file": "3" },
   "live-restore": true,
-  "userns-remap": "default"
+  "userns-remap": "default",
+  "default-ulimits": { "nofile": { "Name": "nofile", "Soft": 4096, "Hard": 8192 } }
 }
 ```
 
-`userns-remap` maps container root to an unprivileged host UID, which removes an entire class of escape consequence. It has real caveats around volume ownership and some images, so test it before rolling it out — but it is worth evaluating rather than dismissing.
+`userns-remap` maps container root to an unprivileged host uid, which removes an entire class of escape consequence. It has real caveats around volume ownership and some images, so test it before rolling it out — but it is worth evaluating rather than dismissing. For developer machines and CI builders, rootless Docker goes further: no root daemon at all.
 
 ## Machine-learning images specifically
 
-**Weights are data, not code.** Mount them read-only from a volume or object store, versioned independently. Baking them in means every retrain pushes gigabytes and every image pull downloads them again.
+**Weights are data, not code.** Mount them read-only from a volume or object store, versioned independently. Baking them in means every retrain pushes gigabytes, every pull downloads them again, and the model version becomes coupled to the code version so rollback is ambiguous.
 
 **Use the `runtime` CUDA base.** `devel` carries `nvcc` and the full toolchain — often several gigabytes more. Compile extensions in a builder stage and copy the result.
 
@@ -232,6 +294,8 @@ Find every deployment referencing it and at what digest. Revoke every credential
 
 **Pin everything, including CUDA and cuDNN.** ML dependency graphs are fragile enough without floating base tags.
 
+**Set memory limits with the runtime in mind.** A framework that reads host memory will size its allocator for the whole machine — the same cgroup blindness that bites JVMs, with much larger numbers.
+
 ```bash
 docker run -d --gpus all \
   -v model-store:/models:ro \
@@ -239,3 +303,25 @@ docker run -d --gpus all \
   -m 16g --cpus 4 \
   ghcr.io/org/inference@sha256:9b2c...
 ```
+
+## The checklist to run before shipping
+
+| Check | Looking for |
+|---|---|
+| `FROM` pinned by digest? | Reproducible, and cannot move under you |
+| Secret in `ARG`, `ENV`, or a `COPY`? | `docker history` grep comes back clean |
+| Non-root numeric `USER`? | `docker run --rm img id` is not uid 0 |
+| Read-only root with declared writable paths? | `--read-only` plus `tmpfs` |
+| Capabilities dropped, `no-new-privileges`? | And the refusal actually tested |
+| Memory, CPU, PID limits set? | On everything, not just the noisy service |
+| Exec-form `CMD`, `exec "$@"` in scripts? | Clean stop exits 143, not 137 |
+| Liveness separate from readiness? | A dependency blip does not restart the fleet |
+| Deploy reference a digest? | And the running revision is reportable |
+| Same artifact promoted, not rebuilt? | Production runs what CI tested |
+| SBOM, provenance, signature attached? | And verification enforced at admission |
+| Multi-arch, built natively where needed? | Manifest list, no silent emulation |
+| Daemon log rotation and `live-restore` set? | Disk-full and upgrade incidents prevented |
+| Rebuild scheduled? | Image age is a metric someone watches |
+
+Most container incidents are prevented at review time rather than at runtime. Reading a Dockerfile and a `docker run` line for what they **permit** — rather than what they do — is the highest-leverage habit in this guide.
+
