@@ -98,7 +98,7 @@ Everything editable is plain data — no CMS, no database.
 | Repos and homepage pillars | `data/community.ts` |
 | Key free resources | `data/resources.ts` |
 | Roadmaps (full text) | `content/roadmaps/*.md` |
-| Student guides (full text) | `content/student-guides/*.md` |
+| Student guides (full text) | `content/student-guides/<slug>/<level>-<track>.md` |
 | UI strings, both languages | `src/lib/i18n.ts` |
 | Arabic translations of the data above | `src/lib/content-i18n.ts` |
 
@@ -125,12 +125,16 @@ Ordering comes from the `ORDER` array in `src/lib/roadmaps.ts`.
 
 ### Adding a student guide
 
-Guides are plain markdown in `content/student-guides/<slug>.md` — **no frontmatter**, because
-the metadata lives in `data/student-guides.ts` and in the route's `pageMetadata()`.
+Guides are plain markdown — **no frontmatter**, because the metadata lives in
+`data/student-guides.ts` and in the route's `pageMetadata()`.
 
-Use `## NN Title` headings (zero-padded, no punctuation that a slugger would eat). The number
-drives the badge next to the heading, the numbered contents list, and the phase dividers, so
-it is not decoration.
+Every guide is a 3 × 3 grid: three levels (`beginner`, `mid`, `senior`) × three tracks
+(`detailed`, `interview`, `tips`), so nine files at
+`content/student-guides/<slug>/<level>-<track>.md`. All nine must exist before the slug is
+registered.
+
+Use `## Title` headings. Section numbers, the contents list, and the per-pane counts on the
+catalogue card are all derived from them, so a heading is structure rather than decoration.
 
 A fenced code block can carry a file label after the language, which becomes the code
 window's title bar:
@@ -149,20 +153,54 @@ under `.student-guide-prose` in `src/app/globals.css`:
 | `.guide-stat-strip` | `.guide-stat` > `<b>` + `<span>` — key facts at the top of a guide |
 | `.callout` (`.note`, `.tip`, `.warn`) | `<span class="ct">Title</span>` then prose |
 | `.cards` | `.card` > `.icon` + `<h4>` + `<p>` |
-| `.flow` | `.node` (+ `<small>`) separated by `.arrow` |
+| `.flow` | `.node` (+ `<small>`) separated by `.arrow` — one row, no branching |
+| `.guide-arch` | A grid for architecture that branches or layers. See below |
 | `ol.guide-steps` | `<li><b>Step title</b>body</li>` — auto-numbered with a connector |
 | `.guide-compare` | `.guide-compare-col.good` / `.bad` > `<h4>` + `<ul>` |
 | `.guide-timeline` | `.guide-timeline-item` > `<span>` + `<strong>` + `<small>` |
+| `.guide-try` | `<span class="ct">Try it</span>` + `<ol>` + `<em>` — deliberately the same violet in every guide |
 | `.pill` (`.req`, `.opt`) | Inline badge, usable inside table cells |
+
+`.guide-arch` is for the diagram `.flow` cannot express — a fan-out, a control plane over an
+execution plane, a trust boundary. Columns come from `--arch-cols`, and `.arch-lane` groups
+nodes into a labelled band with its own `--lane-cols`:
+
+```html
+<div class="guide-arch" style="--arch-cols:3">
+  <div class="arch-lane" style="--lane-cols:2">
+    <span class="arch-label">control plane</span>
+    <div class="arch-node" data-kind="entry"><b>Title</b><small>detail</small></div>
+    <div class="arch-node" data-kind="store"><b>Title</b><small>detail</small></div>
+  </div>
+  <i class="arch-edge" data-dir="down"></i>
+  <div class="arch-node" data-kind="danger"><b>Title</b><small>detail</small></div>
+  <p class="arch-note"><b>Why it matters:</b> the sentence the graph exists to make.</p>
+</div>
+```
+
+`data-kind` is `entry`, `store`, `worker`, `external`, or `danger`, and each renders
+differently so a reader can tell a bucket from a worker. `arch-edge` takes
+`data-dir="right|left|up|down"` plus an optional `data-flow="optional"` for a dashed edge.
+Everything inherits `--guide-accent`, so the graph is in the tool's colour automatically.
+
+Per-tool theming lives in two places. `--guide-accent` is set by the `<slug>-guide-page`
+class that `GuideLevelTracks` applies from its `slug` prop, and the whole
+`.student-guide-prose` block reads it — so callouts, cards, step numbers, headings, and the
+TOC follow the tool rather than a shared cyan. Tool marks come from
+`src/components/ToolLogo.tsx` as inline SVG inheriting `currentColor`; they are geometric
+interpretations rather than reproductions of the trademarked wordmarks.
 
 **Adding a new block class means touching three places**: the CSS, the `REVEAL_SELECTOR`
 list in `src/components/GuideArticle.tsx`, and the `.guide-motion-ready` selectors in
 `globals.css`. Miss one and the block either never fades in or stays invisible.
 
-To register a whole new guide: add a `GuideDefinition` (learning path + phase dividers keyed
-by section number) in `src/lib/student-guides.server.ts`, a view in `src/views/`, an `(en)`
-and an `(ar)` `page.tsx`, an entry in `data/student-guides.ts`, and the path in
-`src/app/sitemap.ts`.
+To register a whole new guide: write the nine panes at
+`content/student-guides/<slug>/{beginner,mid,senior}-{detailed,interview,tips}.md` **first**,
+then add the slug to `GUIDE_SLUGS` in `src/lib/student-guides.server.ts`, an entry in
+`data/student-guides.ts` (which also feeds `src/app/sitemap.ts`), a view in `src/views/`, an
+`(en)` and an `(ar)` `page.tsx`, and the per-slug icon, card classes, and decorative CSS in
+`src/components/StudentGuidesCatalog.tsx` and `globals.css`. The markdown has to exist before
+the slug is registered, because the catalogue counts every pane at build time.
 
 ### Adding a session
 

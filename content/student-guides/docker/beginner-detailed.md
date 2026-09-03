@@ -102,7 +102,7 @@ That restricted view is convincing enough to be confusing. Inside a container, `
   <em>inside, <code>ps aux</code> shows one or two processes and the hostname is a random hex string. On the host, that same shell is visible as an ordinary process. That is the whole model in one experiment: one process, two views.</em>
 </div>
 
-## Image, container, registry
+## Image, container, registry: the three nouns
 
 Three words that get used interchangeably in conversation and mean very different things in practice.
 
@@ -135,7 +135,7 @@ That one command exercises all three ideas: Docker looks for the `hello-world` i
   <em>one image and two containers. Two containers from one run command each, both stopped, both still taking up a little disk until you remove them — which is the first hint that stopped containers do not disappear on their own.</em>
 </div>
 
-## Check your setup
+## Check your setup: client, daemon, registry
 
 Before writing anything, confirm what you have. Three commands tell you everything that matters.
 
@@ -149,12 +149,27 @@ docker run hello-world  # end-to-end proof: pull, create, run
 
 It is worth knowing the shape of what you just installed, because it explains several error messages:
 
-<div class="flow">
-  <div class="node">CLI<small>docker …</small></div>
-  <span class="arrow">&rarr;</span>
-  <div class="node">DAEMON<small>does the work</small></div>
-  <span class="arrow">&rarr;</span>
-  <div class="node">CONTAINER<small>your process</small></div>
+<div class="guide-arch" style="--arch-cols:3">
+  <div class="arch-lane" style="--lane-cols:1">
+    <span class="arch-label">your machine</span>
+    <div class="arch-node" data-kind="entry"><b><code>docker</code> CLI</b><small>A thin client. Sends every request over a socket — it builds nothing itself</small></div>
+  </div>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <div class="arch-lane" style="--lane-cols:3">
+    <span class="arch-label">dockerd — the daemon does the work</span>
+    <div class="arch-node" data-kind="worker"><b>Builder</b><small>Receives the build context, runs each instruction, writes layers</small></div>
+    <div class="arch-node" data-kind="worker"><b>Runtime</b><small>Creates namespaces and cgroups, starts your process</small></div>
+    <div class="arch-node" data-kind="store"><b>Storage</b><small>Images, layers, volumes, under the Docker root directory</small></div>
+  </div>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down" data-flow="optional"></i>
+  <div class="arch-node"><b>Image layers</b><small>Read-only, shared between containers</small></div>
+  <div class="arch-node"><b>Container</b><small>One process, plus a thin writable layer</small></div>
+  <div class="arch-node" data-kind="external"><b>Registry</b><small>Docker Hub, GHCR, ECR — pulled on demand</small></div>
+  <p class="arch-note"><b>Why this matters:</b> the daemon must be running for any command to work; the build context is uploaded <b>to</b> the daemon, which is why its size affects build speed; and on Linux the socket is root-owned, which is why commands need <code>sudo</code> until your user joins the <code>docker</code> group.</p>
 </div>
 
 The `docker` command you type is only a client. It sends your request over a socket to a background service — the **daemon** — which builds images, starts containers, and manages storage. This matters in three practical ways: the daemon needs to be running for any command to work, files are sent *to* the daemon at build time (which is why build context size affects speed), and on Linux the socket is root-owned, which is why Docker commands need `sudo` until your user is added to the `docker` group.
@@ -229,7 +244,7 @@ Without `-d` the container runs in the foreground and your terminal shows its ou
   <em>a working web server you never installed, a Python version you do not have on your machine, and — thanks to <code>--rm</code> — no leftovers from the second experiment. That contrast between the nginx container you had to remove and the Python one that cleaned itself up is the habit to take away.</em>
 </div>
 
-## The commands you will actually use
+## The commands you will actually use, by verb
 
 There are hundreds of Docker subcommands. In day-to-day work you use about fifteen.
 
@@ -280,7 +295,7 @@ Two of those deserve a note now because they save real time. `docker exec -it NA
   <em>a wall of JSON, then the same facts as single lines. <code>--format</code> is the difference between <code>inspect</code> being unusable and being the first tool you reach for — the Tips section has a set worth keeping in your shell history.</em>
 </div>
 
-## The container lifecycle
+## The container lifecycle, state by state
 
 A container moves through a small number of states, and most beginner confusion comes from not knowing which one it is in.
 
@@ -491,7 +506,7 @@ LABEL org.opencontainers.image.description="Checkout API"
   <em><code>1.0</code> from the build argument, then <code>hotfix</code> from the run-time flag. You have just seen the two-stage configuration model that the whole "build once, run anywhere" idea depends on: bake a default, override per environment.</em>
 </div>
 
-## Layers, and why COPY order matters
+## Layers: why `COPY` order decides your build time
 
 This is the single biggest speed lever a beginner can pull, and it takes one minute to apply.
 
@@ -725,7 +740,7 @@ Two rules cover almost every port problem you will hit:
   <em>a refused connection that looks exactly like a broken port mapping, and an <code>ss</code> output showing <code>127.0.0.1:8000</code> as the reason. Then a clear "address already in use" for the duplicate. Those are two of the three port errors you will ever see.</em>
 </div>
 
-## Configuration with environment variables
+## Configuration: environment variables and files
 
 An image should be built **once** and then run in development, staging, and production without modification. That only works if everything environment-specific arrives at run time.
 
@@ -879,7 +894,7 @@ The distinction is worth stating plainly because it decides real outcomes: a **n
   <em>the table is gone in the first case and present in the second, from a completely different container. Destroying your own data once, deliberately, is the fastest way to never do it accidentally.</em>
 </div>
 
-## How containers find each other
+## Networking: how containers find each other
 
 One container is rarely enough. As soon as you have an app and a database, they need to talk — and the way they find each other surprises everyone once.
 
@@ -968,7 +983,7 @@ Order matters, and getting it wrong produces permission errors that look mysteri
   <em>root first, then <code>uid=10001</code>, then a clean "permission denied" proving the restriction is real, then a failed build proving why <code>USER</code> goes last. Four short runs and you understand the whole pattern.</em>
 </div>
 
-## Docker Compose
+## Docker Compose: many containers, one file
 
 By now a single `docker run` line has six flags on it, and you have two containers plus a network to start in the right order. That is what Compose is for: it moves everything you were typing into a file you commit.
 
@@ -1082,7 +1097,7 @@ docker inspect NAME --format '{{range .Config.Env}}{{println .}}{{end}}'
   <em>three recognisable failures and three distinct exit codes. Having produced them deliberately, you will recognise each instantly when it happens for real — which is the difference between a five-minute fix and a lost afternoon.</em>
 </div>
 
-## Keeping your machine clean
+## Keeping your machine clean: prune and reclaim
 
 Docker accumulates. Images you pulled once, containers you forgot to remove, build cache, and volumes from projects you stopped last spring — and then one day a build fails with `no space left on device`.
 

@@ -5,56 +5,56 @@ import ToolLogo from '@/components/ToolLogo'
 import { getGuideLevels } from '@/lib/student-guides.server'
 import { localeHref, t, type Lang } from '@/lib/i18n'
 
-/* The hero rail mirrors the mental model the Beginner track opens with:
-   code in Git → a pointer → the cache → shared remote storage. */
-const flow = ['Code', 'Pointer', 'Cache', 'Remote']
+/* The hero rail mirrors the lifecycle the Beginner track opens with:
+   a run is tracked, packaged as a model, registered, then served. */
+const stages = ['Run', 'Model', 'Registry', 'Serve']
 
-export default async function DvcGuideView({ lang }: { lang: Lang }) {
+export default async function MlflowGuideView({ lang }: { lang: Lang }) {
   const c = t(lang).studentGuidesPage
-  const levels = await getGuideLevels('dvc')
+  const levels = await getGuideLevels('mlflow')
   const sections = levels.reduce((total, level) => total + level.sections, 0)
 
   return (
     <>
-      <section className="guide-page-hero dvc-guide-hero relative overflow-hidden border-b border-line">
-        <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-violet/10 blur-[100px]" />
-        <div className="pointer-events-none absolute -right-24 top-0 h-96 w-96 rounded-full bg-teal/10 blur-[100px]" />
-        <div className="dvc-commits" aria-hidden="true"><i /><i /><i /><i /><i /></div>
+      <section className="guide-page-hero mlflow-guide-hero relative overflow-hidden border-b border-line">
+        <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-cyan-400/10 blur-[100px]" />
+        <div className="pointer-events-none absolute -right-24 top-0 h-96 w-96 rounded-full bg-amber/10 blur-[100px]" />
+        {/* Decorative stand-in for a metric curve filling in over steps. */}
+        <div className="mlflow-curve" aria-hidden="true"><i /><i /><i /><i /><i /><i /><i /></div>
         <div className="relative mx-auto max-w-content px-5 py-16 sm:px-8 sm:py-24">
           <Link href={localeHref(lang, '/student-guides')} className="guide-hero-back inline-flex items-center gap-2 text-sm font-medium text-muted transition hover:text-cyan-400">
             <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" /> {c.backToGuides}
           </Link>
           <div className="guide-hero-chips mt-8 flex flex-wrap items-center gap-2">
-            <span className="chip guide-hero-tool"><ToolLogo slug="dvc" /> DVC</span>
-            <span className="chip">Data versioning</span>
+            <span className="chip guide-hero-tool"><ToolLogo slug="mlflow" /> MLflow</span>
+            <span className="chip">Tracking &amp; registry</span>
             <span className="chip">{levels.length} levels</span>
             <span className="chip">{sections} sections</span>
             {lang === 'ar' && <span className="chip">{c.englishGuide}</span>}
           </div>
           <div lang="en" dir="ltr" className="guide-hero-copy">
             <div className="guide-hero-head">
-              <span className="guide-hero-logo" aria-hidden="true"><ToolLogo slug="dvc" /></span>
+              <span className="guide-hero-logo" aria-hidden="true"><ToolLogo slug="mlflow" /></span>
               <h1 className="text-4xl font-bold leading-[1.1] sm:text-5xl lg:text-6xl">
-                The Complete <span className="dvc-text">DVC</span> Guide
+                The Complete <span className="mlflow-text">MLflow</span> Guide
               </h1>
             </div>
             <p className="mt-5 max-w-3xl text-lg leading-relaxed text-muted">
               Taught at three levels, written three ways. Pick Beginner, Mid-level, or Senior, then read the full explanation, a fast interview review, or the practical tips and traps for that level.
             </p>
-            {/* Decorative stand-in for a pointer resolving through to remote storage. */}
-            <div className="dvc-rail" aria-hidden="true">
-              {flow.map((stage, index) => (
-                <span key={stage} className="dvc-rail-node" style={{ '--rail-index': index } as React.CSSProperties}>
+            <div className="mlflow-rail" aria-hidden="true">
+              {stages.map((stage, index) => (
+                <span key={stage} className="mlflow-rail-node" style={{ '--rail-index': index } as React.CSSProperties}>
                   {stage}
                 </span>
               ))}
-              <i className="dvc-rail-line" />
+              <i className="mlflow-rail-line" />
             </div>
           </div>
         </div>
       </section>
 
-      <GuideLevelTracks levels={levels} labels={c} slug="dvc" />
+      <GuideLevelTracks levels={levels} labels={c} slug="mlflow" />
     </>
   )
 }

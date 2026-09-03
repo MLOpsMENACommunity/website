@@ -55,7 +55,17 @@ function tabKeys<T extends string>(ids: readonly T[], current: T, select: (id: T
   }
 }
 
-export default function GuideLevelTracks({ levels, labels }: { levels: GuideLevel[]; labels: Labels }) {
+export default function GuideLevelTracks({
+  levels,
+  labels,
+  slug,
+}: {
+  levels: GuideLevel[]
+  labels: Labels
+  /* Scopes the per-tool accent: `<slug>-guide-page` re-points `--guide-accent`,
+     which the whole `.student-guide-prose` block reads. */
+  slug: string
+}) {
   const [levelId, setLevelId] = useState<GuideLevelId>(levels[0].id)
   const [trackId, setTrackId] = useState<GuideTrackId>('detailed')
   const anchorRef = useRef<HTMLDivElement>(null)
@@ -132,7 +142,7 @@ export default function GuideLevelTracks({ levels, labels }: { levels: GuideLeve
   }, [owners, levelId, trackId])
 
   return (
-    <div className="guide-levels-shell">
+    <div className={`guide-levels-shell ${slug}-guide-page`}>
       <div ref={anchorRef} aria-hidden="true" />
       <div className="guide-switcher">
         <div className="guide-switcher-inner mx-auto max-w-content px-5 sm:px-8">

@@ -25,6 +25,32 @@ I am starting with the isolation model, because every other decision in this tra
 
 You have known since Beginner that a container is "a process with a restricted view". That view is built from three separate kernel mechanisms, and knowing which one does what is the difference between reasoning about security and guessing at it.
 
+<div class="guide-arch" style="--arch-cols:3">
+  <div class="arch-lane" style="--lane-cols:3">
+    <span class="arch-label">what a container actually is — three kernel mechanisms</span>
+    <div class="arch-node" data-kind="entry"><b>Namespaces</b><small>Separate views of PIDs, mounts, network, hostname, users, IPC</small></div>
+    <div class="arch-node" data-kind="entry"><b>cgroups</b><small>Limits on CPU, memory, PIDs, block I/O — <code>-m</code>, <code>--cpus</code></small></div>
+    <div class="arch-node" data-kind="entry"><b>Capabilities · seccomp · AppArmor</b><small>Which privileged operations are possible at all</small></div>
+  </div>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <div class="arch-lane" style="--lane-cols:1">
+    <span class="arch-label">shared — there is no hypervisor here</span>
+    <div class="arch-node" data-kind="danger"><b>One host kernel, for every container on the machine</b><small><code>uname -r</code> inside any image reports the <em>host's</em> kernel. uid 0 inside is uid 0 outside, unless you use userns remapping or rootless</small></div>
+  </div>
+  <i class="arch-edge" data-dir="down" data-flow="optional"></i>
+  <i class="arch-edge" data-dir="down" data-flow="optional"></i>
+  <i class="arch-edge" data-dir="down" data-flow="optional"></i>
+  <div class="arch-lane" style="--lane-cols:3">
+    <span class="arch-label">stronger boundaries, when the code is not yours</span>
+    <div class="arch-node"><b>gVisor</b><small>Intercepts syscalls in userspace</small></div>
+    <div class="arch-node"><b>Kata · Firecracker</b><small>A lightweight VM per container</small></div>
+    <div class="arch-node"><b>A plain VM</b><small>Always available, always an option</small></div>
+  </div>
+  <p class="arch-note"><b>Why the middle lane decides everything:</b> namespaces restrict what a process can <em>see</em>, not what the kernel will <em>do</em> for it. An escape through a kernel bug, a careless bind mount, or an added capability lands on the host as root — which is why "it's only a container" is not a boundary you can lean on for untrusted code.</p>
+</div>
+
 | Mechanism | Provides | Controls it |
 |---|---|---|
 | **Namespaces** | Separate views of PIDs, mounts, network, hostname, users, IPC | Docker, per container |

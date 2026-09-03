@@ -22,6 +22,7 @@ const REVEAL_SELECTOR = [
   '.guide-compare',
   '.guide-timeline',
   '.guide-try',
+  '.guide-arch',
 ].join(', ')
 
 export default function GuideArticle({

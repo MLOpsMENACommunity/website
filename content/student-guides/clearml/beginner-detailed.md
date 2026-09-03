@@ -57,19 +57,34 @@ You need very little to follow along: Python, a script that trains something sma
   <em>at least one of those three questions is unanswerable, and usually all three. That is the gap ClearML fills — and the third one, tying a model file to a commit, is the one that hurts most in a code review six months later.</em>
 </div>
 
-## The architecture, in four parts
+## The architecture: four parts, three data stores
 
 ClearML has more moving pieces than a single library, and knowing which piece does what makes every error message readable.
 
-<div class="flow">
-  <div class="node">SDK<small>in your script</small></div>
-  <span class="arrow">&rarr;</span>
-  <div class="node">API SERVER<small>metadata</small></div>
-  <span class="arrow">&rarr;</span>
-  <div class="node">WEB SERVER<small>the UI</small></div>
-  <div class="node">FILE SERVER<small>artifacts</small></div>
-  <span class="arrow">&rarr;</span>
-  <div class="node">AGENT<small>executes</small></div>
+<div class="guide-arch" style="--arch-cols:3">
+  <div class="arch-lane" style="--lane-cols:1">
+    <span class="arch-label">your training process</span>
+    <div class="arch-node" data-kind="entry"><b>SDK — <code>Task.init()</code></b><small>Patches frameworks at import time, records code, diff, packages, args; streams metrics</small></div>
+  </div>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down" data-flow="optional"></i>
+  <div class="arch-lane" style="--lane-cols:3">
+    <span class="arch-label">server — api :8008 · web :8080 · files :8081</span>
+    <div class="arch-node" data-kind="store"><b>MongoDB</b><small>Task metadata: params, status, queues. "Task list is slow" lives here</small></div>
+    <div class="arch-node" data-kind="store"><b>Elasticsearch</b><small>Metrics and console logs. "Scalars are slow" — and it fills up first</small></div>
+    <div class="arch-node" data-kind="store"><b>Redis</b><small>Ephemeral worker state and locks</small></div>
+  </div>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <i class="arch-edge" data-dir="down"></i>
+  <div class="arch-lane" style="--lane-cols:3">
+    <span class="arch-label">execution — optional, and the half people find confusing</span>
+    <div class="arch-node"><b>Queue</b><small>A named, ordered list. A task sits here until an agent claims it</small></div>
+    <div class="arch-node" data-kind="worker"><b>Agent</b><small>Rebuilds the env, clones the commit, applies the diff, runs the entry point</small></div>
+    <div class="arch-node" data-kind="external"><b>Artifact storage</b><small>File server, or S3 via <code>output_uri</code> — use S3 for anything large</small></div>
+  </div>
+  <p class="arch-note"><b>Learn the top two lanes first.</b> Tracking needs no agent anywhere: install the SDK, run your script, get a full record. The bottom lane is the second half of the story — <em>re-executing</em> a recorded run elsewhere — and trying to learn both at once is why people find ClearML complicated.</p>
 </div>
 
 | Part | What it does | Where it runs |
@@ -118,7 +133,7 @@ You have two options for the server, and for learning there is only one sensible
   <em>your script talks to the API server for metadata and the file server for files, and nothing else. The web server is for you, not for your code, and the agent is optional. Getting that picture straight now makes every later error message obvious.</em>
 </div>
 
-## Install and connect
+## Install and connect: credentials and config
 
 Two commands, and the second one is interactive.
 
@@ -183,7 +198,7 @@ python -c "from clearml import Task; print(Task.get_projects()[:3])"
   <em>a working connection and a config file you have actually looked at. That last step takes five seconds and prevents the most common ClearML security incident, which is a credentials block committed to a public repository.</em>
 </div>
 
-## Your first tracked task
+## Your first tracked task, in two lines
 
 This is the whole beginner story in two lines. Here is a script with no ClearML in it:
 
@@ -261,7 +276,7 @@ Open that link while the script is still running and you are watching the consol
   <em>the uncommitted diff is the surprise. ClearML stores the patch of your dirty working tree so a run from an uncommitted state is still reproducible — which is enormously useful and, as Senior covers, a place secrets can leak if you are careless.</em>
 </div>
 
-## What gets captured automatically
+## What gets captured automatically, and what does not
 
 The word ClearML uses for this is "automagic", and knowing its exact boundaries stops you from either duplicating work or expecting magic that is not there.
 
@@ -402,7 +417,7 @@ logger.report_single_value("params_millions", count_params(model) / 1e6)
   <em>a Scalars tab you can actually read. The title/series experiment in steps one and two takes two minutes and permanently fixes the most common ClearML plotting mistake.</em>
 </div>
 
-## Hyperparameters and configuration
+## Hyperparameters: the editable surface of a task
 
 Parameters are not just a record. In ClearML they are the **editable surface of a task** — the thing you change when you clone a run and re-launch it. That is why how you register them matters more than it looks.
 
@@ -457,7 +472,7 @@ train(lr=params["lr"])          # runs with 1e-3, no code change
   <em>a fully editable configuration surface. Step four is the trap: the bug is invisible locally and only surfaces when someone re-launches your task with different values, which is the worst possible time to find it.</em>
 </div>
 
-## Artifacts
+## Artifacts: files and objects on a task
 
 An artifact is any file or Python object you attach to a task. Use them for the things that are neither metrics nor the final model: a preprocessed dataframe, an evaluation report, a vocabulary, a set of predictions.
 
@@ -517,7 +532,7 @@ task = Task.init(project_name="vision", task_name="run", output_uri="s3://my-buc
   <em>a preview you can read without downloading, and — in step three — data flowing between two runs with no shared filesystem. That is the mechanism pipelines are built on, so it is worth doing by hand once before you meet the abstraction.</em>
 </div>
 
-## Models and the registry
+## Models and the registry: weights with provenance
 
 A model is an artifact with privileges: its own registry entry, its own tags, and a recorded link back to the task that produced it. Most of the time you get one for free.
 
@@ -577,7 +592,7 @@ The lifecycle is deliberately simple at this level:
   <em>a model whose provenance is one click from the weights, and a loader that names an intent rather than a path. Step four shows you what "published" actually enforces, which is worth knowing before you rely on it as a promotion gate.</em>
 </div>
 
-## Datasets
+## Datasets: immutable, incremental versions
 
 A tracked experiment that reads `/data/train.csv` is only half-reproducible. `ClearML Dataset` closes that gap: an immutable, versioned, content-addressed collection of files that is itself a task, so it has an id, a project, tags, and lineage.
 
@@ -667,7 +682,7 @@ child.finalize()
   <em>a delta upload rather than a full copy, an instant second fetch from cache, and — the important one — a training task that records exactly which data version it read. That recorded id is the difference between "trained on the customer data" and a reproducible claim.</em>
 </div>
 
-## Comparing experiments
+## Comparing experiments: table, chart, and code
 
 This is where the tracking pays off, and it is almost entirely a UI skill. Run your script three times with different learning rates before reading on, so you have something to compare.
 
@@ -737,7 +752,7 @@ print("best:", best.id, best.name)
   <em>the compare view with identical values hidden is the moment the whole tool justifies itself: three runs reduced to exactly the one line that differed. Doing it in Python as well matters because that is what a CI promotion check looks like.</em>
 </div>
 
-## Agents and queues
+## Agents and queues: running a task elsewhere
 
 Everything so far worked with no worker anywhere. This section is the second half of ClearML: taking a recorded run and executing it somewhere else.
 
@@ -823,7 +838,7 @@ Run that on your laptop and it takes two seconds: it registers the task, uploads
   <em>a run you launched without touching a terminal on the executing machine. Running the agent on your own laptop first is the trick that makes this concrete — you can watch both halves at once, and step five teaches you the one error you will otherwise spend an hour on.</em>
 </div>
 
-## Your first pipeline
+## Your first pipeline: tasks that create tasks
 
 Once runs are re-executable, chaining them is a small step. A pipeline is a task that creates and monitors other tasks.
 
@@ -904,7 +919,7 @@ A pipeline step here is literally "clone this existing task, override these para
   <em>a DAG you never drew and, in step four, a skipped step. Caching keys on the component's code and inputs, so an unchanged step is reused — which is what makes iterating on the last step of a long pipeline bearable.</em>
 </div>
 
-## Reading a failed task
+## Reading a failed task, in order
 
 Debugging ClearML has an order, and following it beats guessing.
 

@@ -25,6 +25,14 @@ export const studentGuides: StudentGuide[] = [
     tags: ['GitHub Actions', 'CI/CD', 'DevOps', 'Automation', 'Interview prep'],
   },
   {
+    slug: 'mlflow',
+    title: 'The Complete MLflow Guide',
+    description:
+      'A full experiment tracking, model packaging, and registry course taught at three levels. Pick Beginner, Mid-level, or Senior, then read the detailed explanation, a fast interview review, or the practical tips and traps.',
+    category: 'Tracking & Model Registry',
+    tags: ['MLflow', 'Experiment tracking', 'Model registry', 'Serving', 'Interview prep'],
+  },
+  {
     slug: 'dvc',
     title: 'The Complete DVC Guide',
     description:
