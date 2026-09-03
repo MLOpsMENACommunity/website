@@ -24,6 +24,14 @@ export const studentGuides: StudentGuide[] = [
     category: 'CI/CD & Automation',
     tags: ['GitHub Actions', 'CI/CD', 'DevOps', 'Automation', 'Interview prep'],
   },
+  {
+    slug: 'dvc',
+    title: 'The Complete DVC Guide',
+    description:
+      'A full data and pipeline versioning course taught at three levels. Pick Beginner, Mid-level, or Senior, then read the detailed explanation, a fast interview review, or the practical tips and traps.',
+    category: 'Data & Reproducibility',
+    tags: ['DVC', 'Data versioning', 'Pipelines', 'Experiments', 'Interview prep'],
+  },
 ]
 
 export function getStudentGuide(slug: string) {

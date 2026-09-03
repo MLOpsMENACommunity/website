@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useDeferredValue, useState } from 'react'
-import { ArrowRight, Box, Database, Github, GitPullRequest, Network, Search, Workflow, X } from 'lucide-react'
+import { ArrowRight, Box, Database, GitBranch, Github, GitPullRequest, Layers, Network, Search, Workflow, X } from 'lucide-react'
 import type { StudentGuide } from '~/data/student-guides'
 import { localeHref, type Lang } from '@/lib/i18n'
 
@@ -73,7 +73,8 @@ export default function StudentGuidesCatalog({
           {filteredGuides.map((guide, index) => {
             const isGitHub = guide.slug === 'github-actions'
             const isDocker = guide.slug === 'docker'
-            const Icon = isDocker ? Box : Github
+            const isDvc = guide.slug === 'dvc'
+            const Icon = isDocker ? Box : isDvc ? GitBranch : Github
             const sections = sectionsBySlug[guide.slug]
             return (
               <Link
@@ -84,6 +85,8 @@ export default function StudentGuidesCatalog({
                 isGitHub ? 'github-actions-card md:col-span-2 lg:col-span-3' : ''
               } ${
                 isDocker ? 'docker-guide-card md:col-span-2 lg:col-span-3' : ''
+              } ${
+                isDvc ? 'dvc-guide-card md:col-span-2 lg:col-span-3' : ''
               }`}
             >
               {isGitHub && (
@@ -105,9 +108,19 @@ export default function StudentGuidesCatalog({
                   <i className="docker-card-wave wave-two" />
                 </div>
               )}
+              {isDvc && (
+                <div className="dvc-card-background" aria-hidden="true">
+                  <div className="dvc-commit-graph"><i /><i /><i /><i /><i /></div>
+                  <span className="dvc-card-node node-one"><GitBranch /></span>
+                  <span className="dvc-card-node node-two"><Layers /></span>
+                  <span className="dvc-card-node node-three"><Database /></span>
+                  <i className="dvc-card-line line-one" />
+                  <i className="dvc-card-line line-two" />
+                </div>
+              )}
               <div className="relative flex h-full flex-col md:max-w-[68%]">
                 <div className="flex items-start justify-between gap-4">
-                  <span className={`${isDocker ? 'docker-card-icon' : 'github-card-icon'} flex h-14 w-14 items-center justify-center rounded-2xl border border-cyan-400/25 bg-cyan-400/[0.08] text-cyan-400`}>
+                  <span className={`${isDocker ? 'docker-card-icon' : isDvc ? 'dvc-card-icon' : 'github-card-icon'} flex h-14 w-14 items-center justify-center rounded-2xl border border-cyan-400/25 bg-cyan-400/[0.08] text-cyan-400`}>
                     <Icon className="h-6 w-6" aria-hidden="true" />
                   </span>
                   <span className="chip">{guide.category}</span>
