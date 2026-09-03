@@ -9,7 +9,7 @@ export const site = {
   url: 'https://mlopsmena.com',
   tagline: 'Free MLOps and AI learning for engineers across the Middle East and North Africa.',
   description:
-    'Free MLOps and AI learning for engineers across the Middle East and North Africa. Live sessions, three structured roadmaps, open cohort courses, study groups, and mentorship.',
+    'Free MLOps and AI learning for engineers across the Middle East and North Africa — live sessions, three structured roadmaps, open cohort courses, study groups, and mentorship. We also train, staff, and build for companies across the region.',
 } as const
 
 export const channels = {
@@ -48,6 +48,11 @@ export const roleAddresses = [
   { address: 'partnerships@mlopsmena.com', label: 'Partnerships' },
   { address: 'trainings@mlopsmena.com', label: 'Trainings' },
   { address: 'research@mlopsmena.com', label: 'Research support' },
+  // Company work — outsourcing, project delivery, consultation. Forwards to
+  // mlopsmenacommunity@gmail.com like the rest; create the Cloudflare Email
+  // Routing rule with `scripts/bulk-email-routing.py --rules` before this
+  // address is advertised, or enquiries from /services bounce.
+  { address: 'services@mlopsmena.com', label: 'Services for companies' },
 ] as const
 
 /** Free-join promo for the Brainsmingle space. */
@@ -114,7 +119,7 @@ export const nav = [
   { key: 'courses', href: '/courses' },
   { key: 'sessions', href: '/sessions' },
   { key: 'team', href: '/team' },
-  { key: 'mentorship', href: '/mentorship' },
+  { key: 'services', href: '/services' },
   { key: 'articles', href: '/articles' },
   { key: 'faq', href: '/faq' },
 ] as const

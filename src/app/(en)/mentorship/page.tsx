@@ -1,17 +1,25 @@
 import type { Metadata } from 'next'
-import MentorshipView from '@/views/MentorshipView'
+import MovedView from '@/views/MovedView'
 import { t } from '@/lib/i18n'
 import { pageMetadata } from '@/lib/seo'
 
-const copy = t('en').mentorshipPage
+const copy = t('en').movedPage
 
-export const metadata: Metadata = pageMetadata({
-  lang: 'en',
-  path: '/mentorship',
-  title: copy.metaTitle,
-  description: copy.metaDesc,
-})
+/**
+ * Mentorship folded into the services page. This route stays so the links we
+ * have already published keep resolving, but it is kept out of the index and
+ * points its canonical at the page that replaced it.
+ */
+export const metadata: Metadata = {
+  ...pageMetadata({
+    lang: 'en',
+    path: '/services',
+    title: copy.metaTitle,
+    description: copy.metaDesc,
+  }),
+  robots: { index: false, follow: true },
+}
 
 export default function EnMentorshipPage() {
-  return <MentorshipView lang="en" />
+  return <MovedView lang="en" to="/services" />
 }
