@@ -1,47 +1,9 @@
-/** "What else we offer". Source: master reference §7. */
-
-export const offerings = [
-  {
-    id: 'mentorship',
-    icon: 'Compass',
-    title: 'Mentorship for members',
-    blurb: 'One-to-one help from engineers who do this work, free for community members.',
-    accent: 'cyan',
-    items: [
-      'Career direction',
-      'Portfolio and repo review',
-      'Interview preparation',
-      'Unblocking a specific technical problem',
-      'Research support for papers',
-    ],
-  },
-  {
-    id: 'consultation',
-    icon: 'Building2',
-    title: 'Consultation for companies',
-    blurb: 'Practical help for teams putting machine learning into production.',
-    accent: 'amber',
-    items: [
-      'MLOps maturity review',
-      'Architecture consultation',
-      'Cost and performance review',
-      'Team training on your stack',
-      'Hiring support',
-    ],
-  },
-  {
-    id: 'internships',
-    icon: 'Briefcase',
-    title: 'Internships with partners',
-    blurb: 'Routing students to openings with the companies we work with.',
-    accent: 'violet',
-    items: [
-      'Introductions to partner companies',
-      'Portfolio review before you apply',
-      'Real production experience, not toy projects',
-    ],
-  },
-] as const
+/**
+ * The upcoming course.
+ *
+ * What we offer — free community help and paid company services — moved to
+ * `data/services.ts` when the services page was split out.
+ */
 
 /** Course 02 — announced, not yet scheduled. */
 export const upcomingCourse = {

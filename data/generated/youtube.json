@@ -1,11 +1,16 @@
 {
   "channelId": "UCKX8X4NwhP9Qb4g13SCa84Q",
   "stats": {
-    "subscriberCount": 1200,
-    "viewCount": 13400,
+    "subscriberCount": 1300,
+    "viewCount": 15300,
     "videoCount": 4
   },
   "videos": [
+    {
+      "id": "pkZcMjF1znU",
+      "title": "Hands on CI CD pipelines",
+      "published": "2026-08-31T15:24:50.000Z"
+    },
     {
       "id": "AFcoKDtyhec",
       "title": "handson docker mlops mena community",

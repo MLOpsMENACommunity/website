@@ -6,7 +6,7 @@ export const dynamic = 'force-static'
 
 const staticPages = [
   '', '/roadmaps', '/student-guides', '/courses', '/courses/mlops-practitioner',
-  '/student-guides/docker', '/student-guides/github-actions', '/student-guides/dvc', '/sessions', '/team', '/articles', '/mentorship', '/faq', '/privacy-policy',
+  '/student-guides/github-actions', '/student-guides/docker', '/sessions', '/team', '/articles', '/services', '/faq', '/privacy-policy',
 ]
 
 export default function sitemap(): MetadataRoute.Sitemap {

@@ -38,7 +38,7 @@ const en: PolicySection[] = [
     blocks: [
       {
         kind: 'p',
-        text: 'MLOps MENA Community is a volunteer-run educational community providing free MLOps and AI learning for engineers across the Middle East and North Africa.',
+        text: 'MLOps MENA Community is an educational community and a services business. We publish free MLOps and AI learning for engineers across the Middle East and North Africa, and we provide paid training, talent outsourcing, software delivery and consultation to companies.',
       },
       {
         kind: 'ul',
@@ -231,7 +231,7 @@ const ar: PolicySection[] = [
     blocks: [
       {
         kind: 'p',
-        text: 'مجتمع MLOps MENA مجتمع تعليمي يديره متطوّعون، ويقدّم تعلّمًا مجانيًا في هندسة تشغيل نماذج التعلّم الآلي والذكاء الاصطناعي للمهندسين في الشرق الأوسط وشمال أفريقيا.',
+        text: 'مجتمع MLOps MENA مجتمع تعليمي وجهة تقدّم خدمات. ننشر تعلّمًا مجانيًا في هندسة تشغيل نماذج التعلّم الآلي والذكاء الاصطناعي للمهندسين في الشرق الأوسط وشمال أفريقيا، ونقدّم للشركات خدمات مدفوعة في التدريب وتوفير الكفاءات وتنفيذ المشاريع البرمجية والاستشارات.',
       },
       {
         kind: 'ul',
