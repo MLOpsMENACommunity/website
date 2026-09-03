@@ -19,9 +19,9 @@ export const studentGuides: StudentGuide[] = [
     slug: 'docker',
     title: 'The Complete Docker Guide',
     description:
-      'Build a practical Docker foundation across 26 sections, then move into Compose, networking, security, debugging, optimization, ML images, CI/CD delivery, and production-ready container workflows.',
+      'A full containers course taught at three levels. Pick Beginner, Mid-level, or Senior, then read the detailed explanation, a fast interview review, or the practical tips and traps.',
     category: 'Containers & DevOps',
-    tags: ['Docker', 'Containers', 'Docker Compose', 'DevOps', 'CI/CD'],
+    tags: ['Docker', 'Containers', 'Docker Compose', 'DevOps', 'Interview prep'],
   },
 ]
 

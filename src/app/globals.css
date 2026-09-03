@@ -1015,6 +1015,53 @@
 .student-guide-prose .callout.tip { border-inline-start-color: rgb(var(--c-teal)); background: rgba(51, 206, 192, 0.06); }
 .student-guide-prose .callout.warn { border-inline-start-color: rgb(var(--c-amber-400)); background: rgba(236, 151, 35, 0.07); }
 .student-guide-prose .callout .ct { display: block; margin-bottom: 0.25rem; color: rgb(var(--fg)); font-weight: 700; }
+
+/* "Try it yourself" block that closes a teaching section: a short task the
+   reader can do immediately, so a section ends in practice rather than prose. */
+.student-guide-prose .guide-try {
+  position: relative;
+  margin-block: 1.4rem;
+  border: 1px dashed rgb(var(--c-violet) / 0.4);
+  border-radius: 0.85rem;
+  background: rgb(var(--c-violet) / 0.05);
+  padding: 1rem 1.1rem 1rem 1.1rem;
+}
+.student-guide-prose .guide-try > .ct {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+  border-radius: 999px;
+  background: rgb(var(--c-violet) / 0.12);
+  padding: 0.2rem 0.6rem;
+  color: rgb(var(--c-violet));
+  font-size: 0.65rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.student-guide-prose .guide-try > .ct::before { content: '▸'; font-size: 0.7rem; }
+.student-guide-prose .guide-try ol { margin: 0; padding-inline-start: 1.2rem; counter-reset: none; }
+.student-guide-prose .guide-try li { margin-block: 0.3rem; color: rgb(var(--body)); font-size: 0.86rem; line-height: 1.6; }
+.student-guide-prose .guide-try p { margin-block: 0.4rem; font-size: 0.86rem; }
+.student-guide-prose .guide-try .code-window { margin-block: 0.7rem; }
+.student-guide-prose .guide-try > :last-child { margin-bottom: 0; }
+/* The expected outcome, so the reader can self-check without a solution file. */
+.student-guide-prose .guide-try em {
+  display: block;
+  margin-top: 0.6rem;
+  border-top: 1px dashed rgb(var(--c-violet) / 0.28);
+  padding-top: 0.5rem;
+  color: rgb(var(--muted));
+  font-size: 0.8rem;
+  font-style: normal;
+}
+.student-guide-prose .guide-try em::before {
+  content: 'Expected result — ';
+  color: rgb(var(--c-violet));
+  font-weight: 700;
+}
+[lang='ar'] .student-guide-prose .guide-try > .ct { letter-spacing: normal; }
 .student-guide-prose table { display: block; width: 100%; overflow-x: auto; border-collapse: collapse; font-size: 0.82rem; }
 .student-guide-prose th,
 .student-guide-prose td { min-width: 8rem; border: 1px solid var(--line); padding: 0.65rem 0.8rem; text-align: start; vertical-align: top; }
@@ -1354,11 +1401,11 @@
 
 /* ---- Levelled guide: experience level and reading-section switcher ----
    Two tablists in one sticky bar. Everything that has to sit clear of that bar
-   is derived from `--gha-switcher-h`, so the bar's height is stated once. */
-.gha-levels-shell {
-  --gha-switcher-h: 3.35rem;
+   is derived from `--guide-switcher-h`, so the bar's height is stated once. */
+.guide-levels-shell {
+  --guide-switcher-h: 3.35rem;
 }
-.gha-switcher {
+.guide-switcher {
   position: sticky;
   top: 4rem;
   z-index: 35;
@@ -1367,14 +1414,14 @@
   backdrop-filter: blur(18px);
 }
 /* Brand hairline along the bottom edge, matching the section rules elsewhere. */
-.gha-switcher::after {
+.guide-switcher::after {
   content: '';
   position: absolute;
   inset: auto 0 -1px;
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(44, 172, 209, 0.4), transparent);
 }
-.gha-switcher-inner {
+.guide-switcher-inner {
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -1384,8 +1431,8 @@
   padding-block: 0.45rem;
   scrollbar-width: none;
 }
-.gha-switcher-inner::-webkit-scrollbar { display: none; }
-.gha-group {
+.guide-switcher-inner::-webkit-scrollbar { display: none; }
+.guide-level-group {
   display: flex;
   flex: none;
   align-items: center;
@@ -1395,9 +1442,9 @@
   background: rgb(var(--surface-2));
   padding: 0.2rem;
 }
-.gha-switcher-rule { flex: none; width: 1px; height: 1.4rem; background: var(--line-strong); }
-.gha-tab {
-  --gha-accent: var(--c-cyan-400);
+.guide-switcher-rule { flex: none; width: 1px; height: 1.4rem; background: var(--line-strong); }
+.guide-level-tab {
+  --guide-level-accent: var(--c-cyan-400);
   display: inline-flex;
   flex: none;
   align-items: center;
@@ -1410,45 +1457,32 @@
   white-space: nowrap;
   transition: color 0.25s, background 0.25s, box-shadow 0.3s;
 }
-.gha-tab > svg { width: 0.95rem; height: 0.95rem; }
-.gha-tab:hover { color: rgb(var(--fg)); }
-.gha-tab:focus-visible { outline: 2px solid rgb(var(--c-cyan-400)); outline-offset: 2px; }
-.gha-tab[aria-selected='true'] {
-  background: rgb(var(--gha-accent) / 0.13);
-  box-shadow: inset 0 0 0 1px rgb(var(--gha-accent) / 0.32);
-  color: rgb(var(--gha-accent));
+.guide-level-tab > svg { width: 0.95rem; height: 0.95rem; }
+.guide-level-tab:hover { color: rgb(var(--fg)); }
+.guide-level-tab:focus-visible { outline: 2px solid rgb(var(--c-cyan-400)); outline-offset: 2px; }
+.guide-level-tab[aria-selected='true'] {
+  background: rgb(var(--guide-level-accent) / 0.13);
+  box-shadow: inset 0 0 0 1px rgb(var(--guide-level-accent) / 0.32);
+  color: rgb(var(--guide-level-accent));
 }
 /* One hue per level, so the level in play is recognisable at a glance. */
-.gha-tab[data-level='beginner'] { --gha-accent: var(--c-teal); }
-.gha-tab[data-level='mid'] { --gha-accent: var(--c-cyan-400); }
-.gha-tab[data-level='senior'] { --gha-accent: var(--c-amber-400); }
-.gha-dot {
+.guide-level-tab[data-level='beginner'] { --guide-level-accent: var(--c-teal); }
+.guide-level-tab[data-level='mid'] { --guide-level-accent: var(--c-cyan-400); }
+.guide-level-tab[data-level='senior'] { --guide-level-accent: var(--c-amber-400); }
+.guide-level-dot {
   width: 0.45rem;
   height: 0.45rem;
   flex: none;
   border-radius: 999px;
-  background: rgb(var(--gha-accent));
+  background: rgb(var(--guide-level-accent));
   opacity: 0.4;
   transition: opacity 0.25s, box-shadow 0.3s;
 }
-.gha-tab[aria-selected='true'] .gha-dot { opacity: 1; box-shadow: 0 0 10px rgb(var(--gha-accent) / 0.75); }
-.gha-tab-meta {
-  display: none;
-  color: rgb(var(--faint));
-  font-family: var(--font-mono), monospace;
-  font-size: 0.62rem;
-  font-style: normal;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-.gha-tab[aria-selected='true'] .gha-tab-meta { color: rgb(var(--gha-accent) / 0.8); }
-@media (min-width: 640px) {
-  .gha-tab-meta { display: inline; }
-}
+.guide-level-tab[aria-selected='true'] .guide-level-dot { opacity: 1; box-shadow: 0 0 10px rgb(var(--guide-level-accent) / 0.75); }
 
 /* Step through the nine panes in reading order: each level's three treatments,
    then the next level. */
-.gha-pane-steps {
+.guide-pane-steps {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.9rem;
@@ -1456,7 +1490,7 @@
   border-top: 1px solid var(--line);
   padding-top: 1.75rem;
 }
-.gha-pane-steps button {
+.guide-pane-steps button {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1469,14 +1503,14 @@
   box-shadow: var(--card-shadow);
   transition: border-color 0.3s, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s;
 }
-.gha-pane-steps button[data-back='true'] { text-align: start; }
-.gha-pane-steps button:hover {
+.guide-pane-steps button[data-back='true'] { text-align: start; }
+.guide-pane-steps button:hover {
   border-color: rgba(44, 172, 209, 0.4);
   box-shadow: var(--card-shadow-hover);
   transform: translateY(-2px);
 }
-.gha-pane-steps svg { width: 1rem; height: 1rem; flex: none; color: rgb(var(--c-cyan-400)); }
-.gha-pane-steps small {
+.guide-pane-steps svg { width: 1rem; height: 1rem; flex: none; color: rgb(var(--c-cyan-400)); }
+.guide-pane-steps small {
   display: block;
   color: rgb(var(--faint));
   font-size: 0.62rem;
@@ -1484,31 +1518,31 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
-.gha-pane-steps strong { color: rgb(var(--fg)); font-size: 0.85rem; }
+.guide-pane-steps strong { color: rgb(var(--fg)); font-size: 0.85rem; }
 @media (max-width: 640px) {
-  .gha-pane-steps { grid-template-columns: 1fr; }
+  .guide-pane-steps { grid-template-columns: 1fr; }
 }
 
 /* Only the selected pane is displayed, so a switch is a repaint rather than a
    fetch. Deliberately no `fill-mode`: with `both`, a pane whose animation had not
    started yet would be pinned at the `from` state and stay invisible. */
-.gha-pane { animation: ghaPaneIn 0.4s ease-out; }
-@keyframes ghaPaneIn {
+.guide-pane { animation: guidePaneIn 0.4s ease-out; }
+@keyframes guidePaneIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
 /* The sticky reading chrome has to clear the switcher as well as the header. */
-.gha-levels-shell .guide-desktop-nav {
-  top: calc(4rem + var(--gha-switcher-h) + 1.15rem);
-  max-height: calc(100vh - 4rem - var(--gha-switcher-h) - 2.6rem);
+.guide-levels-shell .guide-desktop-nav {
+  top: calc(4rem + var(--guide-switcher-h) + 1.15rem);
+  max-height: calc(100vh - 4rem - var(--guide-switcher-h) - 2.6rem);
 }
-.gha-levels-shell .guide-mobile-nav { top: calc(4rem + var(--gha-switcher-h)); }
+.guide-levels-shell .guide-mobile-nav { top: calc(4rem + var(--guide-switcher-h)); }
 /* Added to the global 6rem `scroll-padding-top`, not a replacement for it, so
    an anchored heading lands below every pinned bar. */
-.gha-levels-shell .student-guide-prose :is(h2, h3) { scroll-margin-top: calc(var(--gha-switcher-h) + 1.8rem); }
+.guide-levels-shell .student-guide-prose :is(h2, h3) { scroll-margin-top: calc(var(--guide-switcher-h) + 1.8rem); }
 @media (min-width: 1024px) {
-  .gha-levels-shell .student-guide-prose :is(h2, h3) { scroll-margin-top: calc(var(--gha-switcher-h) - 1.2rem); }
+  .guide-levels-shell .student-guide-prose :is(h2, h3) { scroll-margin-top: calc(var(--guide-switcher-h) - 1.2rem); }
 }
 
 /* Guide contents navigation: a sticky reading companion with scroll state. */
@@ -1667,12 +1701,12 @@
 .student-guide-prose h2[data-current]::after { opacity: 1; transform: scaleX(1); }
 .student-guide-prose h3[data-current] { color: rgb(var(--c-cyan-400)); transform: translateX(0.25rem); }
 .student-guide-prose h3[data-current]::before { box-shadow: 0 0 14px rgba(44, 172, 209, 0.75); transform: scale(1.35); }
-.student-guide-prose.guide-motion-ready > :is(h2, h3, p, ul, ol, table, .cards, .flow, .callout, .code-window, .guide-learning-path, .guide-phase-marker, .guide-stat-strip, .guide-compare, .guide-timeline) {
+.student-guide-prose.guide-motion-ready > :is(h2, h3, p, ul, ol, table, .cards, .flow, .callout, .code-window, .guide-learning-path, .guide-phase-marker, .guide-stat-strip, .guide-compare, .guide-timeline, .guide-try) {
   opacity: 0;
   transform: translateY(18px);
   transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.student-guide-prose.guide-motion-ready > :is(h2, h3, p, ul, ol, table, .cards, .flow, .callout, .code-window, .guide-learning-path, .guide-phase-marker, .guide-stat-strip, .guide-compare, .guide-timeline).guide-in-view {
+.student-guide-prose.guide-motion-ready > :is(h2, h3, p, ul, ol, table, .cards, .flow, .callout, .code-window, .guide-learning-path, .guide-phase-marker, .guide-stat-strip, .guide-compare, .guide-timeline, .guide-try).guide-in-view {
   opacity: 1;
   transform: none;
 }
@@ -1761,7 +1795,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .student-guide-prose.guide-motion-ready > :is(h2, h3, p, ul, ol, table, .cards, .flow, .callout, .code-window, .guide-learning-path, .guide-phase-marker, .guide-stat-strip, .guide-compare, .guide-timeline) {
+  .student-guide-prose.guide-motion-ready > :is(h2, h3, p, ul, ol, table, .cards, .flow, .callout, .code-window, .guide-learning-path, .guide-phase-marker, .guide-stat-strip, .guide-compare, .guide-timeline, .guide-try) {
     opacity: 1;
     transform: none;
   }
@@ -1769,7 +1803,7 @@
   .student-guide-prose .code-window:hover .dots i,
   .guide-stat:hover::after,
   .guide-timeline-item::before,
-  .gha-pane,
+  .guide-pane,
   .gha-pipeline,
   .gha-pipeline-node,
   .gha-pipeline-rail::after,

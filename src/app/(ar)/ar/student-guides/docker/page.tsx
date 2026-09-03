@@ -6,7 +6,7 @@ export const metadata: Metadata = pageMetadata({
   lang: 'ar',
   path: '/student-guides/docker',
   title: 'The Complete Docker Guide',
-  description: 'دليل عملي باللغة الإنجليزية لتعلّم Docker في 26 قسمًا: من أساسيات الحاويات إلى Compose والشبكات والتخزين والأمان وتحسين الصور وصور تعلّم الآلة والتسليم عبر CI/CD والتشغيل في الإنتاج ومرجع لحل المشكلات.',
+  description: 'دورة كاملة باللغة الإنجليزية عن Docker تُدرّس على ثلاثة مستويات: اختر مبتدئ أو متوسّط أو متقدّم، ثم اقرأ الشرح الكامل بأمثلة عملية أو مراجعة سريعة للمقابلات أو النصائح والمزالق العملية لهذا المستوى.',
 })
 
 export default function ArDockerGuidePage() {

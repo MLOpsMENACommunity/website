@@ -11,7 +11,6 @@ type Labels = {
   trackNav: string
   levels: Record<GuideLevelId, string>
   tracks: Record<GuideTrackId, string>
-  sectionsSuffix: string
   panePrevious: string
   paneNext: string
   onThisPage: string
@@ -133,51 +132,48 @@ export default function GuideLevelTracks({ levels, labels }: { levels: GuideLeve
   }, [owners, levelId, trackId])
 
   return (
-    <div className="gha-levels-shell">
+    <div className="guide-levels-shell">
       <div ref={anchorRef} aria-hidden="true" />
-      <div className="gha-switcher">
-        <div className="gha-switcher-inner mx-auto max-w-content px-5 sm:px-8">
-          <div className="gha-group" role="tablist" aria-label={labels.levelNav} onKeyDown={tabKeys(levelIds, levelId, (id) => select({ level: id }))}>
+      <div className="guide-switcher">
+        <div className="guide-switcher-inner mx-auto max-w-content px-5 sm:px-8">
+          <div className="guide-level-group" role="tablist" aria-label={labels.levelNav} onKeyDown={tabKeys(levelIds, levelId, (id) => select({ level: id }))}>
             {levels.map((level) => {
               const active = level.id === levelId
               return (
                 <button
                   key={level.id}
                   type="button"
-                  id={`gha-level-${level.id}`}
+                  id={`guide-lv-${level.id}`}
                   role="tab"
                   aria-selected={active}
                   aria-controls={level.panes[trackId].key}
                   tabIndex={active ? 0 : -1}
                   data-level={level.id}
-                  className="gha-tab"
+                  className="guide-level-tab"
                   onClick={() => select({ level: level.id })}
                 >
-                  <i className="gha-dot" aria-hidden="true" />
+                  <i className="guide-level-dot" aria-hidden="true" />
                   {labels.levels[level.id]}
-                  <em className="gha-tab-meta">
-                    {level.sections} {labels.sectionsSuffix}
-                  </em>
                 </button>
               )
             })}
           </div>
 
-          <span className="gha-switcher-rule" aria-hidden="true" />
+          <span className="guide-switcher-rule" aria-hidden="true" />
 
-          <div className="gha-group" role="tablist" aria-label={labels.trackNav} onKeyDown={tabKeys(TRACK_IDS, trackId, (id) => select({ track: id }))}>
+          <div className="guide-level-group" role="tablist" aria-label={labels.trackNav} onKeyDown={tabKeys(TRACK_IDS, trackId, (id) => select({ track: id }))}>
             {TRACKS.map(({ id, Icon }) => {
               const active = id === trackId
               return (
                 <button
                   key={id}
                   type="button"
-                  id={`gha-track-${id}`}
+                  id={`guide-tr-${id}`}
                   role="tab"
                   aria-selected={active}
                   aria-controls={activeLevel.panes[id].key}
                   tabIndex={active ? 0 : -1}
-                  className="gha-tab"
+                  className="guide-level-tab"
                   onClick={() => select({ track: id })}
                 >
                   <Icon aria-hidden="true" />
@@ -189,7 +185,7 @@ export default function GuideLevelTracks({ levels, labels }: { levels: GuideLeve
         </div>
       </div>
 
-      <div className="guide-page-layout gha-guide-page mx-auto max-w-content px-5 py-8 sm:px-8 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:gap-10 lg:py-14">
+      <div className="guide-page-layout guide-levels-page mx-auto max-w-content px-5 py-8 sm:px-8 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:gap-10 lg:py-14">
         <GuideNavigation
           key={activePane.key}
           headings={activePane.headings}
@@ -210,9 +206,9 @@ export default function GuideLevelTracks({ levels, labels }: { levels: GuideLeve
                   key={pane.key}
                   id={pane.key}
                   role="tabpanel"
-                  aria-labelledby={`gha-level-${level.id} gha-track-${track}`}
+                  aria-labelledby={`guide-lv-${level.id} guide-tr-${track}`}
                   hidden={!active}
-                  className="gha-pane"
+                  className="guide-pane"
                 >
                   <GuideArticle html={pane.html} copiedLabel={labels.copied} active={active} />
                 </div>
@@ -220,7 +216,7 @@ export default function GuideLevelTracks({ levels, labels }: { levels: GuideLeve
             }),
           )}
 
-          <nav className="gha-pane-steps" aria-label={labels.paneNext}>
+          <nav className="guide-pane-steps" aria-label={labels.paneNext}>
             {[
               { coord: previous, label: labels.panePrevious, back: true },
               { coord: next, label: labels.paneNext, back: false },
