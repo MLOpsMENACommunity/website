@@ -1,11 +1,11 @@
-This is part three of three. It closes the series by taking **every topic from Beginner and Mid one level further** — each one now has a security, scale, or ownership dimension — and adds the work you own when CI/CD is your responsibility rather than your tool.
+This is part three of three. It closes the series by taking **every topic from Beginner and Mid one level further** (each one now has a security, scale, or ownership dimension) and adds the work you own when CI/CD is your responsibility rather than your tool.
 
 ## Where this picks up
 
 | Topic from earlier levels | What this level adds |
 |---|---|
 | Triggers | The **trust model**: which triggers hand fork-influenced code a privileged token |
-| Expressions | **Script injection** — why event data must never reach a shell |
+| Expressions | **Script injection**: why event data must never reach a shell |
 | Secrets and `GITHUB_TOKEN` | Least-privilege `permissions`, GitHub App tokens, and OIDC instead of stored keys |
 | Caching | Container layer caching with Buildx, and **cache poisoning** |
 | Actions you consume | Actions you **author**, and supply-chain controls on the ones you use |
@@ -14,7 +14,7 @@ This is part three of three. It closes the series by taking **every topic from B
 | Environments | Their role as an identity boundary, not just an approval gate |
 | Matrix and artifacts | Provenance, attestations, and immutable deploy references |
 | Debugging | Fleet observability metrics and incident playbooks |
-| — **new** — | Container builds · custom actions · ML delivery · migration · review checklist |
+| **new** | Container builds · custom actions · ML delivery · migration · review checklist |
 
 ## The trust model: whose code, which secrets, what token
 
@@ -22,7 +22,7 @@ Every workflow run has three properties that together determine your exposure: *
 
 <div class="guide-arch" style="--arch-cols:3">
   <div class="arch-lane" style="--lane-cols:3">
-    <span class="arch-label">safe by design — github withholds the dangerous parts</span>
+    <span class="arch-label">safe by design: github withholds the dangerous parts</span>
     <div class="arch-node"><b><code>pull_request</code> from a fork</b><small>Runs <em>fork</em> code · <b>no secrets</b> · read-only token</small></div>
     <div class="arch-node"><b><code>push</code> · same-repo PR</b><small>Runs <em>your</em> code · secrets · token as configured</small></div>
     <div class="arch-node" data-kind="store"><b>Artifacts</b><small>The safe bridge between an untrusted build and a privileged publish</small></div>
@@ -31,7 +31,7 @@ Every workflow run has three properties that together determine your exposure: *
   <i class="arch-edge" data-dir="down"></i>
   <i class="arch-edge" data-dir="down" data-flow="optional"></i>
   <div class="arch-lane" style="--lane-cols:3">
-    <span class="arch-label">privileged triggers — they undo that protection on purpose</span>
+    <span class="arch-label">privileged triggers. They undo that protection on purpose</span>
     <div class="arch-node" data-kind="danger"><b><code>pull_request_target</code></b><small>Base-repo code · <b>secrets</b> · writable token</small></div>
     <div class="arch-node" data-kind="danger"><b><code>workflow_run</code></b><small>Base-repo code · secrets · writable token</small></div>
     <div class="arch-node" data-kind="danger"><b><code>issue_comment</code></b><small>Base-repo code · secrets · writable token</small></div>
@@ -40,9 +40,9 @@ Every workflow run has three properties that together determine your exposure: *
   <i class="arch-edge" data-dir="down"></i>
   <i class="arch-edge" data-dir="down"></i>
   <div class="arch-node" data-kind="danger"><b>+ checkout <code>head.sha</code></b><small>Untrusted code, in a job holding your secrets</small></div>
-  <div class="arch-node" data-kind="worker"><b>Read event metadata only</b><small>Label, comment, triage — never check out the head</small></div>
+  <div class="arch-node" data-kind="worker"><b>Read event metadata only</b><small>Label, comment, triage, and never check out the head</small></div>
   <div class="arch-node" data-kind="worker"><b>Split privilege</b><small>Unprivileged job builds; privileged job publishes the artifact</small></div>
-  <p class="arch-note"><b>The pattern to internalise:</b> the top lane is safe because secrets are absent, and the middle lane exists because a maintainer needed to label a PR. Combining a privileged trigger with a checkout of fork code is how real repositories have been compromised — the two safe shapes below are the alternatives.</p>
+  <p class="arch-note"><b>The pattern to internalise:</b> the top lane is safe because secrets are absent, and the middle lane exists because a maintainer needed to label a PR. Combining a privileged trigger with a checkout of fork code is how real repositories have been compromised. The two safe shapes below are the alternatives.</p>
 </div>
 
 | Trigger | Executes code from | Secrets | Token |
@@ -58,7 +58,7 @@ Read that until the pattern is obvious: GitHub deliberately makes fork pull requ
 
 <div class="callout warn">
   <span class="ct">The single most dangerous pattern in GitHub Actions</span>
-  <code>pull_request_target</code> combined with checking out <code>github.event.pull_request.head.sha</code>. That executes <b>untrusted fork code</b> in a job that <b>holds your secrets and a writable token</b>. Any build script, test fixture, or lifecycle hook in the fork can print every secret you own. It is not theoretical — it is how numerous real repositories have been compromised.
+  <code>pull_request_target</code> combined with checking out <code>github.event.pull_request.head.sha</code>. That executes <b>untrusted fork code</b> in a job that <b>holds your secrets and a writable token</b>. Any build script, test fixture, or lifecycle hook in the fork can print every secret you own. Numerous real repositories have been compromised exactly this way.
 </div>
 
 Two safe shapes:
@@ -109,7 +109,7 @@ jobs:
 ```
 
 <div class="guide-try">
-  <span class="ct">Try it — in a throwaway repository</span>
+  <span class="ct">Try it: in a throwaway repository</span>
   <ol>
     <li>Add a <code>pull_request</code> workflow that echoes whether a secret is set, then open a pull request <b>from a fork</b> and confirm it is empty.</li>
     <li>Open a pull request from a branch in the same repository and confirm the secret <b>is</b> present.</li>
@@ -151,18 +151,18 @@ The same applies to `actions/github-script` and to any action input you build fr
 ```
 
 <div class="guide-try">
-  <span class="ct">Try it — on a repository you own, nowhere else</span>
+  <span class="ct">Try it: on a repository you own, nowhere else</span>
   <ol>
     <li>Add a step with the vulnerable form: <code>run: echo "Title: ${{ github.event.pull_request.title }}"</code>.</li>
     <li>Open a pull request titled <code>test"; echo INJECTED; #</code> and read the log.</li>
     <li>Switch to the <code>env</code> form and re-run with the same title.</li>
   </ol>
-  <em>the vulnerable version prints <code>INJECTED</code> — your title became a command. The <code>env</code> version prints the title as literal text. Five minutes here is worth more than any amount of reading about injection.</em>
+  <em>the vulnerable version prints <code>INJECTED</code>, because your title became a command. The <code>env</code> version prints the title as literal text. Five minutes here is worth more than any amount of reading about injection.</em>
 </div>
 
 ## Permissions: least privilege
 
-Mid mentioned `permissions` in passing. Here is the whole mechanism.
+Mid mentioned `permissions` in passing. The whole mechanism is one block of YAML.
 
 ```yaml
 permissions:
@@ -177,7 +177,7 @@ jobs:
     runs-on: ubuntu-latest
 ```
 
-The mechanic that makes this powerful: **declaring any scope sets every undeclared scope to `none`.** A single `contents: read` line at the top removes the token's ability to push, tag, comment, or publish — and you then grant back only what a specific job needs.
+The mechanic that makes this powerful: **declaring any scope sets every undeclared scope to `none`.** A single `contents: read` line at the top removes the token's ability to push, tag, comment, or publish, and you then grant back only what a specific job needs.
 
 | Scope | Grants |
 |---|---|
@@ -185,7 +185,7 @@ The mechanic that makes this powerful: **declaring any scope sets every undeclar
 | `pull-requests` | Comment on, label, and modify PRs |
 | `issues` | Same for issues |
 | `packages` | Push to GitHub Packages / GHCR |
-| `id-token` | Request an OIDC token — **required** for cloud federation |
+| `id-token` | Request an OIDC token: **required** for cloud federation |
 | `actions` | Manage workflow runs and artifacts |
 | `attestations` | Write build provenance |
 
@@ -195,7 +195,7 @@ Two limits drive real architecture:
 
 **A reusable workflow receives the caller's token**, so its `permissions` can never exceed the caller's. Declaring them in the callee documents the contract and fails loudly when a caller is too restrictive.
 
-**`GITHUB_TOKEN` cannot reach another repository.** Cross-repository automation needs a GitHub App installation token or a fine-grained PAT — and prefer the App. A PAT carries a human's full access, does not expire with the job, and appears in the audit trail as that person rather than as automation.
+**`GITHUB_TOKEN` cannot reach another repository.** Cross-repository automation needs a GitHub App installation token or a fine-grained PAT, and prefer the App. A PAT carries a human's full access, does not expire with the job, and appears in the audit trail as that person rather than as automation.
 
 ```yaml
 - uses: actions/create-github-app-token@v1
@@ -218,12 +218,12 @@ Two limits drive real architecture:
     <li>Add <code>issues: write</code> to just that job and re-run again.</li>
     <li>Check your organisation's default token permission setting.</li>
   </ol>
-  <em>step two fails with a 403 — declaring one scope zeroed everything else, which is the entire mechanism. Step three passes. You have now seen least privilege enforced rather than described.</em>
+  <em>step two fails with a 403: declaring one scope zeroed everything else, which is the entire mechanism. Step three passes. You have now seen least privilege enforced rather than described.</em>
 </div>
 
 ## OIDC: deployment without stored credentials
 
-Beginner and Mid stored cloud keys as secrets. At this level you remove them entirely — the runner requests a short-lived signed token, and the cloud exchanges it for temporary credentials.
+Beginner and Mid stored cloud keys as secrets. At this level you remove them entirely. The runner requests a short-lived signed token, and the cloud exchanges it for temporary credentials.
 
 ```yaml
 permissions:
@@ -245,31 +245,31 @@ jobs:
 <div class="guide-timeline">
   <div class="guide-timeline-item"><span>1</span><strong>The job requests a token</strong><small>GitHub signs a short-lived JWT whose claims describe the repository, ref, environment, and workflow.</small></div>
   <div class="guide-timeline-item"><span>2</span><strong>The cloud verifies the signature</strong><small>GitHub's OIDC provider is registered once as a trusted identity provider in the account.</small></div>
-  <div class="guide-timeline-item"><span>3</span><strong>The trust policy inspects the claims</strong><small>This is the part that actually matters, and the part that is usually wrong.</small></div>
+  <div class="guide-timeline-item"><span>3</span><strong>The trust policy inspects the claims</strong><small>This is the part that matters, and the part that is usually wrong.</small></div>
   <div class="guide-timeline-item"><span>4</span><strong>Temporary credentials are issued</strong><small>Valid for the job and then gone. Nothing to rotate, nothing to leak from a log.</small></div>
 </div>
 
 <div class="callout warn">
   <span class="ct">Where OIDC is almost always misconfigured</span>
-  A trust policy matching <code>repo:my-org/*:*</code> means <b>any branch of any repository in the organisation</b> can assume that role — including a branch an attacker opens a pull request from. Constrain the <code>sub</code> claim: <code>repo:my-org/my-repo:ref:refs/heads/main</code>, or better <code>repo:my-org/my-repo:environment:production</code>, which makes the environment's approval gate part of the identity itself.
+  A trust policy matching <code>repo:my-org/*:*</code> means <b>any branch of any repository in the organisation</b> can assume that role, including a branch an attacker opens a pull request from. Constrain the <code>sub</code> claim: <code>repo:my-org/my-repo:ref:refs/heads/main</code>, or better <code>repo:my-org/my-repo:environment:production</code>, which makes the environment's approval gate part of the identity itself.
 </div>
 
 Verify the constraint rather than trusting it. Open a pull request from a throwaway branch with a workflow that tries to assume the role. It should be refused. If it succeeds, your condition is too broad and the approval gate is decorative.
 
 <div class="guide-try">
-  <span class="ct">Try it — the verification is the point</span>
+  <span class="ct">Try it: the verification is the point</span>
   <ol>
     <li>Set up a cloud role whose trust policy is deliberately broad: <code>repo:YOUR-ORG/*:*</code>. Assume it from a workflow and run <code>sts get-caller-identity</code>.</li>
     <li>Now push a branch called <code>attacker-test</code> with the same workflow and confirm it <b>also</b> succeeds.</li>
     <li>Tighten the <code>sub</code> claim to <code>repo:YOUR-ORG/YOUR-REPO:environment:production</code> and add <code>environment: production</code> to the job.</li>
     <li>Run from <code>attacker-test</code> again.</li>
   </ol>
-  <em>the broad policy lets any branch assume the role — that is the misconfiguration in production systems today. After tightening, the throwaway branch is refused. Never ship an OIDC role without running step four.</em>
+  <em>the broad policy lets any branch assume the role. That is the misconfiguration in production systems today. After tightening, the throwaway branch is refused. Never ship an OIDC role without running step four.</em>
 </div>
 
 ## Supply chain
 
-A `uses:` line is a decision to execute somebody else's code in a job that may hold your credentials. Mid taught you to pin tags; here is the full control set.
+A `uses:` line is a decision to execute somebody else's code in a job that may hold your credentials. Mid taught you to pin tags; the full control set is wider.
 
 | Control | Removes |
 |---|---|
@@ -298,11 +298,11 @@ updates:
         patterns: ['*']       # one pull request a week instead of fifteen
 ```
 
-Pinning without updating is its own failure — a frozen action is an unpatched one. The two controls only work together.
+Pinning without updating is its own failure: a frozen action is an unpatched one. The two controls only work together.
 
 Two less obvious surfaces worth raising unprompted:
 
-**Caches are a write surface.** A pull request branch can poison a cache that a later `main` run restores. Never restore something and then execute it without verification — which is why you cache dependency *downloads* rather than installed, executable trees.
+**Caches are a write surface.** A pull request branch can poison a cache that a later `main` run restores. Never restore something and then execute it without verification, which is why you cache dependency *downloads* rather than installed, executable trees.
 
 **Self-hosted runners on public repositories are dangerous**, because any fork pull request can execute code on a machine that persists between jobs.
 
@@ -314,7 +314,7 @@ Two less obvious surfaces worth raising unprompted:
     <li>Add the <code>dependabot.yml</code> with grouped updates and wait for the first pull request.</li>
     <li>Check your organisation's <b>Actions permissions</b> setting for an allow-list.</li>
   </ol>
-  <em>most repositories have several unpinned third-party actions. The Dependabot pull request is what makes pinning sustainable — pinning without it is just a frozen, unpatched dependency.</em>
+  <em>most repositories have several unpinned third-party actions. The Dependabot pull request is what makes pinning sustainable, since pinning without it leaves a frozen, unpatched dependency.</em>
 </div>
 
 ## Container builds and layer caching
@@ -361,7 +361,7 @@ steps:
 |---|---|
 | Buildx | BuildKit gives a real layer cache, multi-platform builds, and exportable cache backends |
 | `type=gha` | Right for one repository; a **registry** cache when many repos or self-hosted runners share layers |
-| `mode=max` | Exports intermediate layers too — dramatically better hit rate on multi-stage builds |
+| `mode=max` | Exports intermediate layers too: better hit rate on multi-stage builds |
 | `push:` false on PRs | A fork must never be able to publish to your registry |
 | `:sha-…` tag | Immutable and traceable; `:latest` is for humans, never a deploy reference |
 | `provenance` + attestation | Proves which workflow and commit produced the image |
@@ -376,7 +376,7 @@ steps:
     <li>Open a pull request and confirm <code>push:</code> evaluates false so nothing is published.</li>
     <li>Inspect the pushed image's provenance attestation.</li>
   </ol>
-  <em><code>mode=min</code> barely helps because only the final stage is cached; <code>mode=max</code> exports the intermediate layers and the second build is dramatically faster. And the pull request builds without publishing, which is the boundary that stops a fork pushing to your registry.</em>
+  <em><code>mode=min</code> barely helps because only the final stage is cached; <code>mode=max</code> exports the intermediate layers and the second build is faster. The pull request builds without publishing, which is the boundary that stops a fork pushing to your registry.</em>
 </div>
 
 ## Authoring your own actions
@@ -433,7 +433,7 @@ async function run() {
 run()
 ```
 
-JavaScript actions start fastest and behave identically on all three operating systems, but dependencies are not installed for you — bundle with `@vercel/ncc` and commit the output. Docker actions are the most flexible and the slowest. Composite actions cannot define jobs, matrices, or their own runner; when you need those, you need a reusable workflow.
+JavaScript actions start fastest and behave identically on all three operating systems, but dependencies are not installed for you, so bundle with `@vercel/ncc` and commit the output. Docker actions are the most flexible and the slowest. Composite actions cannot define jobs, matrices, or their own runner; when you need those, you need a reusable workflow.
 
 Version a published action the way the ecosystem expects: release `v1.2.3` and keep a mutable `v1` tag pointing at the newest compatible release.
 
@@ -446,7 +446,7 @@ Version a published action the way the ecosystem expects: release `v1.2.3` and k
     <li>Now delete <code>dist/</code> and run again.</li>
     <li>Tag it <code>v1.0.0</code>, then create a <code>v1</code> tag pointing at the same commit.</li>
   </ol>
-  <em>without the committed bundle the action fails to start — dependencies are never installed for you. The double tag is the convention every published action follows, and now you know why.</em>
+  <em>without the committed bundle the action fails to start, because dependencies are never installed for you. The double tag is the convention every published action follows, and now you know why.</em>
 </div>
 
 ## Reusable workflows as a platform
@@ -457,14 +457,14 @@ Mid showed the mechanism. At this level you are running it as a product for othe
   <li><b>One repository owns the standard</b>An organisation <code>.github</code> repository holding reusable workflows and composite actions, with CODEOWNERS on the workflow directory so changes are reviewed by the people who carry the pager.</li>
   <li><b>Version with a moving major tag</b>Consumers pin <code>@v2</code>. You release <code>v2.7.0</code> and move <code>v2</code>. A fix reaches sixty repositories without sixty pull requests, and a breaking change becomes <code>v3</code> with a migration note rather than a silent surprise.</li>
   <li><b>Canary before you move the tag</b>One low-risk repository pins the exact patch release. Green for a day, then move the major tag. Skip this and one bad release breaks every team simultaneously.</li>
-  <li><b>Treat inputs as a public API</b>Types, defaults, descriptions. Removing an input is a breaking change even if one repository used it — and the failure lands on somebody else's pull request.</li>
+  <li><b>Treat inputs as a public API</b>Types, defaults, descriptions. Removing an input is a breaking change even if one repository used it, and the failure lands on somebody else's pull request.</li>
   <li><b>Pass secrets explicitly</b><code>secrets: inherit</code> hands the callee everything the caller can see. Listing the two it needs documents the contract and bounds the damage from a bad release.</li>
   <li><b>Enforce with policy, not documentation</b>Organisation settings restricting which actions may run, required checks in branch protection, and required review on workflow files. A standard that depends on everyone remembering is not a standard.</li>
 </ol>
 
 <div class="callout warn">
   <span class="ct">The failure mode of a shared pipeline</span>
-  A team needs one small change, cannot get it upstream quickly, and forks. Six months later there are eleven forks and no standard. The fix is not policy — it is <b>turnaround time</b> on upstream changes. If a reasonable request takes two weeks, forking is the rational choice and you will lose.
+  A team needs one small change, cannot get it upstream quickly, and forks. Six months later there are eleven forks and no standard. The fix is <b>turnaround time</b> on upstream changes, not a policy. If a reasonable request takes two weeks, forking is the rational choice and you will lose.
 </div>
 
 <div class="guide-try">
@@ -475,7 +475,7 @@ Mid showed the mechanism. At this level you are running it as a product for othe
     <li>Make a breaking change, release <code>v1.1.0</code>, and move <code>v1</code> to it. Watch the consumer break without changing.</li>
     <li>Revert by moving <code>v1</code> back, then redo it as <code>v2</code> with the consumer opting in.</li>
   </ol>
-  <em>step three is the incident you are trying to prevent — one tag move breaking every consumer at once. Step four is the discipline that prevents it, and feeling the difference is more persuasive than any policy document.</em>
+  <em>step three is the incident you are trying to prevent: one tag move breaking every consumer at once. Step four is the discipline that prevents it, and feeling the difference is more persuasive than any policy document.</em>
 </div>
 
 ## Runners: strategy and cost
@@ -488,18 +488,18 @@ Mid showed the mechanism. At this level you are running it as a product for othe
 | Public repository with fork PRs | **Never** self-hosted | Untrusted code plus persistent state |
 | Many repositories, one custom image | Hosted runner with `container:` | The image is the standard; the runner stays disposable |
 
-If you run self-hosted, the non-negotiables are: **ephemeral** — one job per runner, then destroy the VM or container; scoped to specific repositories rather than the whole organisation; in a network segment that cannot reach production directly; and never schedulable by a fork-triggered workflow.
+If you run self-hosted, the non-negotiables are: **ephemeral**, meaning one job per runner and then destroy the VM or container; scoped to specific repositories rather than the whole organisation; in a network segment that cannot reach production directly; and never schedulable by a fork-triggered workflow.
 
-On cost: Windows minutes bill at roughly twice Linux and macOS at roughly ten times. A matrix that includes macOS "for completeness" can quietly become most of your bill, and larger hosted runners are almost always cheaper than the engineering time to operate your own fleet.
+On cost: Windows minutes bill at roughly twice Linux and macOS at roughly ten times. A matrix that includes macOS "for completeness" can become most of your bill, and larger hosted runners are almost always cheaper than the engineering time to operate your own fleet.
 
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
     <li>Run the same job on <code>ubuntu-latest</code>, <code>windows-latest</code>, and <code>macos-latest</code> and record each duration.</li>
-    <li>Multiply by the billing factors — Windows ×2, macOS ×10 — to get the true relative cost.</li>
+    <li>Multiply by the billing factors (Windows ×2, macOS ×10) to get the true relative cost.</li>
     <li>Open <b>Settings → Billing → Actions</b> and find which workflow consumes the most minutes.</li>
   </ol>
-  <em>a macOS job that takes the same wall-clock time costs roughly ten times as much. The billing page usually reveals one workflow nobody knew was expensive — often a matrix that grew an axis.</em>
+  <em>a macOS job that takes the same wall-clock time costs roughly ten times as much. The billing page usually reveals one workflow nobody knew was expensive, often a matrix that grew an axis.</em>
 </div>
 
 ## Observability
@@ -532,13 +532,13 @@ On cost: Windows minutes bill at roughly twice Linux and macOS at roughly ten ti
       | tee -a "$GITHUB_STEP_SUMMARY"
 ```
 
-Be careful with debugging actions that open an interactive shell on a runner. They are genuinely useful and they are also a live session on a machine holding your secrets — restrict them to jobs that have none.
+Be careful with debugging actions that open an interactive shell on a runner. They are useful and they are also a live session on a machine holding your secrets, so restrict them to jobs that have none.
 
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
     <li>Run the <code>gh api</code> command above against a busy repository and read the p95 per workflow.</li>
-    <li>Count how many runs have <code>run_attempt &gt; 1</code> — that is your re-run rate, a proxy for flakiness.</li>
+    <li>Count how many runs have <code>run_attempt &gt; 1</code>. That is your re-run rate, a proxy for flakiness.</li>
     <li>Compute queue time as the gap between <code>created_at</code> and <code>run_started_at</code>.</li>
     <li>Put all of it into a scheduled workflow that writes to the step summary.</li>
   </ol>
@@ -560,7 +560,7 @@ If your pipelines build models rather than binaries, the shape changes. CI for s
     </ul>
   </div>
   <div class="guide-compare-col bad">
-    <h4>Genuinely new concerns</h4>
+    <h4>New concerns</h4>
     <ul>
       <li>Data validation as a gate, not an afterthought</li>
       <li>Metric thresholds that fail the job rather than log a number</li>
@@ -640,7 +640,7 @@ jobs:
       - run: python -m pipeline.promote "${{ needs.train.outputs.run-id }}"
 ```
 
-Four decisions there are the whole lesson. Validation runs on a cheap runner before an expensive one is provisioned. The gate is a **comparison against production**, not a hard-coded threshold, so it survives a changing dataset. Metrics go to the step summary so the approver does not download a zip. And promotion is a separate job behind an environment, which buys the approval, the scoped credentials, and a deployment record naming the commit and the run.
+Four decisions there are the whole lesson. Validation runs on a cheap runner before an expensive one is provisioned. The gate is a **comparison against production**, not a hard-coded threshold, so it survives a changing dataset. Metrics go to the step summary so the approver does not download a zip. Promotion is a separate job behind an environment, which buys the approval, the scoped credentials, and a deployment record naming the commit and the run.
 
 <div class="guide-try">
   <span class="ct">Try it</span>
@@ -650,7 +650,7 @@ Four decisions there are the whole lesson. Validation runs on a cheap runner bef
     <li>Make the candidate metric worse than the baseline and confirm <code>gate</code> blocks promotion.</li>
     <li>Write the comparison to the step summary and approve the promotion from the run page.</li>
   </ol>
-  <em>the pipeline refuses bad data cheaply and refuses a worse model politely, with the numbers visible to whoever approves. That shape is the whole architectural argument — Actions orchestrates and records; it does not train.</em>
+  <em>the pipeline refuses bad data cheaply and refuses a worse model politely, with the numbers visible to whoever approves. That shape is the whole architectural argument: Actions orchestrates and records; it does not train.</em>
 </div>
 
 ## Migrating from an existing CI system
@@ -665,7 +665,7 @@ You will be asked this. The answer that lands is a sequence, not a tool comparis
   <li><b>Decommission deliberately</b>Old CI kept "just in case" becomes an unpatched server with production credentials.</li>
 </ol>
 
-The important judgement: **do not port the old pipeline verbatim.** A great deal of Jenkinsfile logic exists to work around a persistent workspace and shared mutable state — problems Actions does not have. Reimplementing those workarounds imports complexity you no longer need.
+The important judgement: **do not port the old pipeline verbatim.** A great deal of Jenkinsfile logic exists to work around a persistent workspace and shared mutable state, problems Actions does not have. Reimplementing those workarounds imports complexity you no longer need.
 
 <div class="guide-try">
   <span class="ct">Try it</span>
@@ -673,7 +673,7 @@ The important judgement: **do not port the old pipeline verbatim.** A great deal
     <li>Take one real job from an existing CI system and list what it needs: triggers, credentials, network reach, and required-check status.</li>
     <li>Port it to Actions as a <b>non-required</b> check running in parallel with the original.</li>
     <li>Compare results over a few days, then flip branch protection to the new check.</li>
-    <li>Note anything in the original that exists only to reset a dirty workspace — and delete it rather than porting it.</li>
+    <li>Note anything in the original that exists only to reset a dirty workspace, and delete it rather than porting it.</li>
   </ol>
   <em>the parallel period is what makes migration safe, and that last step is where most of the simplification comes from: a large share of legacy CI logic exists to work around persistent state that Actions does not have.</em>
 </div>
@@ -684,8 +684,8 @@ Most incidents are prevented at review time, not at runtime. This is the whole s
 
 | Check | Looking for |
 |---|---|
-| `on:` triggers | Any `pull_request_target`, `workflow_run`, or `issue_comment` — each gives fork-influenced runs a privileged token |
-| Checkout ref | A `pull_request_target` job checking out `head.sha` — the classic exfiltration pattern |
+| `on:` triggers | Any `pull_request_target`, `workflow_run`, or `issue_comment`. Each gives fork-influenced runs a privileged token |
+| Checkout ref | A `pull_request_target` job checking out `head.sha`: the classic exfiltration pattern |
 | `permissions` | Present, minimal, widened per job rather than per workflow |
 | Third-party `uses:` | SHA-pinned, from a recognisable source, covered by Dependabot |
 | Interpolation | No `${{ github.event.* }}` inside a `run` body or a `github-script` block |
@@ -703,17 +703,17 @@ Most incidents are prevented at review time, not at runtime. This is the whole s
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
-    <li>Apply the checklist to a workflow you did not write — ideally in a repository you have just inherited.</li>
+    <li>Apply the checklist to a workflow you did not write, ideally in a repository you have just inherited.</li>
     <li>Write down every row that fails.</li>
     <li>Fix the two highest-risk findings and open a pull request.</li>
     <li>Add CODEOWNERS on <code>.github/workflows/**</code> so future changes route to your team.</li>
   </ol>
-  <em>almost every unreviewed workflow fails at least three rows — usually a missing <code>permissions</code> floor, an unpinned third-party action, and no <code>timeout-minutes</code>. CODEOWNERS is what stops the list regrowing.</em>
+  <em>almost every unreviewed workflow fails at least three rows, usually a missing <code>permissions</code> floor, an unpinned third-party action, and no <code>timeout-minutes</code>. CODEOWNERS is what stops the list regrowing.</em>
 </div>
 
 ## The complete picture
 
-Here is the series' final pipeline — every level's topics, hardened.
+The series' final pipeline: every level's topics, hardened.
 
 ```yaml .github/workflows/release.yml
 name: Release
@@ -811,14 +811,14 @@ jobs:
 ```
 
 <div class="guide-try">
-  <span class="ct">Try it — the final exercise</span>
+  <span class="ct">Try it: the final exercise</span>
   <ol>
     <li>Build this pipeline end to end on a real project: reusable CI, an image built with provenance, and an OIDC deploy behind an environment.</li>
     <li>Verify each control actively: try to deploy from a non-<code>main</code> branch, try to push an image from a fork pull request, and try to assume the deploy role from a throwaway branch.</li>
     <li>Confirm the deployed reference is a digest, not a tag.</li>
     <li>Then hand it to a colleague and ask them to run the review checklist against it.</li>
   </ol>
-  <em>three refusals and one green deploy. A control you have never seen refuse anything is decoration — this exercise is the difference between a pipeline that looks hardened and one that is.</em>
+  <em>three refusals and one green deploy. A control you have never seen refuse anything is decoration. This exercise is the difference between a pipeline that looks hardened and one that is.</em>
 </div>
 
 ## Where the series leaves you
@@ -835,4 +835,4 @@ Across the three levels you have gone from a first green run to owning CI/CD as 
 
 You should now be able to look at any workflow and see not just what it does but what it *permits*: which triggers give fork-influenced code a privileged token, what that token can reach, whether event data flows into a shell, whether third-party code is pinned, whether a credential could reach a log, and whether there is an automated path to production without a human in it.
 
-That review instinct is the most valuable thing in this guide.
+That review instinct is what you take with you.

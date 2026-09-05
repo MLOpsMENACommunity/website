@@ -1,12 +1,12 @@
-This is part three of three. It closes the series by taking **every topic from Beginner and Mid one level further** — each one now has a security, scale, or ownership dimension — and adds the work you own when containers are your responsibility rather than your tool.
+This is part three of three. It closes the series by taking **every topic from Beginner and Mid one level further** (each one now has a security, scale, or ownership dimension) and adds the work you own when containers are your responsibility rather than your tool.
 
-Up to this point the questions have been about making containers work. From here they are different: what can a compromised container reach, what is actually inside the image you are shipping, who can prove it was built from your source, and what happens when one container tries to take the host down with it.
+Up to this point the questions have been about making containers work. From here they are different: what can a compromised container reach, what is inside the image you are shipping, who can prove it was built from your source, and what happens when one container tries to take the host down with it.
 
 ## Where this picks up
 
 | Topic from earlier levels | What this level adds |
 |---|---|
-| "A container is an isolated process" | **What that isolation consists of** — namespaces, cgroups, capabilities, seccomp — and what an escape means |
+| "A container is an isolated process" | **What that isolation consists of**: namespaces, cgroups, capabilities, seccomp, and what an escape means |
 | Non-root `USER` | The full hardening pass: read-only root filesystem, dropped capabilities, `no-new-privileges` |
 | Layers are additive | Secrets that **never reach a layer**: BuildKit secret mounts, SSH forwarding, verification |
 | Cache mounts | Cache **poisoning** and trust boundaries in shared build caches |
@@ -14,29 +14,29 @@ Up to this point the questions have been about making containers work. From here
 | Multi-arch awareness | Native per-architecture builders, manifest lists, and the QEMU cost |
 | Resource limits | The OOM killer's real behaviour, and runtimes blind to their own cgroup |
 | Health checks | Liveness versus readiness, and what an orchestrator does with each |
-| Compose | Where Compose stops and an orchestrator begins — and what transfers |
+| Compose | Where Compose stops and an orchestrator begins, and what transfers |
 | Registries and promotion | Registry policy, retention, mirrors, and image-freshness as a metric |
 | Debugging | Production incident playbooks, and a review checklist that catches it earlier |
-| — **new** — | GPU and ML images · rootless and userns-remap · daemon configuration · platform ownership |
+| **new** | GPU and ML images · rootless and userns-remap · daemon configuration · platform ownership |
 
 I am starting with the isolation model, because every other decision in this track depends on understanding what a container is *not*.
 
-## What isolation actually gives you
+## What isolation gives you
 
 You have known since Beginner that a container is "a process with a restricted view". That view is built from three separate kernel mechanisms, and knowing which one does what is the difference between reasoning about security and guessing at it.
 
 <div class="guide-arch" style="--arch-cols:3">
   <div class="arch-lane" style="--lane-cols:3">
-    <span class="arch-label">what a container actually is — three kernel mechanisms</span>
+    <span class="arch-label">what a container is: three kernel mechanisms</span>
     <div class="arch-node" data-kind="entry"><b>Namespaces</b><small>Separate views of PIDs, mounts, network, hostname, users, IPC</small></div>
-    <div class="arch-node" data-kind="entry"><b>cgroups</b><small>Limits on CPU, memory, PIDs, block I/O — <code>-m</code>, <code>--cpus</code></small></div>
+    <div class="arch-node" data-kind="entry"><b>cgroups</b><small>Limits on CPU, memory, PIDs, block I/O: <code>-m</code>, <code>--cpus</code></small></div>
     <div class="arch-node" data-kind="entry"><b>Capabilities · seccomp · AppArmor</b><small>Which privileged operations are possible at all</small></div>
   </div>
   <i class="arch-edge" data-dir="down"></i>
   <i class="arch-edge" data-dir="down"></i>
   <i class="arch-edge" data-dir="down"></i>
   <div class="arch-lane" style="--lane-cols:1">
-    <span class="arch-label">shared — there is no hypervisor here</span>
+    <span class="arch-label">shared. There is no hypervisor here</span>
     <div class="arch-node" data-kind="danger"><b>One host kernel, for every container on the machine</b><small><code>uname -r</code> inside any image reports the <em>host's</em> kernel. uid 0 inside is uid 0 outside, unless you use userns remapping or rootless</small></div>
   </div>
   <i class="arch-edge" data-dir="down" data-flow="optional"></i>
@@ -48,7 +48,7 @@ You have known since Beginner that a container is "a process with a restricted v
     <div class="arch-node"><b>Kata · Firecracker</b><small>A lightweight VM per container</small></div>
     <div class="arch-node"><b>A plain VM</b><small>Always available, always an option</small></div>
   </div>
-  <p class="arch-note"><b>Why the middle lane decides everything:</b> namespaces restrict what a process can <em>see</em>, not what the kernel will <em>do</em> for it. An escape through a kernel bug, a careless bind mount, or an added capability lands on the host as root — which is why "it's only a container" is not a boundary you can lean on for untrusted code.</p>
+  <p class="arch-note"><b>Why the middle lane decides everything:</b> namespaces restrict what a process can <em>see</em>, not what the kernel will <em>do</em> for it. An escape through a kernel bug, a careless bind mount, or an added capability lands on the host as root, which is why "it's only a container" is not a boundary you can lean on for untrusted code.</p>
 </div>
 
 | Mechanism | Provides | Controls it |
@@ -63,7 +63,7 @@ There is **no hypervisor**. The kernel is shared with the host and with every ot
 
 <div class="callout warn">
   <span class="ct">Root in a container is root on the host kernel</span>
-  Unless you are using user namespace remapping or a rootless daemon, uid 0 inside the container is uid 0 outside it. A container escape — through a kernel vulnerability, a careless bind mount, or an added capability — lands an attacker on the host as root. This is why "it's only a container" is not a security boundary you can lean on for untrusted code, and why the hardening in the next section is not optional decoration.
+  Unless you are using user namespace remapping or a rootless daemon, uid 0 inside the container is uid 0 outside it. A container escape (through a kernel vulnerability, a careless bind mount, or an added capability) lands an attacker on the host as root. This is why "it's only a container" is not a security boundary you can lean on for untrusted code, and why the hardening in the next section is not optional decoration.
 </div>
 
 Two consequences shape real decisions.
@@ -75,7 +75,7 @@ docker run --rm alpine sh -c 'apk add -q libcap; capsh --print | head -3'
 docker run --rm --cap-drop ALL alpine sh -c 'ping -c1 127.0.0.1 || echo "no NET_RAW"'
 ```
 
-**If you must run genuinely untrusted code, you want a stronger boundary than a namespace.** gVisor intercepts syscalls in userspace, Kata Containers and Firecracker give each container a lightweight VM, and a plain separate VM is always an option. All of them cost performance, and all of them are the right answer when the workload is somebody else's code.
+**If you must run untrusted code, you want a stronger boundary than a namespace.** gVisor intercepts syscalls in userspace, Kata Containers and Firecracker give each container a lightweight VM, and a plain separate VM is always an option. All of them cost performance, and all of them are the right answer when the workload is somebody else's code.
 
 <div class="guide-try">
   <span class="ct">Try it</span>
@@ -128,7 +128,7 @@ docker run -d \
 | `no-new-privileges` | A setuid binary escalating privilege within the container |
 | Memory / CPU / PID limits | One container starving the host, and fork bombs |
 
-`--read-only` is the one people skip because it looks disruptive. It usually is not: most services need exactly one or two writable paths, and declaring them is a five-minute exercise that turns "the container can write anywhere" into "the container can write to `/tmp`". The discipline itself is valuable — if you cannot list your service's writable paths, you do not know what it does.
+`--read-only` is the one people skip because it looks disruptive. It usually is not: most services need exactly one or two writable paths, and declaring them is a five-minute exercise that turns "the container can write anywhere" into "the container can write to `/tmp`". The discipline itself is valuable. If you cannot list your service's writable paths, you do not know what it does.
 
 <div class="callout warn">
   <span class="ct">Three flags that hand over the machine</span>
@@ -144,16 +144,16 @@ docker run -d \
   <span class="ct">Try it</span>
   <ol>
     <li>Run your image with the full flag set above. Whatever breaks, fix it by declaring the writable path rather than by removing <code>--read-only</code>.</li>
-    <li>Confirm each control actually applies: <code>docker run --rm myapp id</code>, then try <code>touch /app/x</code> inside a read-only container.</li>
-    <li>Find which capability your app genuinely needs by starting from <code>--cap-drop ALL</code> and adding back only on failure.</li>
-    <li>Try the operation you meant to prevent — <code>ping</code> needs <code>NET_RAW</code>, <code>mount</code> needs <code>SYS_ADMIN</code> — and confirm it is refused.</li>
+    <li>Confirm each control applies: <code>docker run --rm myapp id</code>, then try <code>touch /app/x</code> inside a read-only container.</li>
+    <li>Find which capability your app needs by starting from <code>--cap-drop ALL</code> and adding back only on failure.</li>
+    <li>Try the operation you meant to prevent (<code>ping</code> needs <code>NET_RAW</code>, <code>mount</code> needs <code>SYS_ADMIN</code>) and confirm it is refused.</li>
   </ol>
-  <em>a container that runs unprivileged on a read-only filesystem with one declared scratch path, and a refused operation proving the restriction is live. A security control you have never watched refuse anything is decoration — step four is the whole exercise.</em>
+  <em>a container that runs unprivileged on a read-only filesystem with one declared scratch path, and a refused operation proving the restriction is live. A security control you have never watched refuse anything is decoration. Step four is the whole exercise.</em>
 </div>
 
 ## Rootless Docker and user namespaces
 
-The hardening above bounds what a container can do. This section changes what "root inside the container" even means on the host — which is a different and stronger kind of protection.
+The hardening above bounds what a container can do. Rootless mode changes what "root inside the container" even means on the host, which is a different and stronger kind of protection.
 
 Two mechanisms, often confused:
 
@@ -168,9 +168,9 @@ Two mechanisms, often confused:
 }
 ```
 
-With that set, a process running as root inside a container is some high-numbered unprivileged uid — typically 100000-something — on the host. An escape lands as nobody rather than as root, which removes an entire class of consequence.
+With that set, a process running as root inside a container is some high-numbered unprivileged uid, typically 100000-something, on the host. An escape lands as nobody rather than as root, which removes an entire class of consequence.
 
-The caveats are real and you should test rather than assume. Existing volumes have ownership from before the remap and will need adjusting. Images that assume specific uid semantics can break. And bind mounts become more awkward, because the host path's ownership must line up with the mapped range.
+The caveats are real and you should test rather than assume. Existing volumes have ownership from before the remap and will need adjusting. Images that assume specific uid semantics can break. Bind mounts become more awkward, because the host path's ownership must line up with the mapped range.
 
 **Rootless Docker** goes further: the daemon itself runs as your user, using user namespaces and a userspace network stack. Nothing in the chain runs as host root.
 
@@ -182,7 +182,7 @@ docker info | grep -i rootless
 
 <div class="callout tip">
   <span class="ct">Where each one belongs</span>
-  Rootless is genuinely good for developer machines and CI builders, where you want no root daemon at all and can tolerate slightly slower storage. <code>userns-remap</code> is the more practical option for an existing production host, because it is a daemon setting rather than a different installation. Either is a large improvement over neither — but both need testing against your actual volumes before rollout.
+  Rootless is good for developer machines and CI builders, where you want no root daemon at all and can tolerate slightly slower storage. <code>userns-remap</code> is the more practical option for an existing production host, because it is a daemon setting rather than a different installation. Either is a large improvement over neither, but both need testing against your actual volumes before rollout.
 </div>
 
 <div class="guide-try">
@@ -193,12 +193,12 @@ docker info | grep -i rootless
     <li>Check the mapping ranges: <code>cat /etc/subuid /etc/subgid</code>.</li>
     <li>Try to start a container publishing port 80 under rootless Docker and read the error.</li>
   </ol>
-  <em>a root-owned file on the host in the first case and a high-numbered unprivileged uid in the second — that difference is the entire security value. The rootless port error in step four is the main operational constraint you need to plan around.</em>
+  <em>a root-owned file on the host in the first case and a high-numbered unprivileged uid in the second. That difference is the entire security value. The rootless port error in step four is the main operational constraint you need to plan around.</em>
 </div>
 
 ## Secrets that never reach a layer
 
-Mid established the mechanism: layers are additive, so anything written into one is permanent. Here is the correct way to use a credential at build time, which is the case that has no run-time answer.
+Mid established the mechanism: layers are additive, so anything written into one is permanent. Build-time credentials are the one case with no run-time answer, so they need their own mechanism.
 
 <div class="guide-compare">
   <div class="guide-compare-col good">
@@ -214,8 +214,8 @@ Mid established the mechanism: layers are additive, so anything written into one
   <div class="guide-compare-col bad">
     <h4>Permanent leak</h4>
     <ul>
-      <li><code>ARG TOKEN</code> — recorded in <code>docker history</code></li>
-      <li><code>ENV PASSWORD</code> — in the image metadata</li>
+      <li><code>ARG TOKEN</code>: recorded in <code>docker history</code></li>
+      <li><code>ENV PASSWORD</code>: in the image metadata</li>
       <li><code>COPY .env .</code> then <code>RUN rm .env</code></li>
       <li>A private key anywhere in the build context</li>
       <li><code>--build-arg</code> for anything sensitive</li>
@@ -264,7 +264,7 @@ docker inspect myapp:1.4.2 --format '{{range .Config.Env}}{{println .}}{{end}}'
 
 <div class="callout warn">
   <span class="ct">If a secret did reach an image, rotate first</span>
-  The image has already been pulled and cached in places you do not control — CI runners, developer machines, registry mirrors, layer caches. Deleting the tag does not un-distribute it. Rotate the credential, then clean up. Doing it the other way round optimises for appearances over exposure.
+  The image has already been pulled and cached in places you do not control: CI runners, developer machines, registry mirrors, layer caches. Deleting the tag does not un-distribute it. Rotate the credential, then clean up. Doing it the other way round optimises for appearances over exposure.
 </div>
 
 <div class="guide-try">
@@ -285,7 +285,7 @@ The question a senior gets asked is not "did it build?" but **"can you prove wha
 | Control | Answers |
 |---|---|
 | **Digest pinning** in `FROM` | "Did the base image change under us?" |
-| **SBOM** | "What packages are actually in this image?" |
+| **SBOM** | "What packages are in this image?" |
 | **Vulnerability scanning** | "Which of them are known-vulnerable?" |
 | **Provenance / attestations** | "Which workflow and which commit produced this?" |
 | **Signing** (cosign, Notation) | "Was this pushed by us?" |
@@ -315,7 +315,7 @@ docker buildx imagetools inspect ghcr.io/org/app:sha-a1b2c3d --format '{{json .S
 
 <div class="callout tip">
   <span class="ct">Why <code>--ignore-unfixed</code> is not cheating</span>
-  A scanner reports vulnerabilities with no available patch. Failing the build on those trains everybody to ignore scan output, which is strictly worse than not scanning. Gate on <b>fixable</b> HIGH and CRITICAL findings, track the rest, and rebuild regularly so base image patches actually land. An image built four months ago is nearly always a bigger problem than anything in today's report.
+  A scanner reports vulnerabilities with no available patch. Failing the build on those trains everybody to ignore scan output, which is strictly worse than not scanning. Gate on <b>fixable</b> HIGH and CRITICAL findings, track the rest, and rebuild regularly so base image patches land. An image built four months ago is nearly always a bigger problem than anything in today's report.
 </div>
 
 Pinning and patching pull in opposite directions, and you need both:
@@ -334,7 +334,7 @@ Pinning and patching pull in opposite directions, and you need both:
   <div class="guide-compare-col bad">
     <h4>Do not</h4>
     <ul>
-      <li>Pin and then never update — frozen vulnerabilities</li>
+      <li>Pin and then never update: frozen vulnerabilities</li>
       <li>Use a floating tag and call it "always patched"</li>
       <li>Scan only at build time, then deploy for six months</li>
       <li>Fail the gate on unfixable findings</li>
@@ -372,7 +372,7 @@ There is one more trust boundary worth naming, because it is easy to miss: **a s
   <ol>
     <li>Resolve your base image tag to a digest and pin it: <code>docker buildx imagetools inspect python:3.11-slim --format '{{.Manifest.Digest}}'</code>.</li>
     <li>Build with <code>--sbom=true --provenance=true</code>, push, then read both back with <code>imagetools inspect</code>.</li>
-    <li>Run a Trivy scan twice — once without <code>--ignore-unfixed</code> and once with it — and compare how actionable the two reports are.</li>
+    <li>Run a Trivy scan twice, once without <code>--ignore-unfixed</code> and once with it, and compare how actionable the two reports are.</li>
     <li>Sign the image with cosign and then verify it. Change one byte, rebuild, and verify again.</li>
   </ol>
   <em>a pinned digest, an SBOM you can read, a scan report that is actionable rather than overwhelming, and a signature that fails after the image changes. The second scan comparison is the one that will change how you configure your gate.</em>
@@ -393,7 +393,7 @@ docker buildx imagetools inspect ghcr.io/org/app:1.4.2
 
 The result is a **manifest list**: one tag pointing at several images, with the client automatically selecting the right one. `docker pull` on an ARM laptop and on an x86 server both work, from the same reference.
 
-The cost is the part people discover late. Buildx emulates the foreign architecture with QEMU, and emulated builds are several times slower — for a compile-heavy image, minutes become tens of minutes. For anything on the critical path, build each architecture on its own **native** runner and merge the manifests afterwards:
+The cost is the part people discover late. Buildx emulates the foreign architecture with QEMU, and emulated builds are several times slower. For a compile-heavy image, minutes become tens of minutes. For anything on the critical path, build each architecture on its own **native** runner and merge the manifests afterwards:
 
 ```bash
 # On an amd64 runner
@@ -410,13 +410,13 @@ docker buildx imagetools create -t ghcr.io/org/app:1.4.2 \
 
 <div class="callout warn">
   <span class="ct">"exec format error"</span>
-  That message almost always means an architecture mismatch: an <code>arm64</code> image on an <code>amd64</code> host, or the reverse. Confirm before debugging anything else with <code>docker image inspect --format '{{.Architecture}}'</code>. The subtler variant is no error at all — just a service that is mysteriously several times slower, because it is running under emulation.
+  That message almost always means an architecture mismatch: an <code>arm64</code> image on an <code>amd64</code> host, or the reverse. Confirm before debugging anything else with <code>docker image inspect --format '{{.Architecture}}'</code>. The subtler variant is no error at all, just a service several times slower than it should be, because it is running under emulation.
 </div>
 
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
-    <li>Check what your machine produces by default: <code>docker build -t arch-test . </code> then <code>docker image inspect arch-test --format '{{.Architecture}}'</code>.</li>
+    <li>Check what your machine produces by default: <code>docker build -t arch-test. </code> then <code>docker image inspect arch-test --format '{{.Architecture}}'</code>.</li>
     <li>Build for the other architecture with <code>--platform</code> and time both builds.</li>
     <li>Build a two-platform manifest list, push it, and inspect it with <code>imagetools</code> to see both entries.</li>
     <li>Deliberately run the wrong architecture with <code>--platform</code> on <code>docker run</code> and read the error or observe the slowdown.</li>
@@ -426,9 +426,9 @@ docker buildx imagetools create -t ghcr.io/org/app:1.4.2 \
 
 ## Resource limits and the OOM killer
 
-Mid taught you to set limits. This section is about what happens at the boundary, because that behaviour decides whether a memory problem is a bounded incident or an outage.
+Mid taught you to set limits. What happens at the boundary decides whether a memory problem is a bounded incident or an outage.
 
-Without limits, one container consumes all host memory and the kernel's OOM killer picks a victim by a heuristic score — **not necessarily the guilty container**. Your database can be the process that dies because an unrelated worker leaked memory.
+Without limits, one container consumes all host memory and the kernel's OOM killer picks a victim by a heuristic score, and **not necessarily the guilty container**. Your database can be the process that dies because an unrelated worker leaked memory.
 
 ```bash
 docker run -d \
@@ -447,7 +447,7 @@ docker inspect --format '{{.State.OOMKilled}}' myapp     # true after a 137
 | `-m` / `--memory` | Hard ceiling; exceeding it means SIGKILL and exit 137 |
 | `--memory-reservation` | Soft target the kernel aims for under host pressure |
 | `--cpus` | CPU quota expressed in cores |
-| `--pids-limit` | Caps the process count — the fork-bomb defence |
+| `--pids-limit` | Caps the process count: the fork-bomb defence |
 | `--restart on-failure:N` | Bounded retries instead of a crash loop forever |
 | `--oom-kill-disable` | Almost always wrong: the container hangs instead of dying |
 
@@ -460,7 +460,7 @@ With a limit in place, the kill is **scoped to that container's cgroup** and the
 
 Two related failure modes worth knowing:
 
-**CPU throttling looks like slowness, not an error.** A container over its `--cpus` quota is not killed, it is throttled — so latency rises with no log line explaining why. Check `docker stats` and the cgroup's throttling counters before concluding the code got slower.
+**CPU throttling looks like slowness, not an error.** A container over its `--cpus` quota is not killed, it is throttled, so latency rises with no log line explaining why. Check `docker stats` and the cgroup's throttling counters before concluding the code got slower.
 
 **Disk is a limit too, and it has no flag.** A container with an unbounded log or a growing writable layer fills the host filesystem, and a full disk presents as a dozen unrelated failures across every container on the machine. Daemon-level log rotation is the fix, and it belongs in configuration rather than in each service.
 
@@ -491,11 +491,11 @@ Two related failure modes worth knowing:
 Six practices, each of which prevents a class of incident rather than a specific bug.
 
 <ol class="guide-steps">
-  <li><b>One concern per container</b>Not literally one process — a supervisor for a worker pool is fine — but one responsibility, so it can be scaled, restarted, and logged independently. Two concerns in one container means you cannot restart one without the other.</li>
-  <li><b>Log to stdout and stderr</b>Never to a file inside the container. Configure rotation on the daemon (<code>max-size</code>, <code>max-file</code>) or you will eventually fill a disk with JSON — and a full disk on a container host looks like a dozen unrelated failures.</li>
-  <li><b>Health checks that mean something</b>A liveness check that only proves the process is alive is worthless, because Docker already knew that. Check the dependency you actually need, keep it cheap enough to run every thirty seconds, and do not fail it because a non-critical downstream is slow.</li>
+  <li><b>One concern per container</b>Not literally one process, a supervisor for a worker pool is fine, but one responsibility, so it can be scaled, restarted, and logged independently. Two concerns in one container means you cannot restart one without the other.</li>
+  <li><b>Log to stdout and stderr</b>Never to a file inside the container. Configure rotation on the daemon (<code>max-size</code>, <code>max-file</code>) or you will eventually fill a disk with JSON, and a full disk on a container host looks like a dozen unrelated failures.</li>
+  <li><b>Health checks that mean something</b>A liveness check that only proves the process is alive is worthless, because Docker already knew that. Check the dependency you need, keep it cheap enough to run every thirty seconds, and do not fail it because a non-critical downstream is slow.</li>
   <li><b>Handle SIGTERM properly</b>Exec form, and <code>exec "$@"</code> in entrypoint scripts. Then drain connections on <code>SIGTERM</code> instead of dropping them. Confirm it: a clean stop exits 143, not 137.</li>
-  <li><b>Immutable, digest-addressable deploys</b>Deploy <code>:sha-a1b2c3d</code> or a digest. A moving tag makes "what is running?" unanswerable and rollback undefined — you cannot roll back to a tag whose contents have changed.</li>
+  <li><b>Immutable, digest-addressable deploys</b>Deploy <code>:sha-a1b2c3d</code> or a digest. A moving tag makes "what is running?" unanswerable and rollback undefined. You cannot roll back to a tag whose contents have changed.</li>
   <li><b>Build once, promote the same artifact</b>If production rebuilds the image, production is running something CI never tested. Promotion is the difference between shipping your tested artifact and shipping something that resembles it.</li>
 </ol>
 
@@ -507,7 +507,7 @@ Liveness and readiness deserve separating, because Docker has one concept and or
 | Should this instance receive traffic right now? | Not modelled | Readiness probe |
 | Has a slow-starting container finished booting? | `--start-period` | Startup probe |
 
-Conflating the first two is a common and expensive mistake: if your liveness check fails whenever a downstream dependency is briefly unavailable, a dependency blip becomes a rolling restart of every one of your instances — turning a small problem into a large one.
+Conflating the first two is a common and expensive mistake: if your liveness check fails whenever a downstream dependency is briefly unavailable, a dependency blip becomes a rolling restart of every one of your instances, turning a small problem into a large one.
 
 <div class="callout tip">
   <span class="ct">The single most valuable operational habit</span>
@@ -522,7 +522,7 @@ Conflating the first two is a common and expensive mistake: if your liveness che
     <li>Write a liveness check that deliberately fails when the database is unreachable, then stop the database and watch your app restart repeatedly. Fix it so the check only reflects its own health.</li>
     <li>Confirm graceful shutdown end to end: <code>docker stop -t 30</code>, exit code 143, and a "draining" line in the logs.</li>
   </ol>
-  <em>a service that can state which commit it is running, a deploy reference that cannot move, and — in step three — the restart storm that follows from a badly scoped liveness check. That storm is worth causing once in a test environment.</em>
+  <em>a service that can state which commit it is running, a deploy reference that cannot move, and, in step three, the restart storm that follows from a badly scoped liveness check. That storm is worth causing once in a test environment.</em>
 </div>
 
 ## Containers for machine learning
@@ -595,7 +595,7 @@ Five decisions in there are the whole lesson.
 
 ## Where Docker stops
 
-Knowing the boundary is itself a senior signal, and stating it clearly in an interview is worth more than listing orchestrator features.
+Naming the boundary is itself a senior signal, and in an interview it lands better than a list of orchestrator features.
 
 <div class="guide-compare">
   <div class="guide-compare-col good">
@@ -633,11 +633,11 @@ The reassuring part is that **almost everything in this guide transfers**:
 | Compose service names and DNS | Services and cluster DNS |
 | `depends_on` + health | Init containers and readiness gating |
 
-Compose is not a stepping stone you throw away. It is the same model on one host, and the concepts map across almost one-to-one. What an orchestrator adds is **scheduling, reconciliation, and multi-host networking** — not a different container model.
+Compose is the same model on one host, and the concepts map across almost one-to-one, so nothing you learned here gets thrown away. What an orchestrator adds is **scheduling, reconciliation, and multi-host networking**, not a different container model.
 
 <div class="callout tip">
   <span class="ct">The honest answer about Swarm</span>
-  Docker Swarm exists, is simpler than Kubernetes, and is genuinely fine for a small multi-host deployment. It also has a much smaller ecosystem and far less industry momentum. Recommending it is defensible for a two-node internal service; recommending it as a general answer in an interview will invite a follow-up you should be ready for.
+  Docker Swarm exists, is simpler than Kubernetes, and is fine for a small multi-host deployment. It also has a much smaller ecosystem and far less industry momentum. Recommending it is defensible for a two-node internal service; recommending it as a general answer in an interview will invite a follow-up you should be ready for.
 </div>
 
 <div class="guide-try">
@@ -648,7 +648,7 @@ Compose is not a stepping stone you throw away. It is the same model on one host
     <li>Write down the specific requirement that would justify moving off Compose for one of your projects.</li>
     <li>Convert your <code>HEALTHCHECK</code> into separate liveness and readiness probes, and note where they should differ.</li>
   </ol>
-  <em>a mapping that is more direct than expected, and a short honest list of things Compose genuinely cannot do. Step three is the useful one — being able to name the trigger for adopting an orchestrator is what distinguishes a decision from a fashion.</em>
+  <em>a mapping that is more direct than expected, and a short honest list of things Compose cannot do. Step three is the useful one: being able to name the trigger for adopting an orchestrator is what distinguishes a decision from a fashion.</em>
 </div>
 
 ## Running Docker as a platform
@@ -657,7 +657,7 @@ Once more than one team is building images, the highest-leverage work stops bein
 
 **Publish base images, not documentation.** A hardened `FROM` line gets adopted; a wiki page does not. Put the non-root user, the pinned base, the sensible `ENV` values, and the standard labels into an internal base image, and teams inherit all of it by changing one line.
 
-**Version base images with a moving major tag.** Consumers use `python-base:3.11`; you release `3.11.7-2` and move the pointer. Canary one low-risk service on the exact patch tag first — otherwise one bad base image release breaks every team simultaneously, which is a memorable way to lose their trust.
+**Version base images with a moving major tag.** Consumers use `python-base:3.11`; you release `3.11.7-2` and move the pointer. Canary one low-risk service on the exact patch tag first. Otherwise one bad base image release breaks every team simultaneously, which is a memorable way to lose their trust.
 
 **Own the registry policy.** Immutable tags where the registry supports them, retention rules so old images are pruned, an internal mirror so an upstream outage is not your outage, and an admission policy that refuses unsigned or unscanned images.
 
@@ -668,12 +668,12 @@ Once more than one team is building images, the highest-leverage work stops bein
 | Median and p95 image size | Size is deploy latency, on every deploy |
 | Age of the oldest deployed image | Nearly always a better vulnerability signal than a scan report |
 | Count of fixable HIGH/CRITICAL findings | The actionable subset, not the total |
-| Build duration, p50 and p95 | Where your teams' time actually goes |
+| Build duration, p50 and p95 | Where your teams' time goes |
 | Percentage of deploys by digest | How answerable "what is running?" is |
 
 <div class="callout warn">
   <span class="ct">The failure mode of a shared base image</span>
-  A team needs one package added, cannot get it upstream quickly, and forks. Six months later there are eleven variants and no standard. The fix is <b>turnaround time on upstream requests</b>, not policy — if a reasonable change takes two weeks, forking is the rational choice and you will lose. Treat the base image as a product with a service level, or do not treat it as a standard.
+  A team needs one package added, cannot get it upstream quickly, and forks. Six months later there are eleven variants and no standard. The fix is <b>turnaround time on upstream requests</b>, not policy. If a reasonable change takes two weeks, forking is the rational choice and you will lose. Treat the base image as a product with a service level, or do not treat it as a standard.
 </div>
 
 Cost and performance levers worth knowing, roughly in order of return:
@@ -702,10 +702,10 @@ Cost and performance levers worth knowing, roughly in order of return:
   <ol>
     <li>Build an internal base image with a non-root user, a digest-pinned upstream base, and standard OCI labels. Rewrite one real Dockerfile to use it.</li>
     <li>Measure the before and after: image size, build time, and how many lines the consuming Dockerfile lost.</li>
-    <li>Pick two of the metrics above and actually collect them across your repositories — image age is usually the most revealing.</li>
+    <li>Pick two of the metrics above and collect them across your repositories. Image age is usually the most revealing.</li>
     <li>Write the one-paragraph policy you would publish alongside the base image, including how quickly you promise to handle an upstream request.</li>
   </ol>
-  <em>a shorter consuming Dockerfile that is hardened by default, and — usually — a surprising number for image age. Step four is the part that determines whether the base image is adopted or forked.</em>
+  <em>a shorter consuming Dockerfile that is hardened by default, and, usually, a surprising number for image age. Step four is the part that determines whether the base image is adopted or forked.</em>
 </div>
 
 ## Debugging production under pressure
@@ -713,8 +713,8 @@ Cost and performance levers worth knowing, roughly in order of return:
 Under pressure, ordering matters more than knowledge. This sequence is designed so the cheapest, highest-information checks come first.
 
 <div class="guide-timeline">
-  <div class="guide-timeline-item"><span>0m</span><strong>Blast radius first</strong><small>One container or every container? Everything failing at once points at the host, the daemon, a base image, or the registry — not at your diff.</small></div>
-  <div class="guide-timeline-item"><span>2m</span><strong>Exit code and OOM flag</strong><small>137 with <code>OOMKilled: true</code> is a memory limit. 143 is a clean SIGTERM. 127 is a missing binary — usually the wrong image entirely.</small></div>
+  <div class="guide-timeline-item"><span>0m</span><strong>Blast radius first</strong><small>One container or every container? Everything failing at once points at the host, the daemon, a base image, or the registry, not at your diff.</small></div>
+  <div class="guide-timeline-item"><span>2m</span><strong>Exit code and OOM flag</strong><small>137 with <code>OOMKilled: true</code> is a memory limit. 143 is a clean SIGTERM. 127 is a missing binary, usually the wrong image entirely.</small></div>
   <div class="guide-timeline-item"><span>4m</span><strong>Confirm which image is running</strong><small>Compare digests, not tags. With a mutable tag the running code may not be the code you are reading.</small></div>
   <div class="guide-timeline-item"><span>6m</span><strong>Host resources</strong><small><code>docker system df</code>, disk, inodes, memory. A full disk presents as a dozen unrelated failures.</small></div>
   <div class="guide-timeline-item"><span>8m</span><strong>Network from inside the namespace</strong><small>A netshoot sidecar, rather than installing tools into a production image.</small></div>
@@ -734,11 +734,11 @@ Four incident shapes and the first move for each:
 
 **A secret was found in a published image.** Rotate first. The image is already pulled and cached in places you do not control, so assume the credential is compromised regardless of how quickly you delete the tag. Then revoke, remove what you can reach, find the instruction that introduced it, and close the class with a BuildKit secret mount plus a `docker history` grep in CI. Deleting the image first and rotating later optimises for appearances.
 
-**One container took the host down.** Check limits before code. A container with no memory limit will consume all host RAM and the OOM killer may take something else entirely. Confirm with `docker inspect` and the host's `dmesg`, then apply `-m`, `--cpus`, and `--pids-limit` to **everything** on that host — not just the guilty container, because the next one will be different.
+**One container took the host down.** Check limits before code. A container with no memory limit will consume all host RAM and the OOM killer may take something else entirely. Confirm with `docker inspect` and the host's `dmesg`, then apply `-m`, `--cpus`, and `--pids-limit` to **everything** on that host, not just the guilty container, because the next one will be different.
 
 **Everything went red at once.** Follow the timeline above. Simultaneous failure across unrelated services is almost never a code change; it is the host, the daemon, a shared base image, a registry outage, or a full disk.
 
-**An image you depend on was compromised.** Find every deployment referencing it and at which digest. Revoke every credential those containers could reach — not only the ones you believe were used. Replace with a vetted digest or an internal mirror. Then close the class: digest pinning, a registry mirror, signature verification at admission, and scheduled rebuilds.
+**An image you depend on was compromised.** Find every deployment referencing it and at which digest. Revoke every credential those containers could reach, not only the ones you believe were used. Replace with a vetted digest or an internal mirror. Then close the class: digest pinning, a registry mirror, signature verification at admission, and scheduled rebuilds.
 
 <div class="callout tip">
   <span class="ct">Most container incidents are prevented at review time</span>
@@ -753,12 +753,12 @@ Four incident shapes and the first move for each:
     <li>Fill a test host's disk with unrotated logs and observe how many unrelated things break.</li>
     <li>Write your own version of the incident timeline as a short runbook, adapted to your stack, and put it where an on-call person will find it.</li>
   </ol>
-  <em>familiarity with normal output — which is what makes abnormal output obvious — and a runbook that exists before you need it. Step three is worth doing once in a disposable environment: the breadth of the failure is genuinely surprising.</em>
+  <em>familiarity with normal output, which is what makes abnormal output obvious, and a runbook that exists before you need it. Do step three in a disposable environment, and notice how far the failure reaches.</em>
 </div>
 
 ## The review checklist
 
-This is the artefact to take away from this level. Run it against any Dockerfile and `docker run` line — your own, or one you are reviewing — and it catches nearly everything in this guide before it reaches production.
+Take this checklist away from this level. Run it against any Dockerfile and `docker run` line (your own, or one you are reviewing) and it catches nearly everything covered here before it reaches production.
 
 | Check | Looking for | Level it comes from |
 |---|---|---|
@@ -785,12 +785,12 @@ This is the artefact to take away from this level. Run it against any Dockerfile
 
 <div class="callout tip">
   <span class="ct">Automate the mechanical half</span>
-  Most of these rows can be checked by a machine. <a href="https://github.com/hadolint/hadolint">hadolint</a> catches Dockerfile issues, <code>trivy config</code> checks for misconfiguration, and a <code>docker history</code> grep catches secrets. Put all three in CI and reserve human review for the judgement calls — whether the capability set is right, whether the health check checks the right thing, whether that <code>--privileged</code> is genuinely necessary.
+  Most of these rows can be checked by a machine. <a href="https://github.com/hadolint/hadolint">hadolint</a> catches Dockerfile issues, <code>trivy config</code> checks for misconfiguration, and a <code>docker history</code> grep catches secrets. Put all three in CI and reserve human review for the judgement calls: whether the capability set is right, whether the health check checks the right thing, whether that <code>--privileged</code> is necessary.
 </div>
 
 ## The complete picture
 
-Here is the series' final artefact — every level's topics, hardened. Nothing in it is new, and you should be able to justify every line.
+The series' final artefact: every level's topics, hardened. Nothing in it is new, and you should be able to justify every line.
 
 ```dockerfile Dockerfile
 # syntax=docker/dockerfile:1
@@ -879,14 +879,14 @@ docker run -d \
 ```
 
 <div class="guide-try">
-  <span class="ct">Try it — the final exercise</span>
+  <span class="ct">Try it: the final exercise</span>
   <ol>
     <li>Build this end to end on a real project: staged build with a secret mount, a test stage that gates the image, SBOM and provenance attached, and a signed digest.</li>
     <li>Verify each control actively rather than trusting it: grep the history for the token, try to write to the read-only filesystem, try the operation your dropped capability should prevent, and try to deploy an unsigned image.</li>
     <li>Confirm the deployed reference is a digest, not a tag, and that the running container can report its own commit.</li>
     <li>Then hand it to a colleague and ask them to run the review checklist against it.</li>
   </ol>
-  <em>several refusals and one clean deploy. A control you have never watched refuse anything is decoration — this exercise is the difference between an image that looks hardened and one that is. The colleague review in step four will find something you did not, which is the point.</em>
+  <em>several refusals and one clean deploy. A control you have never watched refuse anything is decoration. This exercise is the difference between an image that looks hardened and one that is. The colleague review in step four will find something you did not, which is the point.</em>
 </div>
 
 ## Where the series leaves you
@@ -915,10 +915,10 @@ You should now be able to look at a Dockerfile and a `docker run` line and see n
 | Say why an old image beats a clean scan report? | Unpatched base, regardless of the report |
 | Explain 137 with `OOMKilled: true`? | The cgroup limit did its job |
 | Say why a JVM OOMs at 512 MB doing nothing? | It read the host's memory, not the cgroup |
-| Explain the cost of a QEMU multi-arch build? | Several times slower — build natively, merge manifests |
+| Explain the cost of a QEMU multi-arch build? | Several times slower: build natively, merge manifests |
 | Say where model weights belong? | A mounted volume, versioned separately |
 | Name the trigger for adopting an orchestrator? | Multi-host, rolling deploys, autoscaling, reconciliation |
 | State what transfers from Compose to Kubernetes? | Images, probes, limits, security context, config, volumes |
 | Run a review that catches all of the above? | The checklist two sections up |
 
-That review instinct is the most valuable thing in this guide, because — exactly as with CI/CD pipelines — most container incidents are prevented at review time rather than at runtime.
+Carry that review instinct out of here, because, as with CI/CD pipelines, most container incidents are prevented at review time rather than at runtime.

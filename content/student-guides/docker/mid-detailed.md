@@ -1,10 +1,10 @@
-This is part two of three. It picks up exactly where Beginner ended and takes **every topic from there further**, then adds the machinery you have not met yet. Nothing is dropped and nothing is repeated for its own sake — where you already know the basics, we go straight to the depth.
+This is part two of three. It picks up where Beginner ended and takes **every topic from there further**, then adds the machinery you have not met yet. Where you already know the basics, we go straight to the depth.
 
 ## Where this picks up
 
 | Topic you already use | What this level adds |
 |---|---|
-| Images and layers | The exact cache rules, `docker history` forensics, additive layers as a leak mechanism |
+| Images and layers | The cache rules in full, `docker history` forensics, additive layers as a leak mechanism |
 | `COPY` order | Multi-stage builds, cache mounts, and how to make the cache work in CI |
 | Base images | Size levers in order of leverage, distroless, and why Alpine can be a trap |
 | `ENV` / `ARG` / `-e` | Precedence in full, `--env-file` mechanics, config that never rebuilds |
@@ -14,30 +14,30 @@ This is part two of three. It picks up exactly where Beginner ended and takes **
 | `CMD` / `ENTRYPOINT` | Signals, PID 1, graceful shutdown, entrypoint scripts that behave |
 | Tags and registries | Digests, immutable references, promotion, retention |
 | Debugging | `docker diff`, `docker events`, network sidecars, resolved-config forensics |
-| — **new** — | Health checks · resource limits · BuildKit · Compose profiles · image promotion |
+| **New at this level** | Health checks · resource limits · BuildKit · Compose profiles · image promotion |
 
 Each section starts with the problem it solves, and ends with a **Try it** you can do on a real project in a few minutes.
 
 ## Layers and the build cache, precisely
 
-Beginner gave you the rule of thumb: dependencies before source. Here is the mechanism it comes from, because once you know it you can predict every cache miss instead of discovering them.
+Beginner gave you the rule of thumb: dependencies before source. The mechanism underneath it lets you predict every cache miss instead of discovering them one rebuild at a time.
 
-Every instruction produces a layer — a filesystem diff — and Docker decides whether to reuse it by comparing a **cache key**. What goes into that key differs by instruction, and that is the part people never learn:
+Every instruction produces a layer, a filesystem diff, and Docker decides whether to reuse it by comparing a **cache key**. The contents of that key differ by instruction:
 
 | Instruction | Cache key is built from |
 |---|---|
 | `FROM` | The resolved image digest |
-| `RUN` | The **command string**, verbatim — not its effects |
+| `RUN` | The **command string**, verbatim, not its effects |
 | `COPY` / `ADD` | A checksum of the file contents, plus destination and mode |
 | `ENV`, `ARG`, `WORKDIR`, `USER` | The literal instruction text |
 
 Two consequences fall straight out of that table.
 
-**`RUN` is cached on the text of the command, not on the world it runs in.** `RUN apt-get update` produces a layer keyed on those three words, so Docker happily reuses a six-week-old package index. That is the real reason `update` and `install` must live in the same instruction — not tidiness, but cache correctness.
+**`RUN` is cached on the text of the command, not on the world it runs in.** `RUN apt-get update` produces a layer keyed on those three words, so Docker reuses a six-week-old package index. Cache correctness, not tidiness, is why `update` and `install` must live in the same instruction.
 
-**`COPY` is cached on content, so touching a file is not enough to bust it** — but changing one byte in any copied file is. `COPY . .` therefore hashes your whole source tree, which is why a `.dockerignore` that excludes `.git` and log files removes a whole class of spurious rebuilds.
+**`COPY` is cached on content, so touching a file does not bust it.** Changing one byte in any copied file does. `COPY . .` hashes your whole source tree, so a `.dockerignore` that excludes `.git` and log files removes a class of spurious rebuilds.
 
-And the rule that ties the two together: **once one layer's key changes, every layer after it is rebuilt**, regardless of whether its own inputs changed. The cache is a prefix match, not a per-line lookup.
+The rule that ties the two together: **once one layer's key changes, every layer after it is rebuilt**, whether or not its own inputs changed. The cache is a prefix match, not a per-line lookup.
 
 ```dockerfile
 FROM node:20-slim
@@ -50,10 +50,10 @@ COPY . .                       # key = hash of everything else → changes const
 RUN npm run build              # cheap by comparison
 ```
 
-Now the second consequence of layering, and the more important one:
+The second consequence of layering costs more when you miss it:
 
 <div class="callout warn">
-  <span class="ct">Layers are additive, so deleting does not shrink — or hide</span>
+  <span class="ct">Layers are additive, so deleting neither shrinks nor hides</span>
   A file added in one layer and removed in a later one is still present in the earlier layer, still counted in the image size, and still extractable by anyone who can pull the image. This is the mechanism behind most credentials leaked in images, and it is why "we deleted it in the next line" is never an answer.
 </div>
 
@@ -74,23 +74,23 @@ docker build --progress=plain --no-cache -t myapp:1.0 .   # see every step, cach
 
 <div class="callout tip">
   <span class="ct">Read the build output as a cache report</span>
-  With BuildKit, every reused step is printed as <code>CACHED</code>. The first line <em>without</em> that marker is your invalidation point — and it is almost always higher up the file than you assumed.
+  With BuildKit, every reused step is printed as <code>CACHED</code>. The first line <em>without</em> that marker is your invalidation point, and it usually sits higher up the file than you assumed.
 </div>
 
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
     <li>Build twice with no changes and confirm every step reports <code>CACHED</code>.</li>
-    <li>Edit one character of source, rebuild, and note the exact instruction where <code>CACHED</code> stops.</li>
-    <li>Add <code>RUN apt-get update</code> as its own instruction, build, wait a day, and rebuild — it is still cached.</li>
+    <li>Edit one character of source, rebuild, and note the instruction where <code>CACHED</code> stops.</li>
+    <li>Add <code>RUN apt-get update</code> as its own instruction, build, wait a day, and rebuild. It is still cached.</li>
     <li>Prove the additive-layer point: <code>RUN echo "SECRET=abc123" &gt; /tmp/k</code> then <code>RUN rm /tmp/k</code>, rebuild, and run <code>docker history --no-trunc myapp:1.0 | grep SECRET</code>.</li>
   </ol>
-  <em>the invalidation point is visible in the build log, the stale <code>apt-get update</code> stays cached indefinitely, and your deleted secret is still sitting in <code>docker history</code>. That last result is the one to remember.</em>
+  <em>the invalidation point is visible in the build log, the stale <code>apt-get update</code> stays cached indefinitely, and your deleted secret is still sitting in <code>docker history</code>.</em>
 </div>
 
 ## Multi-stage builds
 
-The problem: building needs compilers, headers, and development dependencies. Running needs none of them. A single-stage image ships the entire toolchain to production — often several hundred megabytes of software whose only purpose was to produce one directory.
+The problem: building needs compilers, headers, and development dependencies. Running needs none of them. A single-stage image ships the entire toolchain to production, often several hundred megabytes of software whose only purpose was to produce one directory.
 
 A multi-stage build puts the build in one stage and the runtime in another, and copies only the result across.
 
@@ -114,7 +114,7 @@ USER node
 CMD ["node", "dist/server.js"]
 ```
 
-**Only what you explicitly `COPY --from` crosses the boundary.** The compilers, the source tree, the dev dependencies, the `.git` history, and any credential used during the build all stay in the discarded stage — they never exist in the shipped image, so they cannot be extracted from it.
+**Only what you `COPY --from` crosses the boundary.** The compilers, the source tree, the dev dependencies, the `.git` history, and any credential used during the build stay in the discarded stage. They never exist in the shipped image, so nobody can extract them from it.
 
 The Python equivalent uses a virtualenv as the transportable artifact, because it is a single self-contained directory:
 
@@ -138,7 +138,7 @@ CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
 
 Three further capabilities make stages more than a size trick:
 
-**Stop at any stage.** `docker build --target builder -t myapp:build .` builds only up to that stage — useful for debugging, and for a development image that keeps the toolchain.
+**Stop at any stage.** `docker build --target builder -t myapp:build .` builds only up to that stage, which helps when debugging and when you want a development image that keeps the toolchain.
 
 **Run tests as a stage.** A `test` stage that runs the suite means a failing test fails the image build, so a broken image cannot be produced at all.
 
@@ -150,7 +150,7 @@ FROM node:20-slim AS runtime
 COPY --from=builder /app/dist ./dist
 ```
 
-**Copy from an image you did not build.** `COPY --from=` accepts an image reference, not just a stage name, which is the neat way to pull in a single binary:
+**Copy from an image you did not build.** `COPY --from=` accepts an image reference as well as a stage name, which is the tidy way to pull in a single binary:
 
 ```dockerfile
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
@@ -170,12 +170,12 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
     <li>Confirm the toolchain is gone from the final image: <code>docker run --rm myapp:1.0 sh -c 'which gcc npm pip'</code>.</li>
     <li>Add a <code>test</code> stage that runs your suite, break a test, and watch the build fail.</li>
   </ol>
-  <em>usually a several-hundred-megabyte drop, a builder image that is still large, and a runtime image where the compilers are simply absent. The failing build in step five is the useful one: it means a red test can no longer produce a shippable image.</em>
+  <em>usually a several-hundred-megabyte drop, a builder image that is still large, and a runtime image with no compilers in it. Step five is the useful one: a red test can no longer produce a shippable image.</em>
 </div>
 
 ## Making images small, in order of leverage
 
-Size is not vanity. It is pull time on every deploy, cache pressure in CI, storage cost in your registry, and attack surface in production. But most size "optimisation" is guesswork applied to the wrong layer, so measure first.
+Image size is pull time on every deploy, cache pressure in CI, storage cost in your registry, and attack surface in production. Most size "optimisation" is guesswork applied to the wrong layer, so measure first.
 
 ```bash
 docker history myapp:1.0 --no-trunc --format '{{.Size}}\t{{.CreatedBy}}' | head -20
@@ -183,27 +183,27 @@ docker image inspect myapp:1.0 --format '{{.Size}}'
 docker images myapp                                   # compare tags side by side
 ```
 
-Then work down this list. It is ordered by how much each change typically returns:
+Then work down this list, ordered by how much each change typically returns:
 
 <ol class="guide-steps">
-  <li><b>Split build and runtime</b>A multi-stage build removes compilers, headers, dev dependencies, and the source tree in one change. Usually worth more than everything below it combined.</li>
-  <li><b>Drop to a <code>-slim</code> base</b>Hundreds of megabytes, and almost always a drop-in change. Do this before considering anything more exotic.</li>
+  <li><b>Split build and runtime</b>A multi-stage build removes compilers, headers, dev dependencies, and the source tree in one change. Usually returns more than everything below it combined.</li>
+  <li><b>Drop to a <code>-slim</code> base</b>Hundreds of megabytes, and usually a drop-in change. Do this before considering anything more exotic.</li>
   <li><b>Clean package manager state in the same layer</b><code>--no-install-recommends</code>, then <code>rm -rf /var/lib/apt/lists/*</code> inside the same <code>RUN</code>. Cleaning in a later instruction removes nothing at all.</li>
-  <li><b>Stop shipping caches</b><code>pip --no-cache-dir</code>, <code>npm ci --omit=dev</code>, <code>go build</code> into a minimal stage. Package manager caches are pure dead weight in a shipped image.</li>
+  <li><b>Stop shipping caches</b><code>pip --no-cache-dir</code>, <code>npm ci --omit=dev</code>, <code>go build</code> into a minimal stage. Package manager caches are dead weight in a shipped image.</li>
   <li><b>Write a real <code>.dockerignore</code></b>Smaller context, faster uploads, and fewer spurious cache invalidations from files that have nothing to do with the build.</li>
   <li><b>Only then consider distroless or Alpine</b>The smallest runtime images, at the cost of no shell to debug in and, for Alpine, musl incompatibilities.</li>
 </ol>
 
 | Lever | Typical effect |
 |---|---|
-| Multi-stage build | The largest single win — drops the whole toolchain |
+| Multi-stage build | Drops the whole toolchain, usually the largest saving |
 | `-slim` instead of the full base | Hundreds of megabytes |
 | `--no-install-recommends` + clean apt lists | Tens of megabytes |
 | `--no-cache-dir` on pip, `npm ci --omit=dev` | Tens to hundreds of megabytes |
 | `.dockerignore` | Removes `.git` and `node_modules` from the context |
 | Distroless or Alpine runtime stage | Smallest, at the cost of no shell |
 
-Distroless deserves a note because it is the option people have not usually met. A distroless image contains your runtime and nothing else — no shell, no package manager, no `ls`. That removes most of the tooling an attacker would use after a compromise, and it means you cannot `docker exec` into it, which is a real operational trade-off rather than a detail.
+Distroless deserves a note because you have probably not met it. A distroless image contains your runtime and nothing else: no shell, no package manager, no `ls`. That removes most of the tooling an attacker would use after a compromise, and it also means you cannot `docker exec` into it. Weigh that operational cost before you choose it.
 
 ```dockerfile
 FROM python:3.11-slim AS builder
@@ -221,7 +221,7 @@ CMD ["-m", "src.serve"]
 
 <div class="callout warn">
   <span class="ct">Alpine is not automatically smaller in practice</span>
-  Alpine uses musl instead of glibc, so prebuilt Python wheels and some Node native modules do not apply and get compiled from source instead. That needs a toolchain, and the result is frequently <b>larger</b> and much slower to build than <code>-slim</code>. Measure both before switching, and treat the base image as a decision you justify rather than a default you inherit.
+  Alpine uses musl instead of glibc, so prebuilt Python wheels and some Node native modules do not apply and get compiled from source instead. That needs a toolchain, and the result is frequently <b>larger</b> and slower to build than <code>-slim</code>. Measure both before switching, and treat the base image as a decision you justify rather than a default you inherit.
 </div>
 
 <div class="guide-try">
@@ -232,14 +232,14 @@ CMD ["-m", "src.serve"]
     <li>Build the same app on <code>-slim</code> and on <code>-alpine</code>, timing both builds and comparing final sizes.</li>
     <li>Try a distroless runtime stage, then attempt <code>docker exec -it NAME sh</code> on it.</li>
   </ol>
-  <em>the fat layer is usually not the one you expected, Alpine is often slower to build and not much smaller, and the distroless container refuses your shell entirely. That refusal is the trade-off in one command.</em>
+  <em>the fat layer is usually not the one you expected, Alpine is often slower to build and not much smaller, and the distroless container refuses your shell. That refusal is the trade-off in one command.</em>
 </div>
 
 ## BuildKit and cache mounts
 
-BuildKit is the modern build engine, and it is the default in current Docker versions. Two of its features change how you write a Dockerfile.
+BuildKit is the modern build engine and the default in current Docker versions. Two of its features change how you write a Dockerfile.
 
-**Cache mounts** persist a directory *across builds* without ever putting it in the image. This is different from layer caching: it survives even when the layer above it was invalidated, so a changed lockfile no longer means re-downloading every package.
+**Cache mounts** persist a directory *across builds* without ever putting it in the image. That differs from layer caching: the mount survives even when the layer above it was invalidated, so a changed lockfile no longer means re-downloading every package.
 
 ```dockerfile
 # syntax=docker/dockerfile:1
@@ -251,7 +251,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     pip install -r requirements.txt
 ```
 
-Note there is no `--no-cache-dir` here. You *want* the cache — the mount keeps it out of the image while letting the next build reuse it. The same pattern applies to every package manager:
+Note there is no `--no-cache-dir` here. You *want* the cache: the mount keeps it out of the image while letting the next build reuse it. The same pattern applies to every package manager:
 
 ```dockerfile
 # apt
@@ -275,11 +275,11 @@ RUN --mount=type=bind,source=requirements.txt,target=/tmp/requirements.txt \
     pip install -r /tmp/requirements.txt
 ```
 
-The `# syntax=docker/dockerfile:1` line at the top is what enables this syntax. It is a directive, must be the first line, and pins the Dockerfile frontend rather than the base image.
+The `# syntax=docker/dockerfile:1` line at the top enables this syntax. It is a directive, must be the first line, and pins the Dockerfile frontend rather than the base image.
 
 <div class="callout tip">
   <span class="ct">The third mount type is for secrets</span>
-  <code>--mount=type=secret</code> makes a credential available to one <code>RUN</code> without it ever becoming a layer — the correct answer to "how do I install from a private package index?". Senior level covers it in full, along with SSH agent forwarding for private Git dependencies.
+  <code>--mount=type=secret</code> makes a credential available to one <code>RUN</code> without it ever becoming a layer, which answers "how do I install from a private package index?". Senior level covers it in full, along with SSH agent forwarding for private Git dependencies.
 </div>
 
 <div class="guide-try">
@@ -290,14 +290,14 @@ The `# syntax=docker/dockerfile:1` line at the top is what enables this syntax. 
     <li>Compare against the same change without the cache mount.</li>
     <li>Confirm the cache is not in the image: <code>docker run --rm myapp:1.0 du -sh /root/.cache 2&gt;/dev/null || echo 'not present'</code>.</li>
   </ol>
-  <em>the second build re-resolves dependencies but downloads almost nothing, and the cache directory is absent from the image. This is the change that makes adding one package a ten-second rebuild instead of a two-minute one.</em>
+  <em>the second build re-resolves dependencies but downloads almost nothing, and the cache directory is absent from the image. Adding one package becomes a ten-second rebuild instead of a two-minute one.</em>
 </div>
 
 ## Configuration without rebuilding
 
-Beginner established the principle: build once, configure at run time. Here is what it takes to hold that line in practice, because the pressure to bake something in arrives quickly.
+Beginner established the principle: build once, configure at run time. Holding that line takes four mechanisms and a clear head about the precedence between them, because the pressure to bake something in arrives quickly.
 
-The four mechanisms, and the precedence between them:
+The four mechanisms:
 
 | Mechanism | Available at | Recorded in the image | Use for |
 |---|---|---|---|
@@ -321,10 +321,10 @@ docker build --build-arg PYTHON_VERSION=3.12 --build-arg BUILD_REV="$(git rev-pa
 
 docker run -e LOG_LEVEL=debug -e DATABASE_URL="$DB_URL" myapp:1.0
 docker run --env-file ./prod.env myapp:1.0
-docker run --rm myapp:1.0 env                # exactly what the container received
+docker run --rm myapp:1.0 env                # what the container received
 ```
 
-Two `ARG` details cost people time. An `ARG` declared before the first `FROM` is only visible to `FROM` lines — to use it inside a stage you must declare it again there. And an `ARG` used in a `RUN` becomes part of that layer's cache key, so changing it invalidates everything after it, which is occasionally what you want and often a surprise.
+Two `ARG` details cost people time. An `ARG` declared before the first `FROM` is visible only to `FROM` lines, so to use it inside a stage you must declare it again there. An `ARG` used in a `RUN` becomes part of that layer's cache key, so changing it invalidates everything after it. Sometimes that is what you want, often it is a surprise.
 
 Precedence, most specific wins:
 
@@ -347,11 +347,11 @@ docker run -d \
   myapp:1.0
 ```
 
-That pattern — a read-only mount plus an environment variable naming the path — is how real services take structured configuration, and it keeps the image identical across environments.
+That pattern, a read-only mount plus an environment variable naming the path, is how real services take structured configuration, and it keeps the image identical across environments.
 
 <div class="callout warn">
   <span class="ct">Neither <code>ARG</code> nor <code>ENV</code> is a secret</span>
-  Both are image metadata, readable with <code>docker history</code> and <code>docker inspect</code> by anyone who can pull the image. A password passed as a build argument is in that history permanently. At this level: secrets arrive at run time, as a mounted file or from a secret manager. Senior covers the BuildKit secret mount for the genuine build-time case.
+  Both are image metadata, readable with <code>docker history</code> and <code>docker inspect</code> by anyone who can pull the image. A password passed as a build argument is in that history permanently. At this level: secrets arrive at run time, as a mounted file or from a secret manager. Senior covers the BuildKit secret mount for the build-time case.
 </div>
 
 <div class="guide-try">
@@ -359,7 +359,7 @@ That pattern — a read-only mount plus an environment variable naming the path 
   <ol>
     <li>Parameterise your base image version with an <code>ARG</code> above <code>FROM</code>, and build with two different values.</li>
     <li>Add a second <code>ARG</code> for the git revision, expose it as an <code>ENV</code>, and confirm it with <code>docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}'</code>.</li>
-    <li>Set the same variable three ways — <code>ENV</code>, <code>--env-file</code>, and <code>-e</code> — and confirm which wins.</li>
+    <li>Set the same variable three ways, <code>ENV</code>, <code>--env-file</code>, and <code>-e</code>, then confirm which wins.</li>
     <li>Now find your build arg in the metadata: <code>docker history --no-trunc myapp:1.0 | grep BUILD_REV</code>.</li>
   </ol>
   <em>one image that reports which commit produced it, clear precedence between the three mechanisms, and your build argument visible in plain text in the history. The last point is why the warning above is not theoretical.</em>
@@ -367,13 +367,13 @@ That pattern — a read-only mount plus an environment variable naming the path 
 
 ## Networking in depth
 
-Beginner's rule was "create a network, address containers by name". Here is the model underneath it, which you need as soon as something does not resolve.
+Beginner's rule was "create a network, address containers by name". The model underneath it is what you need as soon as something does not resolve.
 
 | Driver | Behaviour |
 |---|---|
 | `bridge` (default) | Private network on the host; needs `-p` to be reachable from outside; **no DNS** |
 | **User-defined bridge** | Same, **plus automatic DNS by container name** |
-| `host` | No network isolation — the container uses the host's stack directly |
+| `host` | No network isolation, so the container uses the host's stack directly |
 | `none` | No networking at all |
 | `overlay` | Multi-host, for Swarm or orchestrators |
 
@@ -386,7 +386,7 @@ docker network inspect appnet                 # subnet, gateway, connected conta
 
 docker run -d --name db  --network appnet postgres:16
 docker run -d --name api --network appnet -p 8000:8000 myapi:1.0
-# api connects to postgres://db:5432 — "db" resolves through Docker's DNS
+# api connects to postgres://db:5432, and "db" resolves through Docker's DNS
 
 docker network connect othernet api           # a container can be on several networks
 docker network disconnect othernet api
@@ -401,7 +401,7 @@ docker run -d --name postgres-16 --network appnet --network-alias db postgres:16
 # clients keep connecting to "db"; you decide which container answers
 ```
 
-**`host` networking** removes the network namespace entirely: no port mapping, no isolation, and the container's ports are the host's ports. It is occasionally right for performance-sensitive or network-inspecting workloads, and it is Linux-only — on Docker Desktop it does not behave the way you expect.
+**`host` networking** removes the network namespace entirely: no port mapping, no isolation, and the container's ports are the host's ports. It is occasionally right for performance-sensitive or network-inspecting workloads. It is also Linux-only, and on Docker Desktop it does not behave the way you expect.
 
 **Reaching the host** from inside a container is a common need and has a platform-specific answer:
 
@@ -416,10 +416,10 @@ docker run --rm --add-host=host.docker.internal:host-gateway curlimages/curl \
 
 <div class="callout warn">
   <span class="ct">Inside a container, <code>localhost</code> means <em>that container</em></span>
-  It is the single most common networking mistake and it produces "connection refused" against a service you can plainly see running. A container cannot reach a sibling on <code>localhost</code>, and it cannot reach a service on your host that way either. Sibling: use the container or service name. Host: use <code>host.docker.internal</code>.
+  This is the most common networking mistake, and it produces "connection refused" against a service you can see running. A container cannot reach a sibling on <code>localhost</code>, and it cannot reach a service on your host that way either. Sibling: use the container or service name. Host: use <code>host.docker.internal</code>.
 </div>
 
-Debugging without installing tools into your image — attach a container that already has them to the target's network namespace:
+Debug without installing tools into your image: attach a container that already has them to the target's network namespace.
 
 ```bash
 docker run --rm -it --network container:api nicolaka/netshoot
@@ -438,7 +438,7 @@ docker run --rm -it --network container:api nicolaka/netshoot
     <li>Attach netshoot with <code>--network container:api</code> and run <code>dig db</code>, <code>ss -tlnp</code>, and a <code>curl</code> against the database port.</li>
     <li>From inside a container, try to reach a service running on your host, first with <code>localhost</code> and then with <code>host.docker.internal</code>.</li>
   </ol>
-  <em>DNS fails on the default bridge and works on yours; netshoot shows you resolution and listening sockets without touching your image; and <code>localhost</code> reaches nothing from inside a container while <code>host.docker.internal</code> works. Those three results cover nearly every container networking question you will be asked.</em>
+  <em>DNS fails on the default bridge and works on yours; netshoot shows you resolution and listening sockets without touching your image; and <code>localhost</code> reaches nothing from inside a container while <code>host.docker.internal</code> works. Those three results cover most container networking questions you will be asked.</em>
 </div>
 
 ## Volumes in depth
@@ -447,13 +447,13 @@ Beginner covered named volumes versus bind mounts. There are five mount types in
 
 | Type | Syntax | Notes |
 |---|---|---|
-| Named volume | `-v pgdata:/data` | Docker-managed, portable, correct ownership — right for state |
-| Bind mount | `-v "$(pwd)":/app` | Host path, permission-sensitive — right for development |
+| Named volume | `-v pgdata:/data` | Docker-managed, portable, correct ownership: right for state |
+| Bind mount | `-v "$(pwd)":/app` | Host path, permission-sensitive: right for development |
 | Anonymous volume | `-v /data` | Created unnamed; a common source of orphaned disk usage |
 | `tmpfs` | `--tmpfs /tmp:rw,noexec,nosuid` | Memory only, never written to disk |
 | Read-only | `-v conf:/etc/app:ro` | Configuration the container must not modify |
 
-The long `--mount` form is more verbose and much clearer, and it is what you want in anything shared:
+The long `--mount` form is more verbose and clearer, and it is what you want in anything shared:
 
 ```bash
 docker run -d \
@@ -463,7 +463,7 @@ docker run -d \
   postgres:16
 ```
 
-**Anonymous volumes** are worth understanding because they appear whether you ask for them or not: an image with a `VOLUME` instruction creates one on every `docker run`, and they accumulate silently. They also have one genuinely useful application — shielding a subdirectory from a bind mount:
+**Anonymous volumes** appear whether you ask for them or not: an image with a `VOLUME` instruction creates one on every `docker run`, and each run leaves another behind. They have one useful application, shielding a subdirectory from a bind mount:
 
 ```yaml compose.override.yaml
 services:
@@ -475,9 +475,9 @@ services:
 
 Without that second line, mounting your project over `/app` hides everything the build installed there, including `node_modules`. The anonymous volume masks that one subdirectory back.
 
-**`tmpfs`** puts a path in memory. Use it when a container needs scratch space but you do not want it on disk — the typical case being a read-only container that still needs somewhere to write.
+**`tmpfs`** puts a path in memory. Use it when a container needs scratch space that you do not want on disk, typically a read-only container that still needs somewhere to write.
 
-Backup and restore comes up far more often than people expect, and the pattern is always the same: a throwaway container with the volume attached and a bind mount to write to.
+Backup and restore comes up more often than people expect, and the pattern is always the same: a throwaway container with the volume attached and a bind mount to write to.
 
 ```bash
 # Back up a named volume to a tarball on the host
@@ -500,13 +500,13 @@ docker system df -v
 ```
 
 <div class="callout warn">
-  <span class="ct">Stop the writer first — or use the database's own tooling</span>
+  <span class="ct">Stop the writer first, or use the database's own tooling</span>
   Tarring a live Postgres data directory gives you a torn, possibly unrestorable copy. Either stop the container, or use <code>pg_dump</code>, which is the correct answer for anything transactional. The tar pattern above is right for caches, uploads, and model files; it is wrong for a running database.
 </div>
 
 <div class="callout warn">
   <span class="ct">Bind-mount permission pain</span>
-  A bind mount keeps the <b>host's</b> ownership. If the container runs as uid 10001 and the host directory belongs to uid 1000, writes fail with "permission denied" — and this bites Linux users while Mac and Windows users never see it, because Docker Desktop's VM papers over it. Either run with <code>--user "$(id -u):$(id -g)"</code>, or use a named volume, which Docker initialises with the right ownership.
+  A bind mount keeps the <b>host's</b> ownership. If the container runs as uid 10001 and the host directory belongs to uid 1000, writes fail with "permission denied". This bites Linux users while Mac and Windows users never see it, because Docker Desktop's VM papers over it. Either run with <code>--user "$(id -u):$(id -g)"</code>, or use a named volume, which Docker initialises with the right ownership.
 </div>
 
 <div class="guide-try">
@@ -517,7 +517,7 @@ docker system df -v
     <li>Reproduce the bind-mount masking problem: mount your source over <code>/app</code> in a Node project and watch <code>node_modules</code> vanish, then fix it with an anonymous volume.</li>
     <li>Run <code>docker volume ls</code> and count how many anonymous (hash-named) volumes you have accumulated.</li>
   </ol>
-  <em>a restored volume that actually works, ephemeral <code>/tmp</code>, a broken then fixed <code>node_modules</code>, and probably more orphaned anonymous volumes than you expected. That last count is why <code>docker volume prune</code> exists.</em>
+  <em>a restored volume you can start a container against, ephemeral <code>/tmp</code>, a broken then fixed <code>node_modules</code>, and probably more orphaned anonymous volumes than you expected. That last count is why <code>docker volume prune</code> exists.</em>
 </div>
 
 ## Health checks
@@ -536,12 +536,12 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
 | `--start-period` | Grace window during boot; failures here do not count towards `--retries` |
 | `--retries` | Consecutive failures before the status flips to `unhealthy` |
 
-The check is a command run **inside** the container, and its exit code is the whole result: 0 is healthy, 1 is unhealthy. That is why `curl -f` matters — without `-f`, curl exits 0 even on an HTTP 500.
+The check is a command run **inside** the container, and its exit code is the whole result: 0 is healthy, 1 is unhealthy. That is why `curl -f` matters. Without `-f`, curl exits 0 even on an HTTP 500.
 
 ```bash
 docker ps                                                    # STATUS shows (healthy)
 docker inspect --format '{{json .State.Health}}' api         # full history of checks
-docker inspect --format '{{.State.Health.Status}}' api       # just the current state
+docker inspect --format '{{.State.Health.Status}}' api       # the current state only
 docker events --filter event=health_status                   # watch transitions live
 ```
 
@@ -549,10 +549,10 @@ docker events --filter event=health_status                   # watch transitions
 
 <div class="callout tip">
   <span class="ct">Check the dependency, not the process</span>
-  A health endpoint that returns 200 unconditionally proves only that the web framework is running — which Docker already knew. A useful check touches the thing that actually breaks: a cheap query against the database, a ping to the cache. Keep it cheap enough to run every thirty seconds, and do not make it fail because a non-critical downstream is slow.
+  A health endpoint that returns 200 unconditionally proves only that the web framework is running, which Docker already knew. A useful check touches the thing that breaks: a cheap query against the database, a ping to the cache. Keep it cheap enough to run every thirty seconds, and do not make it fail because a non-critical downstream is slow.
 </div>
 
-If your image has no `curl` — a slim or distroless image often does not — use the runtime you already have:
+A slim or distroless image often has no `curl`. Use the runtime you already have:
 
 ```dockerfile
 # Python, no extra packages needed
@@ -571,14 +571,14 @@ HEALTHCHECK CMD node -e "require('http').get('http://localhost:3000/health',r=>p
     <li>Break the endpoint on purpose and watch the status flip to <code>unhealthy</code> after the retries are exhausted.</li>
     <li>Remove <code>--start-period</code>, add an artificial thirty-second startup delay, and watch it be declared unhealthy before it is even ready.</li>
   </ol>
-  <em>a visible state machine in <code>docker ps</code>, a check history with timestamps and output, and — in step four — a container that is marked broken purely because nobody gave it time to start. That is the failure <code>--start-period</code> exists to prevent.</em>
+  <em>a visible state machine in <code>docker ps</code>, a check history with timestamps and output, and in step four a container marked broken because nobody gave it time to start. That is the failure <code>--start-period</code> exists to prevent.</em>
 </div>
 
 ## Signals, PID 1, and graceful shutdown
 
-Beginner told you to use the exec form of `CMD`. Here is why, and what it costs you when you get it wrong.
+Beginner told you to use the exec form of `CMD`. Signal delivery is the reason, and dropped requests on every deploy are the cost of getting it wrong.
 
-When you run `docker stop`, Docker sends `SIGTERM` to **process 1** inside the container, waits ten seconds by default, then sends `SIGKILL`. Whether your application ever hears that signal depends entirely on what PID 1 is.
+When you run `docker stop`, Docker sends `SIGTERM` to **process 1** inside the container, waits ten seconds by default, then sends `SIGKILL`. Whether your application hears that signal depends on what PID 1 is.
 
 ```dockerfile
 # Exec form: your process IS PID 1 and receives signals
@@ -590,7 +590,7 @@ CMD node server.js
 
 <div class="guide-compare">
   <div class="guide-compare-col good">
-    <h4>Exec form — signals work</h4>
+    <h4>Exec form: signals work</h4>
     <ul>
       <li><code>CMD ["node", "server.js"]</code></li>
       <li>Your process is PID 1</li>
@@ -600,7 +600,7 @@ CMD node server.js
     </ul>
   </div>
   <div class="guide-compare-col bad">
-    <h4>Shell form — signals lost</h4>
+    <h4>Shell form: signals lost</h4>
     <ul>
       <li><code>CMD node server.js</code></li>
       <li>PID 1 is <code>/bin/sh</code></li>
@@ -611,7 +611,7 @@ CMD node server.js
   </div>
 </div>
 
-The symptom is unmistakable once you know it: **`docker stop` takes exactly ten seconds and then the container dies hard.** That is not slowness, it is the grace period expiring because nothing responded.
+The symptom is unmistakable once you know it: **`docker stop` takes ten seconds and then the container dies hard.** That is the grace period expiring because nothing responded, not slowness.
 
 ```bash
 docker stop api                          # default 10s grace
@@ -619,13 +619,13 @@ docker stop -t 30 api                    # allow 30s to drain
 docker inspect api --format '{{.State.ExitCode}}'   # 143 = clean SIGTERM, 137 = SIGKILL
 ```
 
-Most real images need something to happen before the app starts — wait for a dependency, run a migration, resolve configuration. Done carelessly, that entrypoint script becomes the reason your container ignores `docker stop`.
+Most real images need something to happen before the app starts: wait for a dependency, run a migration, resolve configuration. Done carelessly, that entrypoint script becomes the reason your container ignores `docker stop`.
 
 ```bash docker-entrypoint.sh
 #!/bin/sh
 set -eu
 
-# Wait for a dependency, but bounded — never loop forever
+# Wait for a dependency, but bounded. Never loop forever.
 tries=0
 until nc -z "${DB_HOST:-db}" "${DB_PORT:-5432}"; do
   tries=$((tries + 1))
@@ -655,10 +655,10 @@ CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
 
 <div class="callout warn">
   <span class="ct">A wait loop is not a substitute for retries</span>
-  Waiting at startup handles the boot case only. Databases restart, networks blip, failovers happen — your application must reconnect at run time as well. The entrypoint wait makes the first request work; connection retry logic keeps the service alive.
+  Waiting at startup handles the boot case only. Databases restart, networks blip, failovers happen, so your application must reconnect at run time as well. The entrypoint wait makes the first request work; connection retry logic keeps the service alive.
 </div>
 
-There is one more PID 1 consideration: a real init process reaps zombies. If your container spawns child processes that it does not wait on, add `--init` (or `init: true` in Compose) and Docker inserts a minimal init as PID 1.
+One more PID 1 consideration: a real init process reaps zombies. If your container spawns child processes that it does not wait on, add `--init` (or `init: true` in Compose) and Docker inserts a minimal init as PID 1.
 
 <div class="guide-try">
   <span class="ct">Try it</span>
@@ -668,19 +668,19 @@ There is one more PID 1 consideration: a real init process reaps zombies. If you
     <li>Add a <code>SIGTERM</code> handler to your app that logs "draining" and exits, then confirm you see that line in <code>docker logs</code> on stop.</li>
     <li>Compare exit codes across both runs: <code>docker inspect NAME --format '{{.State.ExitCode}}'</code>.</li>
   </ol>
-  <em>ten seconds and exit 137 with the shell form; well under a second and exit 143 with the exec form, plus your "draining" line in the logs. That is graceful shutdown proven rather than assumed.</em>
+  <em>ten seconds and exit 137 with the shell form; well under a second and exit 143 with the exec form, plus your "draining" line in the logs.</em>
 </div>
 
 ## Resource limits
 
-Without limits, one container can consume all the memory on a host and the kernel will kill *something* — not necessarily the guilty process. Setting limits is how you make a runaway container a bounded, diagnosable failure rather than an outage.
+Without limits, one container can consume all the memory on a host and the kernel will kill *something*, not necessarily the guilty process. Limits turn a runaway container into a bounded, diagnosable failure rather than an outage.
 
 ```bash
 docker run -d \
   -m 512m \                       # hard memory ceiling
   --memory-reservation 256m \     # soft target under host pressure
   --cpus 1.5 \                    # CPU quota, in cores
-  --pids-limit 200 \              # process count cap — the fork-bomb defence
+  --pids-limit 200 \              # process count cap, the fork-bomb defence
   --restart on-failure:5 \        # bounded retries, not a forever crash loop
   myapp:1.0
 
@@ -692,15 +692,15 @@ docker inspect --format '{{.State.OOMKilled}}' myapp        # true after a 137
 |---|---|
 | `-m` / `--memory` | Hard ceiling; exceeding it means SIGKILL and exit 137 |
 | `--memory-reservation` | Soft target the kernel aims for when the host is under pressure |
-| `--cpus` | CPU quota expressed in cores — `1.5` means one and a half cores' worth |
+| `--cpus` | CPU quota expressed in cores, so `1.5` means one and a half cores' worth |
 | `--pids-limit` | Caps the number of processes |
 | `--restart on-failure:N` | Restart on failure, at most N times |
 
-Exit code **137** with `OOMKilled: true` is the memory limit doing its job. The container asked for more than it was allowed and the kernel stopped it. That is a much better outcome than the alternative, where an unlimited container takes the host's memory and the kernel kills your database instead.
+Exit code **137** with `OOMKilled: true` is the memory limit doing its job. The container asked for more than it was allowed and the kernel stopped it. Compare that with the alternative: an unlimited container takes the host's memory and the kernel kills your database instead.
 
 <div class="callout warn">
   <span class="ct">Some runtimes do not see the container's limit</span>
-  Older JVMs and Node builds read the <b>host's</b> memory rather than the cgroup limit, so they size their heap for a 64 GB machine inside a 512 MB container and get OOM-killed almost immediately. Modern JVMs are container-aware; for Node, set <code>--max-old-space-size</code> explicitly to roughly 75% of the limit. If a container dies at a limit while apparently doing nothing, suspect this before your code.
+  Older JVMs and Node builds read the <b>host's</b> memory rather than the cgroup limit, so they size their heap for a 64 GB machine inside a 512 MB container and get OOM-killed within seconds. Modern JVMs are container-aware; for Node, set <code>--max-old-space-size</code> explicitly to roughly 75% of the limit. If a container dies at a limit while apparently doing nothing, suspect this before your code.
 </div>
 
 The same settings in Compose, where they belong for anything a team runs:
@@ -724,16 +724,16 @@ services:
   <span class="ct">Try it</span>
   <ol>
     <li>Run your app with <code>-m 64m</code> and watch it get killed. Confirm with the exit code and the <code>OOMKilled</code> flag.</li>
-    <li>Raise the limit until it runs, then check actual usage with <code>docker stats --no-stream</code> — the headroom is usually smaller than expected.</li>
+    <li>Raise the limit until it runs, then check usage with <code>docker stats --no-stream</code>. The headroom is usually smaller than expected.</li>
     <li>Run a CPU-heavy task with <code>--cpus 0.5</code> and then <code>--cpus 2</code>, and compare the wall-clock time.</li>
     <li>Add <code>--pids-limit 20</code> and try to start more processes than that from inside.</li>
   </ol>
-  <em>a deliberate OOM kill with exit 137, real memory numbers for your service, a visible CPU quota effect, and a hard process cap. Knowing your service's actual footprint is what turns limit-setting from guesswork into a measurement.</em>
+  <em>a deliberate OOM kill with exit 137, real memory numbers for your service, a visible CPU quota effect, and a hard process cap. Once you know your service's footprint, limit-setting becomes a measurement rather than guesswork.</em>
 </div>
 
 ## Docker Compose in depth
 
-Beginner used Compose to start an app and a database. At this level Compose becomes the file that describes how your whole system fits together — and the file a colleague reads to understand it.
+Beginner used Compose to start an app and a database. At this level Compose describes how your whole system fits together, and it is the file a colleague reads to understand that system.
 
 ```yaml compose.yaml
 services:
@@ -800,7 +800,7 @@ docker compose down -v                # deletes volumes too
 
 <div class="callout warn">
   <span class="ct">Plain <code>depends_on</code> is a startup order, not a readiness gate</span>
-  It waits for the container to <b>start</b>, not for the service inside to accept connections — and a Postgres container is "started" several seconds before it is ready. That is the entire explanation for "the first request after <code>up</code> always fails". The fix is the <code>healthcheck</code> plus <code>condition: service_healthy</code> shown above, and connection retry logic in the app, which you want regardless.
+  It waits for the container to <b>start</b>, not for the service inside to accept connections, and a Postgres container is "started" several seconds before it is ready. That explains "the first request after <code>up</code> always fails". The fix is the <code>healthcheck</code> plus <code>condition: service_healthy</code> shown above, and connection retry logic in the app, which you want regardless.
 </div>
 
 ### Layering Compose files per environment
@@ -826,10 +826,10 @@ services:
 docker compose up                                          # base + override
 docker compose -f compose.yaml -f compose.prod.yaml up -d   # explicit set, no override
 docker compose config                                       # print the MERGED result
-docker compose -f compose.yaml config                       # what production really gets
+docker compose -f compose.yaml config                       # what production gets
 ```
 
-**`docker compose config` is the debugging tool here.** It prints the fully merged, variable-interpolated file — which is what actually runs, and often not what you believe you wrote. If a colleague reports behaviour you cannot reproduce, this settles it in one command.
+**`docker compose config` is the debugging tool here.** It prints the fully merged, variable-interpolated file, which is what runs and often not what you believe you wrote. If a colleague reports behaviour you cannot reproduce, this settles it in one command.
 
 ### Profiles
 
@@ -857,7 +857,7 @@ docker compose --profile perf run loadtest run /scripts/load.js
 
 <div class="callout tip">
   <span class="ct">Interpolation and the <code>.env</code> file</span>
-  <code>${TAG:-dev}</code> reads from your shell environment or from a <code>.env</code> file next to <code>compose.yaml</code> — note that this is a different mechanism from <code>env_file:</code>, which passes variables <em>into</em> the container. Compose's own <code>.env</code> substitutes values <em>into the YAML</em>. Mixing them up is a common source of empty variables.
+  <code>${TAG:-dev}</code> reads from your shell environment or from a <code>.env</code> file next to <code>compose.yaml</code>. That is a different mechanism from <code>env_file:</code>, which passes variables <em>into</em> the container. Compose's own <code>.env</code> substitutes values <em>into the YAML</em>. Mixing them up is a common source of empty variables.
 </div>
 
 <div class="guide-try">
@@ -869,16 +869,16 @@ docker compose --profile perf run loadtest run /scripts/load.js
     <li>Run <code>docker compose config</code> and then <code>docker compose -f compose.yaml config</code>, and diff the two.</li>
     <li>Add a service behind a <code>profiles: [dev]</code> key and confirm it only starts with <code>--profile dev</code>.</li>
   </ol>
-  <em>the api visibly waiting for a healthy database, a broken cold start once you remove the gate, live reload from your editor, and two clearly different merged configurations. That diff in step four is the one that prevents "it works on my machine" from returning through the back door.</em>
+  <em>the api visibly waiting for a healthy database, a broken cold start once you remove the gate, live reload from your editor, and two different merged configurations. The diff in step four is what stops "it works on my machine" returning through the back door.</em>
 </div>
 
 ## Registries, tags, and digests
 
-Beginner said "pin a tag, never deploy `:latest`". Here is the part that matters once more than one machine is involved: **a tag is a mutable pointer.**
+Beginner said "pin a tag, never deploy `:latest`". Once more than one machine is involved, the part that matters is this: **a tag is a mutable pointer.**
 
-`myapp:1.4.2` is a label that currently points at one image. Nothing stops someone repushing it tomorrow with different contents. Two hosts pulling the same tag an hour apart can legitimately be running different code.
+`myapp:1.4.2` is a label that currently points at one image. Nothing stops someone repushing it tomorrow with different contents. Two hosts pulling the same tag an hour apart can be running different code.
 
-The only truly immutable reference is the **digest** — a content hash of the image:
+The only immutable reference is the **digest**, a content hash of the image:
 
 ```bash
 docker build -t ghcr.io/my-org/myapp:1.4.2 .
@@ -888,7 +888,7 @@ echo "$TOKEN" | docker login ghcr.io -u USERNAME --password-stdin
 docker push ghcr.io/my-org/myapp:1.4.2
 docker push ghcr.io/my-org/myapp:latest
 
-# The digest — cannot change, by definition
+# The digest cannot change, by definition
 docker inspect --format '{{index .RepoDigests 0}}' ghcr.io/my-org/myapp:1.4.2
 docker pull ghcr.io/my-org/myapp@sha256:9b2c...
 ```
@@ -897,7 +897,7 @@ docker pull ghcr.io/my-org/myapp@sha256:9b2c...
   <div class="guide-compare-col good">
     <h4>Tagging that works</h4>
     <ul>
-      <li><code>:sha-a1b2c3d</code> on every build — immutable and traceable to a commit</li>
+      <li><code>:sha-a1b2c3d</code> on every build, immutable and traceable to a commit</li>
       <li><code>:1.4.2</code> for releases, never repushed</li>
       <li><code>:latest</code> or <code>:stable</code> as a human convenience only</li>
       <li>Digest pinning for anything security-sensitive</li>
@@ -907,7 +907,7 @@ docker pull ghcr.io/my-org/myapp@sha256:9b2c...
   <div class="guide-compare-col bad">
     <h4>Tagging that hurts</h4>
     <ul>
-      <li>Deploying <code>:latest</code> — nobody can say what is running</li>
+      <li>Deploying <code>:latest</code>, so nobody can say what is running</li>
       <li>Repushing an existing version tag</li>
       <li><code>:dev-fix-2-final</code> accumulating forever</li>
       <li>No tag at all, so rollback means rebuilding</li>
@@ -916,11 +916,11 @@ docker pull ghcr.io/my-org/myapp@sha256:9b2c...
   </div>
 </div>
 
-Which brings us to the practice that follows from all of it:
+One practice follows from all of it:
 
 <div class="callout tip">
   <span class="ct">Build once, promote the same artifact</span>
-  Build one image, tag it with the commit SHA, and promote that exact image through staging into production. If production rebuilds, production is running something CI never tested — the compiler version moved, a transitive dependency published a patch, the base image changed. Promotion is the difference between testing your artifact and testing something that resembles it.
+  Build one image, tag it with the commit SHA, and promote that image through staging into production. If production rebuilds, production is running something CI never tested: the compiler version moved, a transitive dependency published a patch, the base image changed. Promotion tests your artifact instead of something that resembles it.
 </div>
 
 ```bash
@@ -930,7 +930,7 @@ docker buildx build \
   -t ghcr.io/org/app:main \
   --push .
 
-# Promote by re-tagging the same digest — no rebuild
+# Promote by re-tagging the same digest, with no rebuild
 DIGEST=$(docker buildx imagetools inspect ghcr.io/org/app:sha-${GIT_SHA} --format '{{.Manifest.Digest}}')
 docker buildx imagetools create -t ghcr.io/org/app:production ghcr.io/org/app@${DIGEST}
 ```
@@ -953,13 +953,13 @@ Layer caching is nearly free locally and does **nothing** in CI by default, beca
 | `type=registry,ref=…:buildcache` | Many repositories, or self-hosted runners sharing layers |
 | `type=local` | Self-hosted runners with persistent disk |
 
-`mode=max` exports intermediate layers as well. With `mode=min` only the final stage is cached, which is nearly useless for a multi-stage build — the expensive builder stage misses every single time.
+`mode=max` exports intermediate layers as well. With `mode=min` only the final stage is cached, which does little for a multi-stage build: the expensive builder stage misses every time.
 
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
     <li>Push an image to GHCR under two tags, then resolve both to digests and confirm they match.</li>
-    <li>Rebuild with a trivial change, repush the <em>same</em> version tag, and observe that the digest is now different — the tag moved.</li>
+    <li>Rebuild with a trivial change, repush the <em>same</em> version tag, and observe that the digest is now different. The tag moved.</li>
     <li>Pull by digest and confirm you get the original image back.</li>
     <li>If you have a CI pipeline, add <code>cache-from</code>/<code>cache-to</code> with <code>mode=max</code> and compare build times across two runs.</li>
   </ol>
@@ -973,8 +973,8 @@ Beginner gave you an ordered checklist for a container that will not start. At t
 <div class="guide-timeline">
   <div class="guide-timeline-item"><span>1</span><strong>Logs and exit code</strong><small><code>docker logs --tail 100</code>, then <code>docker ps -a</code>. 137 is a kill (usually OOM), 143 a clean SIGTERM, 127 command-not-found, 126 not-executable.</small></div>
   <div class="guide-timeline-item"><span>2</span><strong>Inspect the resolved config</strong><small><code>docker inspect</code> shows the real entrypoint, command, environment, mounts, and networks after every default and override has been applied.</small></div>
-  <div class="guide-timeline-item"><span>3</span><strong>Run the image without your app</strong><small><code>docker run -it --entrypoint sh myapp</code> and try the command by hand. The interactive error is almost always more informative.</small></div>
-  <div class="guide-timeline-item"><span>4</span><strong>Diff the filesystem</strong><small><code>docker diff NAME</code> lists everything the container has written — often revealing a path you believed was a volume.</small></div>
+  <div class="guide-timeline-item"><span>3</span><strong>Run the image without your app</strong><small><code>docker run -it --entrypoint sh myapp</code> and try the command by hand. The interactive error is usually more informative.</small></div>
+  <div class="guide-timeline-item"><span>4</span><strong>Diff the filesystem</strong><small><code>docker diff NAME</code> lists everything the container has written, which often reveals a path you believed was a volume.</small></div>
   <div class="guide-timeline-item"><span>5</span><strong>Compare against the built image</strong><small><code>docker run --rm myapp ls -la /app</code> beats speculating about <code>.dockerignore</code>.</small></div>
   <div class="guide-timeline-item"><span>6</span><strong>Debug the network from inside</strong><small>A netshoot sidecar sharing the namespace, rather than installing tools into a production image.</small></div>
 </div>
@@ -1000,7 +1000,7 @@ docker stats --no-stream
 docker inspect api --format '{{.State.ExitCode}} {{.State.OOMKilled}} {{.State.Error}}'
 ```
 
-`docker diff` is the underused one. It compares the container's filesystem against its image and tells you exactly what changed — which is how you discover that your "volume" is actually writing into the container's writable layer because a path was misspelled.
+`docker diff` is the underused one. It compares the container's filesystem against its image and tells you what changed, which is how you discover that your "volume" is writing into the container's writable layer because a path was misspelled.
 
 ### "Works locally, not in staging"
 
@@ -1028,7 +1028,7 @@ docker buildx imagetools inspect ghcr.io/org/app:1.4.2      # confirm both archi
   <span class="ct">Try it</span>
   <ol>
     <li>Write a file inside a running container, then run <code>docker diff NAME</code> and find it.</li>
-    <li>Write into a mounted volume instead and confirm it does <strong>not</strong> appear in the diff — that is how you tell a volume from the writable layer.</li>
+    <li>Write into a mounted volume instead and confirm it does <strong>not</strong> appear in the diff. That is how you tell a volume from the writable layer.</li>
     <li>Run <code>docker events --since 30m</code> in one terminal while you start, stop, and remove a container in another.</li>
     <li>Attach netshoot to a running container's namespace and resolve a service name from inside it.</li>
     <li>Check your own image's architecture, and if you are on Apple Silicon build an <code>amd64</code> variant and compare.</li>
@@ -1038,7 +1038,7 @@ docker buildx imagetools inspect ghcr.io/org/app:1.4.2      # confirm both archi
 
 ## Putting it all together
 
-Everything from this level in one project. Nothing here is new — read it as a whole and you should be able to justify every line.
+Everything from this level in one project. Nothing here is new. Read it as a whole and you should be able to justify every line.
 
 ```dockerfile Dockerfile
 # syntax=docker/dockerfile:1
@@ -1149,7 +1149,7 @@ Nine decisions in there are the whole lesson of this level:
 | `mem_limit` / `cpus` and an environment-driven tag | Resource limits · registries and tags |
 
 <div class="guide-try">
-  <span class="ct">Try it — the one that matters</span>
+  <span class="ct">Try it: the one that matters</span>
   <ol>
     <li>Rebuild a real project against this template and measure the image size before and after.</li>
     <li>Verify each control actively: break a test and confirm the build fails; stop the container and confirm exit 143 rather than 137; remove <code>start_period</code> and watch the health check misfire.</li>
@@ -1173,9 +1173,9 @@ You can predict cache behaviour instead of discovering it, cut an image by an or
 | Back up a named volume? | Throwaway container, `tar`, bind mount |
 | Close the `depends_on` readiness gap? | Health check + `condition: service_healthy` |
 | Explain a ten-second `docker stop`? | Shell form, so `sh` is PID 1 |
-| Say what exit 137 means? | Killed — check `OOMKilled` |
+| Say what exit 137 means? | Killed: check `OOMKilled` |
 | Give the only immutable image reference? | The digest |
 | Make layer caching work in CI? | Export it: `cache-to type=gha,mode=max` |
 | Tell a volume write from a writable-layer write? | `docker diff` |
 
-**Senior takes every one of these further, with a security, scale, or ownership dimension.** What isolation actually consists of — namespaces, cgroups, capabilities, seccomp — and therefore what an escape means. Hardening so a compromise is bounded: non-root, read-only root filesystem, dropped capabilities, `no-new-privileges`. Secrets that never touch a layer, via BuildKit secret mounts and SSH forwarding. Supply chain: digest-pinned bases, SBOMs, scanning that people do not learn to ignore, signing, provenance, and admission policy. Multi-architecture builds on native runners. The OOM killer, and runtimes that cannot see their own cgroup. GPU and machine-learning images, where weights do not belong in a layer. Where Docker stops and an orchestrator begins. And debugging production while it is on fire.
+**Senior takes every one of these further, with a security, scale, or ownership dimension.** What isolation consists of (namespaces, cgroups, capabilities, seccomp) and therefore what an escape means. Hardening so a compromise is bounded: non-root, read-only root filesystem, dropped capabilities, `no-new-privileges`. Secrets that never touch a layer, via BuildKit secret mounts and SSH forwarding. Supply chain: digest-pinned bases, SBOMs, scanning that people do not learn to ignore, signing, provenance, and admission policy. Multi-architecture builds on native runners. The OOM killer, and runtimes that cannot see their own cgroup. GPU and machine-learning images, where weights do not belong in a layer. Where Docker stops and an orchestrator begins. Debugging production while it is on fire.

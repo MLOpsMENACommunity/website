@@ -2,12 +2,12 @@ Part three of three. The problems at this level are rarely about syntax. They ar
 
 ## Common errors at this level
 
-Cumulative — everything from Beginner and Mid still applies. These cause incidents rather than failed runs.
+Cumulative. Everything from Beginner and Mid still applies. These cause incidents rather than failed runs.
 
 | Symptom | Real cause | Fix |
 |---|---|---|
 | `dvc gc --cloud` destroyed other branches' data | Default `--workspace` scope on a shared remote | Remove delete from human credentials; retention by lifecycle policy |
-| Deleted remote objects are unrecoverable | Bucket versioning never enabled | Enable it — this is the highest-priority change |
+| Deleted remote objects are unrecoverable | Bucket versioning never enabled | Enable it. This is the highest-priority change |
 | A corrupted object was restored silently | `verify` not set; a pointer is not proof | `dvc remote modify … verify true` |
 | An object at a hash path holds different bytes | Someone with write access replaced it | Restrict write; enable versioning; `verify true` |
 | A leaked access key had data write access | Long-lived credential stored in CI | OIDC with a branch-pinned trust policy |
@@ -110,7 +110,7 @@ aws s3api put-bucket-lifecycle-configuration --bucket ml-data-prod \
 
 <div class="callout warn">
   <span class="ct">Three permissions to audit today</span>
-  Who can <b>delete</b> on the remote — ideally nobody human. Who can <b>write</b> to the production prefix — ideally only CI on a protected branch. And what identity a <b>fork pull request</b> receives — ideally read-only or nothing. Those three answers determine your entire blast radius.
+  Who can <b>delete</b> on the remote, ideally nobody human. Who can <b>write</b> to the production prefix, ideally only CI on a protected branch. What identity a <b>fork pull request</b> receives, ideally read-only or nothing. Those three answers determine your entire blast radius.
 </div>
 
 ## Verifying, not assuming
@@ -142,7 +142,7 @@ dvc gc --cloud --dry-run --workspace | wc -l
 ```
 
 <div class="callout warn">
-  <span class="ct">Test that the control actually refuses something</span>
+  <span class="ct">Test that the control refuses something</span>
   After enabling object lock, try to delete an object without the bypass privilege. After setting <code>verify true</code>, corrupt an object and confirm the pull fails. After pinning the trust policy, try to assume the role from another branch. A control you have never watched refuse anything is decoration.
 </div>
 
@@ -192,14 +192,14 @@ dvc gc --dry-run --all-commits
 
 <div class="callout tip">
   <span class="ct">Publish two numbers and behaviour changes</span>
-  Total bytes per project, and the fraction of those bytes in experiments nobody has read in ninety days. That second number is usually a majority, and it is the most persuasive thing you can put in front of a team — far more effective than a policy document about cleaning up.
+  Total bytes per project, and the fraction of those bytes in experiments nobody has read in ninety days. That second number is usually a majority, and it is the most persuasive thing you can put in front of a team, far more effective than a policy document about cleaning up.
 </div>
 
 ## Incident playbooks
 
 ### `dvc gc --cloud` deleted live data
 
-Stop all pushes immediately, because a subsequent push can overwrite the delete markers you need to recover. Restore from bucket versioning — this is the entire reason versioning is non-optional. Then remove delete permission from every human credential and move retention to a lifecycle policy. The post-mortem action is a permission change, not a training session.
+Stop all pushes immediately, because a subsequent push can overwrite the delete markers you need to recover. Restore from bucket versioning. This is the entire reason versioning is non-optional. Then remove delete permission from every human credential and move retention to a lifecycle policy. The post-mortem action is a permission change, not a training session.
 
 ### A remote object is corrupt or missing
 
@@ -212,7 +212,7 @@ Work the layers in order, cheapest first: is the commit findable from the model'
 ### The cache filled the disk mid-sweep
 
 <div class="guide-timeline">
-  <div class="guide-timeline-item"><span>0m</span><strong>Stop the queue</strong><small><code>dvc queue stop</code>. Do not delete yet — a half-written cache object is worse than a full disk.</small></div>
+  <div class="guide-timeline-item"><span>0m</span><strong>Stop the queue</strong><small><code>dvc queue stop</code>. Do not delete yet, because a half-written cache object is worse than a full disk.</small></div>
   <div class="guide-timeline-item"><span>2m</span><strong>Measure before deleting</strong><small><code>du -sh .dvc/cache</code> and <code>dvc gc --dry-run --all-commits</code>. Know what is reachable.</small></div>
   <div class="guide-timeline-item"><span>5m</span><strong>Drop experiment refs first</strong><small><code>dvc exp remove --all</code> makes sweep artifacts collectable, then <code>dvc gc --all-commits</code>.</small></div>
   <div class="guide-timeline-item"><span>10m</span><strong>Move the cache</strong><small><code>dvc cache dir --local /mnt/big/cache</code> rather than fighting a small root disk.</small></div>
@@ -221,11 +221,11 @@ Work the layers in order, cheapest first: is the commit findable from the model'
 
 ### A credential leaked
 
-Rotate before anything else — it may already be in a log, a cache, or a fork. Then audit the bucket's access logs for the exposure window, looking for **writes and deletes** rather than only reads, because a write is the damaging case. Replace the mechanism, not just the value: if a long-lived key leaked, the fix is OIDC. Rotating a key you still store only resets the clock.
+Rotate before anything else. It may already be in a log, a cache, or a fork. Then audit the bucket's access logs for the exposure window, looking for **writes and deletes** rather than only reads, because a write is the damaging case. Replace the mechanism, not just the value: if a long-lived key leaked, the fix is OIDC. Rotating a key you still store only resets the clock.
 
 ### An erasure request lands
 
-Establish the blast radius: which hashes contain the data, and which commits, tags, and models reference those hashes. Decide what must survive — usually the model and its metrics remain auditable while the training data goes — and write that decision down. Rebuild the dataset without the subject, push it, and update pointers on active branches. Delete the old objects from the remote, every local cache, every CI cache, and any mirror, including old versions in a versioned bucket. Record a committed tombstone naming the erased hash, the date, and the authority. Then close the class by moving personal data out of the versioned store.
+Establish the blast radius: which hashes contain the data, and which commits, tags, and models reference those hashes. Decide what must survive, usually the model and its metrics remain auditable while the training data goes, and write that decision down. Rebuild the dataset without the subject, push it, and update pointers on active branches. Delete the old objects from the remote, every local cache, every CI cache, and any mirror, including old versions in a versioned bucket. Record a committed tombstone naming the erased hash, the date, and the authority. Then close the class by moving personal data out of the versioned store.
 
 ## Running DVC as a platform
 
@@ -248,14 +248,14 @@ Establish the blast radius: which hashes contain the data, and which commits, ta
 
 <div class="callout warn">
   <span class="ct">The failure mode of a shared registry</span>
-  A team needs one extra column, cannot get it quickly, and forks. Six months later there are nine variants and no canonical source. The fix is <b>turnaround time on requests</b>, not policy — if a reasonable schema change takes three weeks, forking is rational and you will lose. Treat it as a product with a service level, or do not call it canonical.
+  A team needs one extra column, cannot get it quickly, and forks. Six months later there are nine variants and no canonical source. The fix is <b>turnaround time on requests</b>, not policy. If a reasonable schema change takes three weeks, forking is rational and you will lose. Treat it as a product with a service level, or do not call it canonical.
 </div>
 
 ## Machine-learning specifics
 
-**Weights are data, not code.** Track them, but keep them out of the same lifecycle as source — a retrain should not require a code release, and a code fix should not require re-pushing gigabytes.
+**Weights are data, not code.** Track them, but keep them out of the same lifecycle as source. A retrain should not require a code release, and a code fix should not require re-pushing gigabytes.
 
-**Model artifacts accumulate fastest.** Every experiment caches one. A 2 GB model across thirty sweeps a month is where the storage bill actually comes from, and `dvc exp remove` plus a lifecycle rule is the answer.
+**Model artifacts accumulate fastest.** Every experiment caches one. A 2 GB model across thirty sweeps a month is where the storage bill comes from, and `dvc exp remove` plus a lifecycle rule is the answer.
 
 **Register promoted models explicitly.** A Git tag plus `dvc.lock` gives you data, code, and metrics for a release. `live.log_artifact(..., type="model")` makes the artifact discoverable rather than implied.
 
@@ -296,4 +296,4 @@ live.log_params({
 | Storage cost is visible to the team | Growth gets managed |
 | The right tool for each data shape | Tables in a table format, not in DVC |
 
-Most data incidents are prevented at review time rather than at recovery time. Reading a DVC project for what it **guarantees** — rather than what it does — is the highest-leverage habit in this guide.
+Most data incidents are prevented at review time rather than at recovery time. Reading a DVC project for what it **guarantees**, rather than what it does, is the highest-leverage habit you can build.

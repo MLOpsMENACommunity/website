@@ -1,10 +1,10 @@
-Part one of three. A fast review of **everything in the Beginner Detailed track**, in about twenty-five minutes. Fast review first, common questions at the end. Mid-level reviews this plus its own material; Senior reviews all three.
+Part one of three. A twenty-five-minute review of the **Beginner Detailed track**, then the questions interviewers ask. Mid-level reviews this plus its own material; Senior reviews all three.
 
 ## The thirty-second answer
 
-> Docker packages an application together with its runtime, libraries, and system dependencies into an immutable image. A container is a running instance of that image — a process on the host, isolated by kernel namespaces and cgroups rather than by a hypervisor. Because the image carries its own environment, the artifact that passed CI is the artifact that runs in production.
+> Docker packages an application with its runtime, libraries, and system dependencies into an immutable image. A container is a running instance of that image: a process on the host, isolated by kernel namespaces and cgroups rather than a hypervisor. Because the image carries its own environment, the artifact that passed CI is the artifact that runs in production.
 
-Then add the sentence that shows you have used it: *"the thing people miss is that a container lives exactly as long as its main process, and anything not in a volume disappears when the container is removed."*
+Then the line that shows you have used it: *"a container lives as long as its main process, and anything not in a volume disappears when the container is removed."*
 
 ## The model
 
@@ -25,7 +25,7 @@ Then add the sentence that shows you have used it: *"the thing people miss is th
 | **Container** | A running instance: the image's layers plus a thin writable layer |
 | **Volume** | Docker-managed storage that outlives the container |
 | **Bind mount** | A host directory mounted into a container |
-| **Registry** | Where images are stored and shared — Docker Hub, GHCR, ECR |
+| **Registry** | Where images are stored and shared: Docker Hub, GHCR, ECR |
 | **Tag** | A mutable human label on an image, `myapp:1.2.0` |
 | **Build context** | The directory sent to the daemon at build time |
 | **Dockerfile** | The recipe that produces an image |
@@ -48,15 +48,15 @@ Then add the sentence that shows you have used it: *"the thing people miss is th
     <ul>
       <li>Ships its own guest kernel and OS</li>
       <li>Tens of seconds, gigabytes</li>
-      <li>Isolated by a hypervisor — stronger</li>
+      <li>Isolated by a hypervisor (stronger)</li>
       <li>A simulated computer</li>
     </ul>
   </div>
 </div>
 
-Know the follow-up, because it always comes: *"so is a container less secure?"* Yes — shared-kernel isolation is weaker than a hypervisor. A kernel vulnerability is a container-escape path, which is why you drop privileges and do not run untrusted code in a plain container.
+The follow-up: *"so is a container less secure?"* Yes. Shared-kernel isolation is weaker than a hypervisor, and a kernel vulnerability is an escape path. Drop privileges, and keep untrusted code out of a plain container.
 
-One more detail worth having ready: on macOS and Windows, Docker Desktop runs a small Linux VM because containers are a Linux kernel feature. That is why bind-mount file I/O is slower there.
+One more fact: containers are a Linux kernel feature, so Docker Desktop runs a small Linux VM on macOS and Windows. Bind-mount file I/O is slower there.
 
 ## Image versus container
 
@@ -68,7 +68,7 @@ One more detail worth having ready: on macOS and Windows, Docker Desktop runs a 
 | Count | One | Many from the same image |
 | Built by | `docker build` | `docker run` |
 
-Two facts that follow: three containers from one image share its read-only layers on disk, and anything written outside a volume dies with `docker rm`.
+Three containers from one image share its read-only layers on disk, and anything you write outside a volume dies with `docker rm`.
 
 ## The commands to have ready
 
@@ -88,12 +88,12 @@ docker system prune                          # reclaim space
 | Flag | Means |
 |---|---|
 | `-d` | Detached (background) |
-| `-p host:container` | Publish a port — **host first** |
+| `-p host:container` | Publish a port: **host first** |
 | `-it` | Interactive + TTY |
 | `--rm` | Auto-remove on exit |
 | `-e KEY=value` / `--env-file` | Environment |
 | `-v name:/path` | Volume or bind mount |
-| `--entrypoint sh` | Override the entrypoint — the debugging escape hatch |
+| `--entrypoint sh` | Override the entrypoint: the debugging escape hatch |
 | `--restart unless-stopped` | Survive crashes and reboots |
 
 ## Lifecycle and exit codes
@@ -104,7 +104,7 @@ docker system prune                          # reclaim space
   <div class="guide-timeline-item"><span>gone</span><strong><code>docker rm</code></strong><small>Writable layer deleted. Anything not in a volume is lost.</small></div>
 </div>
 
-**A container lives exactly as long as its main process.** That is the whole explanation for `docker run ubuntu` exiting instantly: the default command is a shell, a shell with no terminal has nothing to read, so it finishes.
+**A container lives as long as its main process.** That is why `docker run ubuntu` exits at once: its default command is a shell, and a shell with no terminal has nothing to read.
 
 | Exit code | Means |
 |---|---|
@@ -112,9 +112,9 @@ docker system prune                          # reclaim space
 | 1 | Application error |
 | 125 | Bad `docker run` flags |
 | 126 | Command found but not executable |
-| 127 | Command not found — often the wrong image |
-| 137 | Killed (SIGKILL) — usually the memory limit |
-| 143 | Stopped by SIGTERM — a clean shutdown |
+| 127 | Command not found, often the wrong image |
+| 137 | Killed (SIGKILL), usually the memory limit |
+| 143 | Stopped by SIGTERM: a clean shutdown |
 
 ## Dockerfile instructions
 
@@ -133,19 +133,19 @@ CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
 
 | Instruction | Runs at | Note |
 |---|---|---|
-| `FROM` | — | Always first; pin the tag, never `:latest` |
+| `FROM` | n/a | Always first; pin the tag, never `:latest` |
 | `RUN` | **Build** | Result is saved as a layer |
 | `CMD` | **Run** | Default command; replaced by `docker run img args` |
 | `ENTRYPOINT` | Run | Fixed executable; `CMD` supplies its arguments |
 | `COPY` | Build | From the build context into the image |
-| `ADD` | Build | Like `COPY` but unpacks archives — prefer `COPY` |
+| `ADD` | Build | Like `COPY` but unpacks archives; prefer `COPY` |
 | `WORKDIR` | Build + run | Directory for everything after it |
 | `ENV` | Build + run | Persists into the container |
 | `ARG` | Build only | Visible in `docker history` |
-| `EXPOSE` | — | **Documentation only.** `-p` publishes |
+| `EXPOSE` | n/a | **Documentation only.** `-p` publishes |
 | `USER` | Run | Drops from root |
 
-Three exam favourites: **`RUN` is build time, `CMD` is run time**, **`EXPOSE` publishes nothing**, and **`ENV PYTHONUNBUFFERED=1`** is why `docker logs` shows Python output immediately.
+Three exam favourites: **`RUN` is build time, `CMD` is run time**, **`EXPOSE` publishes nothing**, and **`ENV PYTHONUNBUFFERED=1`** is why `docker logs` shows Python output without a buffer delay.
 
 ## Layer caching and COPY order
 
@@ -154,7 +154,7 @@ Three exam favourites: **`RUN` is build time, `CMD` is run time**, **`EXPOSE` pu
     <h4>Dependencies first</h4>
     <ul>
       <li><code>COPY requirements.txt .</code> then <code>RUN pip install</code></li>
-      <li><code>COPY . .</code> last</li>
+      <li><code>COPY. .</code> last</li>
       <li>Source edits reuse the cached install</li>
       <li>Rebuild: seconds</li>
     </ul>
@@ -162,7 +162,7 @@ Three exam favourites: **`RUN` is build time, `CMD` is run time**, **`EXPOSE` pu
   <div class="guide-compare-col bad">
     <h4>Everything first</h4>
     <ul>
-      <li><code>COPY . .</code> then <code>RUN pip install</code></li>
+      <li><code>COPY. .</code> then <code>RUN pip install</code></li>
       <li>Any source change busts the install layer</li>
       <li>Every build reinstalls from scratch</li>
       <li>Rebuild: minutes</li>
@@ -170,11 +170,11 @@ Three exam favourites: **`RUN` is build time, `CMD` is run time**, **`EXPOSE` pu
   </div>
 </div>
 
-Docker reuses a layer when its inputs are unchanged, and **once a layer is invalidated every layer after it is rebuilt too**. Two corollaries to state without prompting:
+Docker reuses a layer when its inputs are unchanged, and **once a layer is invalidated every layer after it is rebuilt too**. Two corollaries to state unprompted:
 
 **Layers are additive, so deleting does not shrink or hide.** `COPY .env .` then `RUN rm .env` leaves the file in the earlier layer, readable by anyone who can pull the image.
 
-**Clean up inside the same `RUN`.** `apt-get update` and `install` in separate instructions caches a stale package index and ships the package lists.
+**Clean up inside the same `RUN`.** Splitting `apt-get update` and `install` into separate instructions caches a stale package index and ships the package lists.
 
 ```dockerfile
 RUN apt-get update \
@@ -184,7 +184,7 @@ RUN apt-get update \
 
 ## Build context and `.dockerignore`
 
-The trailing `.` in `docker build -t myapp .` is the **build context** — the whole directory, sent to the daemon before the build starts. Without a `.dockerignore` you ship `.git`, `node_modules`, your virtualenv, and possibly `.env`: slow, and a real secret-leak path.
+The trailing `.` in `docker build -t myapp .` names the **build context**: the CLI uploads that whole directory to the daemon before the build starts. Without a `.dockerignore` you ship `.git`, `node_modules`, your virtualenv, and possibly `.env`: slow builds and leaked secrets.
 
 ```text .dockerignore
 .git
@@ -199,19 +199,19 @@ build
 *.log
 ```
 
-`docker run --rm myapp ls -la /app` settles both "is my file missing?" and "did I ship `.env`?" in one command.
+`docker run --rm myapp ls -la /app` settles "is my file missing?" and "did I ship `.env`?" in one command.
 
 ## Ports
 
 <div class="flow">
   <div class="node">HOST<small>localhost:8080</small></div>
   <span class="arrow">&rarr;</span>
-  <div class="node">-p 8080:80<small>host : container</small></div>
+  <div class="node">-p 8080:80<small>host: container</small></div>
   <span class="arrow">&rarr;</span>
   <div class="node">CONTAINER<small>listening on 80</small></div>
 </div>
 
-Two facts that come up constantly: the mapping is **host first**, and inside a container your app must bind **`0.0.0.0`**, not `127.0.0.1`, or the published port appears dead. Binding loopback inside a container means "reachable only from inside this container".
+The mapping is **host first**, and inside a container your app must bind **`0.0.0.0`**, not `127.0.0.1`, or the published port looks dead. Loopback there means "reachable only from inside this container".
 
 ## Configuration and secrets
 
@@ -222,7 +222,7 @@ Two facts that come up constantly: the mapping is **host first**, and inside a c
 | `-e` / `--env-file` | Run only | No | Per-environment configuration |
 | Mounted file | Run only | No | Credentials |
 
-Precedence, most specific wins: `-e` beats `--env-file` beats `ENV`. **Neither `ARG` nor `ENV` is a secret** — both are image metadata readable by anyone who can pull. At this level: secrets arrive at run time.
+Precedence, most specific wins: `-e` beats `--env-file` beats `ENV`. **Neither `ARG` nor `ENV` is a secret.** Both are image metadata, readable by anyone who can pull. At this level: secrets arrive at run time.
 
 ## Volumes
 
@@ -236,15 +236,15 @@ docker run -v ./conf.yaml:/etc/app/conf.yaml:ro myapp        # read-only config
 |---|---|---|
 | Managed by | Docker | You |
 | Location | Docker's storage area | A path on the host |
-| Portable | Yes | No — host-path dependent |
-| Permissions | Initialised correctly | Keeps the host's ownership |
+| Portable | Yes | No, it depends on a host path |
+| Permissions | Docker initialises them | Keeps the host's ownership |
 | Use for | Databases, app state | Live-reload development |
 
-Data written outside a volume lives in the container's writable layer and dies with `docker rm`.
+Data you write outside a volume lands in the container's writable layer and dies with `docker rm`.
 
 ## Networking and Compose
 
-Containers on a **user-defined** network reach each other by container or service name. The **default** bridge has no name resolution at all — that difference is the answer to most "container cannot reach container" questions.
+Containers on a **user-defined** network reach each other by container or service name. The **default** bridge has no name resolution. That difference answers most "container cannot reach container" questions.
 
 ```bash
 docker network create appnet
@@ -276,11 +276,11 @@ docker compose logs -f api
 docker compose down          # add -v to delete volumes too
 ```
 
-Compose creates a network automatically and puts every service on it, addressable by service name. That is why the connection string says `db`.
+Compose creates a network and puts every service on it, addressable by service name. That is why the connection string says `db`.
 
 <div class="callout warn">
   <span class="ct">Know the limit of <code>depends_on</code></span>
-  It waits for the container to <b>start</b>, not for the service inside to be <b>ready</b>. A database accepting connections thirty seconds later still breaks your app's first query. The fix is a health check plus <code>depends_on: { db: { condition: service_healthy } }</code>, and retry logic in the app regardless.
+  It waits for the container to <b>start</b>, not for the service inside to be <b>ready</b>. A database that accepts connections thirty seconds later still breaks your app's first query. The fix: a health check plus <code>depends_on: { db: { condition: service_healthy } }</code>, and retry logic in the app regardless.
 </div>
 
 ## Non-root, in two lines
@@ -291,21 +291,21 @@ COPY --chown=appuser:appuser . .
 USER 10001
 ```
 
-`USER` comes **after** the installs, because installing to system paths needs the privilege you are about to drop. Use a numeric uid. And say the reason out loud: **root in a container is root on the host kernel** — there is no hypervisor between them.
+`USER` comes **after** the installs, because installing to system paths needs the privilege you are about to drop. Use a numeric uid. Say the reason out loud: **root in a container is root on the host kernel**, with no hypervisor between them.
 
 ## Debugging order
 
 <ol class="guide-steps">
   <li><b>Logs</b><code>docker logs NAME</code>. An exited container keeps its output until you remove it.</li>
-  <li><b>Exit code</b><code>docker ps -a</code>. 137 is a kill (usually OOM), 127 command-not-found, 126 not-executable, 143 a clean SIGTERM.</li>
+  <li><b>Exit code</b><code>docker ps -a</code>. 137 is a kill (usually OOM), 127 command-not-found, 126 not-executable, and 143 a clean SIGTERM.</li>
   <li><b>Shell without the app</b><code>docker run -it --entrypoint sh myapp</code>, then run the command by hand.</li>
   <li><b>Is the file there?</b><code>pwd</code>, <code>ls -la</code> inside. A wrong <code>WORKDIR</code> or a <code>.dockerignore</code> exclusion explains most "not found" errors.</li>
-  <li><b>Resolved config</b><code>docker inspect NAME</code> — the real entrypoint, env, mounts, and networks after every override.</li>
+  <li><b>Resolved config</b><code>docker inspect NAME</code> for the real entrypoint, env, mounts, and networks after every override.</li>
 </ol>
 
 ## The traps, and why they share one cause
 
-Three ideas explain nearly every beginner failure: a container is **one process**, the writable layer is **temporary**, and build time is **not** run time.
+Three ideas explain most beginner failures: a container is **one process**, the writable layer is **temporary**, and build time is **not** run time.
 
 | Symptom | Cause | Fix |
 |---|---|---|
@@ -324,25 +324,25 @@ Three ideas explain nearly every beginner failure: a container is **one process*
 
 <ol class="guide-steps">
   <li><b>What is Docker, and why use it?</b>It packages an app with its dependencies into an immutable image, so the artifact that passed CI is the artifact that runs in production. It removes environment drift, makes onboarding one command, and gives you fast, disposable, isolated environments.</li>
-  <li><b>Container versus virtual machine — and is a container less secure?</b>A container shares the host kernel and is a process with a restricted view: milliseconds to start, tens of megabytes. A VM ships a full guest OS behind a hypervisor: slower, larger, stronger isolation. And yes, weaker — a kernel vulnerability is an escape path, which is why you run non-root and do not put untrusted code in a plain container.</li>
+  <li><b>Container versus virtual machine, and is a container less secure?</b>A container shares the host kernel and is a process with a restricted view: milliseconds to start, tens of megabytes. A VM ships a full guest OS behind a hypervisor: slower, larger, stronger isolation. Yes, weaker: a kernel vulnerability is an escape path, so run non-root and keep untrusted code out of a plain container.</li>
   <li><b>Image versus container?</b>An image is a read-only template of stacked layers; a container is a running instance with a thin writable layer on top. One image, many containers.</li>
-  <li><b>Why does <code>docker run ubuntu</code> exit immediately?</b>A container lives exactly as long as its main process. The default command is a shell with no terminal attached, so it finishes at once. <code>-it</code> gives it a terminal to wait on.</li>
+  <li><b>Why does <code>docker run ubuntu</code> exit immediately?</b>A container lives as long as its main process. The default command is a shell with no terminal attached, so it finishes at once. <code>-it</code> gives it a terminal to wait on.</li>
   <li><b><code>RUN</code> versus <code>CMD</code>?</b><code>RUN</code> executes at build time and its result becomes a layer. <code>CMD</code> is the default command when a container starts. Putting the app's start command in <code>RUN</code> makes the build hang forever.</li>
-  <li><b><code>CMD</code> versus <code>ENTRYPOINT</code>?</b><code>ENTRYPOINT</code> is the fixed executable; <code>CMD</code> supplies default arguments. Arguments after <code>docker run image</code> replace <code>CMD</code> but are appended to <code>ENTRYPOINT</code>. Use <code>ENTRYPOINT</code> when the container should always run one program — and always use the exec form, so your process is PID 1 and receives <code>SIGTERM</code>.</li>
+  <li><b><code>CMD</code> versus <code>ENTRYPOINT</code>?</b><code>ENTRYPOINT</code> is the fixed executable; <code>CMD</code> supplies default arguments. Arguments after <code>docker run image</code> replace <code>CMD</code> but are appended to <code>ENTRYPOINT</code>. Use <code>ENTRYPOINT</code> when the container should always run one program, and always use the exec form, so your process is PID 1 and receives <code>SIGTERM</code>.</li>
   <li><b>Does <code>EXPOSE</code> publish a port?</b>No. It is documentation for humans and tooling. <code>-p host:container</code> is what publishes.</li>
-  <li><b>My port mapping does not work. Why?</b>Most often the app inside is listening on <code>127.0.0.1</code>, which is only reachable inside the container — bind <code>0.0.0.0</code>. Otherwise: the <code>-p</code> order is reversed, or the app is on a different port than the one you mapped.</li>
-  <li><b>How do you persist data?</b>A named volume. Anything written to the container's writable layer is deleted with the container.</li>
-  <li><b>Named volume versus bind mount?</b>A named volume is Docker-managed, portable, and gets correct ownership — right for databases. A bind mount maps a host directory, is host-path dependent and permission-sensitive — right for development live-reload, wrong for production data.</li>
-  <li><b>How do two containers talk to each other?</b>Put them on the same user-defined network and address each other by container or service name. The default bridge has no DNS, which is why this fails if you skip creating a network. Compose does it for you, which is why the connection string is <code>db:5432</code>.</li>
-  <li><b>Why is my rebuild so slow?</b>Almost always COPY order. Copy the dependency manifest and install first, then copy the source, so source edits reuse the cached install layer. Once a layer is invalidated, everything after it rebuilds.</li>
-  <li><b>I deleted a secret in a later layer. Is it safe?</b>No. Layers are additive — the file is still in the earlier layer and readable by anyone who can pull the image. Rebuild without it and rotate the credential.</li>
-  <li><b>What is the build context, and why does it matter?</b>The directory passed to <code>docker build</code>, sent in full to the daemon. Without a <code>.dockerignore</code> you ship <code>.git</code>, <code>node_modules</code>, and possibly <code>.env</code> — a speed problem and a real secret-leak path.</li>
-  <li><b>How do you pass configuration?</b>At run time with <code>-e</code> or <code>--env-file</code>, so one image is promoted across environments. Never secrets via <code>ARG</code> or <code>ENV</code> — both land in image metadata and <code>docker history</code>.</li>
+  <li><b>My port mapping does not work. Why?</b>Usually the app inside listens on <code>127.0.0.1</code>, reachable only inside the container, so bind <code>0.0.0.0</code>. Otherwise the <code>-p</code> order is reversed, or the app uses a different port than the one you mapped.</li>
+  <li><b>How do you persist data?</b>A named volume. Anything you write to the container's writable layer is deleted with the container.</li>
+  <li><b>Named volume versus bind mount?</b>A named volume is Docker-managed, portable, and gets correct ownership: right for databases. A bind mount maps a host directory, depends on that path, and keeps host permissions: right for development live-reload, wrong for production data.</li>
+  <li><b>How do two containers talk to each other?</b>Put them on the same user-defined network and address each other by container or service name. The default bridge has no DNS, so this fails if you skip creating a network. Compose creates one for you, hence <code>db:5432</code> in the connection string.</li>
+  <li><b>Why is my rebuild so slow?</b>COPY order, most of the time. Copy the dependency manifest and install first, then copy the source, so source edits reuse the cached install layer. Once a layer is invalidated, everything after it rebuilds.</li>
+  <li><b>I deleted a secret in a later layer. Is it safe?</b>No. Layers are additive, so the file is still in the earlier layer and readable by anyone who can pull the image. Rebuild without it and rotate the credential.</li>
+  <li><b>What is the build context, and why does it matter?</b>The directory you pass to <code>docker build</code>, uploaded in full to the daemon. Without a <code>.dockerignore</code> you ship <code>.git</code>, <code>node_modules</code>, and possibly <code>.env</code>: a speed problem and a secret-leak path.</li>
+  <li><b>How do you pass configuration?</b>At run time with <code>-e</code> or <code>--env-file</code>, so you promote one image across environments. Never secrets via <code>ARG</code> or <code>ENV</code>, because both land in image metadata and <code>docker history</code>.</li>
   <li><b>How do you debug a container that will not start?</b><code>docker logs</code> first, then the exit code from <code>docker ps -a</code>, then <code>docker run -it --entrypoint sh</code> to get inside without running the app, then <code>docker inspect</code> for the resolved configuration.</li>
-  <li><b>What does exit code 137 mean?</b>The process was SIGKILLed, nearly always by the memory limit. Confirm with <code>docker inspect --format '{{.State.OOMKilled}}'</code>.</li>
+  <li><b>What does exit code 137 mean?</b>The kernel SIGKILLed the process, in most cases at the memory limit. Confirm with <code>docker inspect --format '{{.State.OOMKilled}}'</code>.</li>
   <li><b>Where should an app write its logs?</b>stdout and stderr. That is what <code>docker logs</code>, log shippers, and orchestrators read. A file inside the container hides them and fills the writable layer.</li>
-  <li><b>Why not run as root, and how do you avoid it?</b>Because root in the container is root on the host kernel — there is no hypervisor between them, so an escape lands as root. Add a user with a fixed numeric uid, <code>COPY --chown</code>, and <code>USER 10001</code> after the installs.</li>
-  <li><b>Why not use <code>:latest</code>?</b>It is just the tag Docker assumes when you give none, and it points at whatever was last pushed. It can move between two builds an hour apart, so "what is running?" becomes unanswerable and rollback undefined.</li>
+  <li><b>Why not run as root, and how do you avoid it?</b>Root in the container is root on the host kernel, with no hypervisor between them, so an escape lands as root. Add a user with a fixed numeric uid, <code>COPY --chown</code>, and <code>USER 10001</code> after the installs.</li>
+  <li><b>Why not use <code>:latest</code>?</b>It is the tag Docker assumes when you give none, pointing at whatever was pushed last. It can move between two builds an hour apart, so "what is running?" becomes unanswerable and rollback undefined.</li>
 </ol>
 
 ## Sixty-second self-test

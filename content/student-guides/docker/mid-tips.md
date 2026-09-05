@@ -2,7 +2,7 @@ Part two of three. At this level your images build and your stacks run, so the p
 
 ## Common errors at this level
 
-Cumulative — Beginner's errors still apply, and these are the ones that appear once things basically work.
+Cumulative: Beginner's errors still apply, and these are the ones that appear once things work.
 
 | Symptom | Real cause | Fix |
 |---|---|---|
@@ -41,11 +41,11 @@ Cumulative — Beginner's errors still apply, and these are the ones that appear
   <div class="card"><div class="icon">🪜</div><h4>Multi-stage everything</h4><p>The largest single size win, and it keeps build credentials and compilers out of the shipped image.</p></div>
   <div class="card"><div class="icon">🧊</div><h4>Order for cache, not for reading</h4><p>Least-frequently-changed instruction first. The dependency install should almost never rerun.</p></div>
   <div class="card"><div class="icon">⚡</div><h4>Cache mounts for package managers</h4><p>Warm rebuilds in seconds even when the lockfile changed, and nothing added to the image.</p></div>
-  <div class="card"><div class="icon">🩺</div><h4>Health check with a start period</h4><p>Turns "the container is up" into "the service is ready", which is what dependants actually need.</p></div>
+  <div class="card"><div class="icon">🩺</div><h4>Health check with a start period</h4><p>Turns "the container is up" into "the service is ready", which is what dependants need.</p></div>
   <div class="card"><div class="icon">📶</div><h4>Exec form + <code>exec "$@"</code></h4><p>Signals reach your app, so shutdown is graceful instead of a hard kill mid-request.</p></div>
   <div class="card"><div class="icon">🔖</div><h4>Immutable deploy tags</h4><p><code>:sha-a1b2c3d</code> or a digest. Moving tags are for humans, never for a deployment reference.</p></div>
   <div class="card"><div class="icon">🔍</div><h4><code>docker history</code> before optimising</h4><p>Find the fat layer first. Most size "optimisation" is guesswork applied to the wrong layer.</p></div>
-  <div class="card"><div class="icon">🧾</div><h4><code>docker compose config</code> habitually</h4><p>It prints what actually runs. Half of "cannot reproduce" is an override file you forgot about.</p></div>
+  <div class="card"><div class="icon">🧾</div><h4><code>docker compose config</code> habitually</h4><p>It prints what runs. Half of "cannot reproduce" is an override file you forgot about.</p></div>
 </div>
 
 ## Practice cards
@@ -56,7 +56,7 @@ Cumulative — Beginner's errors still apply, and these are the ones that appear
   <li><b>Prove the cache mount</b>Add a pip or npm cache mount, build, change one line of the manifest, and rebuild. Compare against the same change without the mount.</li>
   <li><b>Gate the image on tests</b>Add a <code>test</code> stage that runs your suite, break a test, and confirm no image is produced.</li>
   <li><b>Close the readiness gap</b>Add health checks and <code>condition: service_healthy</code>, then remove them and confirm the first request after a cold <code>up</code> fails.</li>
-  <li><b>Time both shutdowns</b>Build with the shell form and run <code>time docker stop NAME</code> — ten seconds, exit 137. Switch to exec form and repeat — under a second, exit 143.</li>
+  <li><b>Time both shutdowns</b>Build with the shell form and run <code>time docker stop NAME</code>: ten seconds, exit 137. Switch to exec form and repeat: under a second, exit 143.</li>
   <li><b>Round-trip a volume</b>Back up a named volume with the tar pattern, delete it, restore into a fresh volume, and start a container against the restored copy.</li>
   <li><b>Move a tag under yourself</b>Push an image, record its digest, rebuild with a trivial change, repush the same tag, and confirm the digest changed while the digest reference still resolves to the original.</li>
   <li><b>Diff the two merged Composes</b>Run <code>docker compose config</code> and <code>docker compose -f compose.yaml config</code>, and diff them. Everything in that diff is a local-only assumption.</li>
@@ -64,7 +64,7 @@ Cumulative — Beginner's errors still apply, and these are the ones that appear
 
 ## Shrinking an image, in order of leverage
 
-Measure first — `docker history myapp:1.0` shows every layer with its size and the instruction that made it.
+Measure first: `docker history myapp:1.0` shows every layer with its size and the instruction that made it.
 
 <ol class="guide-steps">
   <li><b>Split build and runtime</b>A multi-stage build removes compilers, headers, dev dependencies, and the source tree in one change. Usually worth more than everything below combined.</li>
@@ -81,7 +81,7 @@ docker image inspect myapp:1.0 --format '{{.Size}}'
 docker run --rm myapp:1.0 du -xh --max-depth=2 / 2>/dev/null | sort -h | tail -15
 ```
 
-That third command is the one people do not know: it tells you where the space actually went *inside* the image, which is often a dataset or a cache you forgot about rather than the base.
+That third command is the one people do not know: it tells you where the space went *inside* the image, which is often a dataset or a cache you forgot about rather than the base.
 
 ## Making the cache work in CI
 
@@ -103,16 +103,16 @@ Layer caching is nearly free locally and does nothing in CI by default, because 
 | `type=registry,ref=…:buildcache` | Many repositories, or self-hosted runners sharing layers |
 | `type=local` | Self-hosted runners with persistent disk |
 
-`mode=max` exports intermediate layers too. With `mode=min` only the final stage is cached, which is nearly useless for a multi-stage build — the expensive builder stage misses every time.
+`mode=max` exports intermediate layers too. With `mode=min` only the final stage is cached, which is nearly useless for a multi-stage build, because the expensive builder stage misses every time.
 
 <div class="callout tip">
   <span class="ct">Build once, promote the same digest</span>
-  Do not rebuild per environment. Build one image, tag it with the commit SHA, and promote that exact artifact through staging and production. If you rebuild for production you are shipping something CI never tested — the base image may have moved and a transitive dependency may have published a patch.
+  Do not rebuild per environment. Build one image, tag it with the commit SHA, and promote that exact artifact through staging and production. If you rebuild for production you are shipping something CI never tested. The base image may have moved and a transitive dependency may have published a patch.
 </div>
 
 ## Compose in practice
 
-**`docker compose config` is the debugging tool.** It prints the fully merged, variable-interpolated file — which is what actually runs, and often not what you think you wrote.
+**`docker compose config` is the debugging tool.** It prints the fully merged, variable-interpolated file, which is what runs, and often not what you think you wrote.
 
 ```bash
 docker compose config                                   # merged result
@@ -151,14 +151,14 @@ docker compose down -v                                  # -v also deletes volume
 
 <div class="callout warn">
   <span class="ct"><code>compose.override.yaml</code> is applied automatically</span>
-  If a colleague reports behaviour you cannot reproduce, check whether an override file is silently merging in. <code>docker compose config</code> settles it in one command. And in CI always pass <code>-f</code> flags explicitly, so a developer's local override can never leak into a deployment.
+  If a colleague reports behaviour you cannot reproduce, check whether an override file is silently merging in. <code>docker compose config</code> settles it in one command. In CI always pass <code>-f</code> flags explicitly, so a developer's local override can never leak into a deployment.
 </div>
 
-Two more distinctions worth internalising. Compose's own `.env` file substitutes values **into the YAML**; `env_file:` passes variables **into the container** — mixing them up produces empty variables that look like a bug. And `profiles:` keeps heavy optional services out of a default `up`, which is much better than commenting them out.
+Two more distinctions worth internalising. Compose's own `.env` file substitutes values **into the YAML**; `env_file:` passes variables **into the container**, and mixing them up produces empty variables that look like a bug. `profiles:` keeps heavy optional services out of a default `up`, which is much better than commenting them out.
 
 ## Debugging without polluting the image
 
-The instinct is to `apt-get install curl` into the image so you can debug it. Resist — you are permanently enlarging every deployment to solve a temporary problem. Attach a sidecar to the container's network namespace instead.
+The instinct is to `apt-get install curl` into the image so you can debug it. Resist. You are permanently enlarging every deployment to solve a temporary problem. Attach a sidecar to the container's network namespace instead.
 
 ```bash
 # Full network toolkit, sharing the target container's network
@@ -173,12 +173,12 @@ docker run --rm -it --network container:api nicolaka/netshoot
   <div class="guide-timeline-item"><span>1</span><strong>Logs, then exit code</strong><small><code>docker logs --tail 100</code>, then <code>docker ps -a</code>. 137 is a kill (usually OOM), 127 command-not-found, 126 not-executable, 143 a clean stop.</small></div>
   <div class="guide-timeline-item"><span>2</span><strong>Inspect the resolved config</strong><small><code>docker inspect</code> shows the real entrypoint, env, mounts, and networks after every default and override.</small></div>
   <div class="guide-timeline-item"><span>3</span><strong>Run the image without your app</strong><small><code>docker run -it --entrypoint sh myapp</code> and try the command by hand.</small></div>
-  <div class="guide-timeline-item"><span>4</span><strong>Diff the filesystem</strong><small><code>docker diff NAME</code> lists everything the container wrote — often reveals a path you thought was a volume.</small></div>
+  <div class="guide-timeline-item"><span>4</span><strong>Diff the filesystem</strong><small><code>docker diff NAME</code> lists everything the container wrote, which often reveals a path you thought was a volume.</small></div>
   <div class="guide-timeline-item"><span>5</span><strong>Compare against the built image</strong><small>Is the file even in there? <code>docker run --rm myapp ls -la /app</code> beats guessing about <code>.dockerignore</code>.</small></div>
   <div class="guide-timeline-item"><span>6</span><strong>Timeline and resources last</strong><small><code>docker events --since 30m --filter container=api</code>, then <code>docker stats</code> and <code>.State.OOMKilled</code>.</small></div>
 </div>
 
-`docker diff` is the underused one. It compares the container's filesystem against its image, which is how you discover that your "volume" is actually writing into the writable layer because a mount path was misspelled.
+`docker diff` is the underused one. It compares the container's filesystem against its image, which is how you discover that your "volume" is writing into the writable layer because a mount path was misspelled.
 
 ## "Works locally, not in staging"
 
@@ -204,7 +204,7 @@ docker buildx imagetools inspect ghcr.io/org/app:1.4.2     # confirm both arches
 
 ## Entrypoint scripts that behave
 
-Most real images need something to happen before the app starts — wait for a dependency, run a migration, resolve configuration. Done carelessly, the entrypoint script becomes the reason your container ignores `docker stop`.
+Most real images need something to happen before the app starts: wait for a dependency, run a migration, resolve configuration. Done carelessly, the entrypoint script becomes the reason your container ignores `docker stop`.
 
 ```bash docker-entrypoint.sh
 #!/bin/sh
@@ -241,10 +241,10 @@ CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
 
 <div class="callout warn">
   <span class="ct">A wait loop is not a substitute for retries</span>
-  Waiting at startup only handles the boot case. A database restarts, a network blips, a failover happens — your app must reconnect at run time too. The entrypoint wait makes the first request work; connection retry logic keeps the service alive.
+  Waiting at startup only handles the boot case. A database restarts, a network blips, a failover happens, so your app must reconnect at run time too. The entrypoint wait makes the first request work; connection retry logic keeps the service alive.
 </div>
 
-## Volume operations you will actually need
+## Volume operations you will need
 
 Backing up and moving named volumes comes up far more often than people expect, and the pattern is always the same: a throwaway container with the volume and a bind mount.
 
@@ -272,7 +272,7 @@ docker system df -v
 
 <div class="callout warn">
   <span class="ct">Stop the writer first</span>
-  Tarring a live Postgres data directory gives you a torn, possibly unusable copy. Either stop the container, or use the database's own tooling — <code>docker compose exec db pg_dump</code> — which is the correct answer for anything transactional. The tar pattern is right for caches, uploads, and model files.
+  Tarring a live Postgres data directory gives you a torn, possibly unusable copy. Either stop the container, or use the database's own tooling, <code>docker compose exec db pg_dump</code>, which is the correct answer for anything transactional. The tar pattern is right for caches, uploads, and model files.
 </div>
 
 ## Registry hygiene
@@ -283,7 +283,7 @@ An unmanaged registry becomes a slow, expensive, confusing place. Four decisions
   <div class="guide-compare-col good">
     <h4>Tags that work</h4>
     <ul>
-      <li><code>:sha-a1b2c3d</code> for every build — immutable, traceable</li>
+      <li><code>:sha-a1b2c3d</code> for every build: immutable, traceable</li>
       <li><code>:1.4.2</code> for releases, never repushed</li>
       <li><code>:main</code> / <code>:latest</code> as human conveniences only</li>
       <li>Deploy by digest for anything sensitive</li>
@@ -317,11 +317,11 @@ docker buildx imagetools inspect ghcr.io/org/app:sha-${GIT_SHA} \
 docker buildx imagetools create -t ghcr.io/org/app:staging ghcr.io/org/app@sha256:9b2c...
 ```
 
-Set a retention policy: keep all release tags, keep the last N `sha-` tags, expire untagged manifests after a week. Without it, build cache and dangling manifests quietly become your largest storage line item.
+Set a retention policy: keep all release tags, keep the last N `sha-` tags, expire untagged manifests after a week. Without it, build cache and dangling manifests become your largest storage line item.
 
 ## Making dev and prod differences explicit
 
-The goal is one image promoted everywhere. Where local and production genuinely must differ, put the difference in a file somebody can read, not in a developer's memory.
+The goal is one image promoted everywhere. Where local and production must differ, put the difference in a file somebody can read, not in a developer's memory.
 
 ```yaml compose.yaml
 # Base: what is true everywhere
@@ -392,5 +392,5 @@ services:
     restart: unless-stopped
 ```
 
-**Senior tips go further:** the hardening pass every image should get, verifying controls rather than trusting them, keeping images fresh without unpinning them, incident playbooks for a leaked secret and a host taken down by one container, running Docker as a platform, and the cost levers that actually pay.
+**Senior tips go further:** the hardening pass every image should get, verifying controls rather than trusting them, keeping images fresh without unpinning them, incident playbooks for a leaked secret and a host taken down by one container, running Docker as a platform, and the cost levers that pay.
 

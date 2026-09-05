@@ -1,4 +1,4 @@
-This is part two of three. It picks up exactly where Beginner ended and takes **every topic from there further**, then adds the machinery you have not met yet. Nothing is dropped and nothing is repeated for its own sake — where you already know the basics, we go straight to the depth.
+This is part two of three. It picks up exactly where Beginner ended and takes **every topic from there further**, then adds the machinery you have not met yet. Nothing is dropped and nothing is repeated for its own sake. Where you already know the basics, we go straight to the depth.
 
 ## Where this picks up
 
@@ -6,7 +6,7 @@ This is part two of three. It picks up exactly where Beginner ended and takes **
 |---|---|
 | Runs | Nested runs, parent/child sweeps, resuming, and bulk operations via the client |
 | Params, metrics, tags | System tags, metric history and steps, batch logging, and search at scale |
-| Autologging | What each integration actually patches, and how to control or disable it safely |
+| Autologging | What each integration patches, and how to control or disable it safely |
 | The model format | Custom `pyfunc` models, wrappers, `code_paths`, and dependency resolution |
 | Signatures | Explicit schemas, params in signatures, and enforcement behaviour |
 | The registry | A promotion workflow with tags, aliases, approvals, and CI gates |
@@ -15,7 +15,7 @@ This is part two of three. It picks up exactly where Beginner ended and takes **
 | Serving | Deployment targets, the deployments API, containers, and scoring-server internals |
 | Projects | Docker environments, backends, and parameterised multi-step flows |
 | Debugging | Client-level diagnosis, artifact-store failures, and reproducing the serving path |
-| — **new** — | Tracing & LLM evaluation · plugins · CI/CD gates · model aliases at scale · signature params |
+| **new** | Tracing & LLM evaluation · plugins · CI/CD gates · model aliases at scale · signature params |
 
 Each section starts with the problem it solves, and ends with a **Try it** you can do on a real project in a few minutes.
 
@@ -38,7 +38,7 @@ with mlflow.start_run(run_name="sweep: max_depth") as parent:
     mlflow.set_tag("best_child_run_id", best_run_id)
 ```
 
-The parent/child relationship is stored as a tag — `mlflow.parentRunId` — which means it is queryable:
+The parent/child relationship is stored as a tag, `mlflow.parentRunId`, which means it is queryable:
 
 ```python
 children = mlflow.search_runs(
@@ -48,7 +48,7 @@ children = mlflow.search_runs(
 )
 ```
 
-The fluent API (`mlflow.log_*`) always writes to the *active* run, which is convenient and occasionally wrong — in a multi-threaded sweep, or when writing to a run you are not inside. The client API takes an explicit run id and has no global state:
+The fluent API (`mlflow.log_*`) always writes to the *active* run, which is convenient until it is wrong: in a multi-threaded sweep, or when writing to a run you are not inside. The client API takes an explicit run id and has no global state:
 
 ```python
 from mlflow import MlflowClient
@@ -63,7 +63,7 @@ client.set_terminated(run.info.run_id, status="FINISHED")
 | Need | Fluent API | Client API |
 |---|---|---|
 | A normal script | ✅ `mlflow.log_metric(...)` | Works, more verbose |
-| Threads or async | Risky — one global active run | ✅ explicit run id |
+| Threads or async | Risky: one global active run | ✅ explicit run id |
 | Writing to someone else's run | Only via `start_run(run_id=...)` | ✅ direct |
 | Bulk / batch logging | `log_metrics`, `log_params` | ✅ `log_batch` for thousands of points |
 | Registry operations | A few module functions | ✅ the full surface |
@@ -99,7 +99,7 @@ client.log_batch(
 
 ## Autologging internals
 
-Beginner said "one line". Here is what that line does, because at this level you have to control it.
+Beginner said "one line". At this level you have to control what that line does.
 
 Each integration installs **patches** around specific framework functions:
 
@@ -136,11 +136,11 @@ Three behaviours worth knowing precisely:
 
 **`exclusive=True` means "do not interfere".** With it, autologging skips logging when a run is already active, which is how you keep a hand-instrumented run from being polluted by framework noise.
 
-**`log_input_examples=True` embeds data in the artifact.** Useful for documentation, and a data-leak vector if the training data is sensitive — the example ships inside the model directory that you might publish.
+**`log_input_examples=True` embeds data in the artifact.** Useful for documentation, and a data-leak vector if the training data is sensitive, because the example ships inside the model directory that you might publish.
 
 <div class="callout warn">
   <span class="ct">Autolog plus your own `log_model` means two models per run</span>
-  Autologging logs a model without your signature or your <code>registered_model_name</code>. If you also log one explicitly, the run has two model artifacts and nothing states which is authoritative. Set <code>log_models=False</code> and log it yourself — that is the pattern to standardise on.
+  Autologging logs a model without your signature or your <code>registered_model_name</code>. If you also log one explicitly, the run has two model artifacts and nothing states which is authoritative. Set <code>log_models=False</code> and log it yourself. That is the pattern to standardise on.
 </div>
 
 <div class="guide-try">
@@ -151,12 +151,12 @@ Three behaviours worth knowing precisely:
     <li>Leave autolog's <code>log_models=True</code> and also log a model yourself. Look at the resulting artifact tree.</li>
     <li>Set <code>exclusive=True</code> and confirm autologging steps aside inside your own run.</li>
   </ol>
-  <em>step three is the one to see once: two <code>model/</code> directories in one run, with different signatures, and no indication which the registry took. That ambiguity is exactly what <code>log_models=False</code> exists to prevent.</em>
+  <em>step three is the one to see once: two <code>model/</code> directories in one run, with different signatures, and no indication which the registry took. That ambiguity is what <code>log_models=False</code> exists to prevent.</em>
 </div>
 
 ## Custom `pyfunc` models
 
-The single most useful advanced feature in MLflow. A `pyfunc` model can wrap *anything* — preprocessing, several models, business rules, a call to another service — behind one `predict`, and it travels as one artifact with one environment.
+The single most useful advanced feature in MLflow. A `pyfunc` model can wrap *anything* (preprocessing, several models, business rules, a call to another service) behind one `predict`, and it travels as one artifact with one environment.
 
 The problem it solves: your model needs a fitted scaler, a vocabulary, and a threshold. Log only the estimator and every consumer must reimplement the rest, correctly, forever.
 
@@ -225,16 +225,16 @@ model.predict(frame, params={"threshold": 0.7})       # overridden at call time
 | `artifacts={...}` | Files copied into the model directory and re-pathed at load |
 | `code_paths=[...]` | Your modules, copied in so the model does not import your repo |
 | `params` in the signature | Call-time knobs, validated and documented |
-| `pip_requirements` | Explicit dependencies — do not let inference guess for a custom model |
+| `pip_requirements` | Explicit dependencies: do not let inference guess for a custom model |
 
 <div class="callout warn">
   <span class="ct">Without `code_paths`, a custom pyfunc fails at load in any other environment</span>
-  A <code>PythonModel</code> is pickled by reference to its class, so loading it requires that module to be importable. It works on your machine because your repo is on the path, and fails in the serving container with <code>ModuleNotFoundError</code>. <code>code_paths</code> copies the modules into the artifact — and it is the number-one cause of "works locally, fails in serving" for custom models.
+  A <code>PythonModel</code> is pickled by reference to its class, so loading it requires that module to be importable. It works on your machine because your repo is on the path, and fails in the serving container with <code>ModuleNotFoundError</code>. <code>code_paths</code> copies the modules into the artifact, and it is the number-one cause of "works locally, fails in serving" for custom models.
 </div>
 
 <div class="callout tip">
   <span class="ct">`params` in a signature is underused and excellent</span>
-  A decision threshold, a top-k, a temperature — anything a caller might want to vary — becomes a validated, documented, call-time parameter rather than a second endpoint or a redeploy. And because it is in the signature, the serving layer exposes and checks it for you.
+  A decision threshold, a top-k, a temperature, anything a caller might want to vary, becomes a validated, documented, call-time parameter rather than a second endpoint or a redeploy. Because it is in the signature, the serving layer exposes and checks it for you.
 </div>
 
 <div class="guide-try">
@@ -245,7 +245,7 @@ model.predict(frame, params={"threshold": 0.7})       # overridden at call time
     <li>Add <code>code_paths</code> and repeat. Then inspect the artifact tree and find your copied module.</li>
     <li>Add a <code>threshold</code> param to the signature and override it at call time.</li>
   </ol>
-  <em>step two is the lesson, and it is worth failing on purpose: the model that loads perfectly in your project and dies in a container is almost always a missing <code>code_paths</code>. Doing it once makes the error message instantly recognisable.</em>
+  <em>step two is the lesson, and it is worth failing on purpose: the model that loads in your project and dies in a container is almost always a missing <code>code_paths</code>. Doing it once makes the error message instantly recognisable.</em>
 </div>
 
 ## Dependencies and environments, precisely
@@ -277,7 +277,7 @@ mlflow.pyfunc.log_model(name="model", python_model=ChurnModel(),
                         pip_requirements="requirements-serving.txt")
 ```
 
-And two ways to check the result before it becomes a production problem:
+Two ways to check the result before it becomes a production problem:
 
 ```bash
 # Validate that the model loads and scores in a freshly built environment
@@ -305,7 +305,7 @@ validate_serving_input("runs:/abc123/model", payload)     # raises if the contra
 
 <div class="callout warn">
   <span class="ct">Inference sees imports, not intent</span>
-  If your code does <code>importlib.import_module(name)</code>, or imports inside a branch that did not execute, the dependency is invisible and the model will fail to load elsewhere. For anything custom, declare <code>pip_requirements</code> explicitly rather than trusting inference — it takes one line and removes a whole failure class.
+  If your code does <code>importlib.import_module(name)</code>, or imports inside a branch that did not execute, the dependency is invisible and the model will fail to load elsewhere. For anything custom, declare <code>pip_requirements</code> explicitly rather than trusting inference. It takes one line and removes a whole failure class.
 </div>
 
 <div class="guide-try">
@@ -350,7 +350,7 @@ result = mlflow.evaluate(
 )
 ```
 
-If any threshold fails, `mlflow.evaluate` raises `ModelValidationFailedException` — so in CI the job simply fails, with the failing metric named.
+If any threshold fails, `mlflow.evaluate` raises `ModelValidationFailedException`, so in CI the job fails, with the failing metric named.
 
 You can also evaluate a **static dataset** with predictions already computed, which is how you evaluate something MLflow did not train:
 
@@ -364,7 +364,7 @@ mlflow.evaluate(
 )
 ```
 
-And add domain metrics that the default evaluator cannot know about:
+Add domain metrics that the default evaluator cannot know about:
 
 ```python
 from mlflow.models import make_metric
@@ -401,7 +401,7 @@ result = mlflow.evaluate(
 
 <div class="callout tip">
   <span class="ct">A relative threshold against a baseline is the honest gate</span>
-  An absolute floor passes forever once you clear it. Comparing against the current champion with a minimum change means a promotion has to actually be an improvement — which is what stops a quarter of churn from noise-level "wins".
+  An absolute floor passes forever once you clear it. Comparing against the current champion with a minimum change means a promotion has to be an improvement, which is what stops a quarter of churn from noise-level "wins".
 </div>
 
 <div class="guide-try">
@@ -417,7 +417,7 @@ result = mlflow.evaluate(
 
 ## The registry as a promotion workflow
 
-Beginner registered versions and moved an alias. Here is the workflow around it, which is where most of the operational value lives.
+Beginner registered versions and moved an alias. Most of the operational value lives in the workflow around it.
 
 ```python promote.py
 import mlflow
@@ -490,7 +490,7 @@ client.search_model_versions(f"name = '{NAME}' and tags.approved_by = 'ci'")
   <ol>
     <li>Tag a version <code>validated=true</code> only after a threshold evaluation passes, and make your promotion script require that tag.</li>
     <li>Promote, keeping <code>previous</code>, then roll back with one call and confirm your serving endpoint follows.</li>
-    <li>Search model versions by tag and confirm you can list exactly what CI has approved.</li>
+    <li>Search model versions by tag and confirm you can list what CI has approved.</li>
     <li>Try to promote a marginal model and watch the relative threshold reject it.</li>
   </ol>
   <em>step two is the drill worth rehearsing before you need it. A rollback you have performed once takes thirty seconds; one you have only read about takes an incident.</em>
@@ -498,7 +498,7 @@ client.search_model_versions(f"name = '{NAME}' and tags.approved_by = 'ci'")
 
 ## Dataset tracking and lineage
 
-Beginner called `log_input` once. Here is what it actually records — and, importantly, what it does not prove.
+Beginner called `log_input` once. The call records more than it proves.
 
 ```python
 import mlflow.data
@@ -523,7 +523,7 @@ with mlflow.start_run():
 |---|---|
 | `from_pandas` | A DataFrame, with a declared source URI |
 | `from_numpy` | Arrays |
-| `from_spark` / `load_delta` | Spark tables and Delta versions — the strongest lineage available |
+| `from_spark` / `load_delta` | Spark tables and Delta versions: the strongest lineage available |
 | `from_huggingface_dataset` | HF datasets, with their own revision |
 | `mlflow.data.meta_dataset` | A pointer only, when the data is too large to hash |
 
@@ -533,7 +533,7 @@ What it does **not** give you: immutability. The digest proves the frame you pro
 
 <div class="callout warn">
   <span class="ct">A source URI is a name, not a guarantee</span>
-  MLflow's dataset tracking is <b>lineage annotation</b>, not data versioning. It tells you which path a run read and what that data looked like at the time. Real immutability comes from the storage side — versioned buckets, dated immutable prefixes, or a table format with time travel. If you need "rebuild exactly this dataset", pair MLflow with something that provides it.
+  MLflow's dataset tracking is <b>lineage annotation</b>, not data versioning. It tells you which path a run read and what that data looked like at the time. Real immutability comes from the storage side: versioned buckets, dated immutable prefixes, or a table format with time travel. If you need "rebuild exactly this dataset", pair MLflow with something that provides it.
 </div>
 
 The pattern that closes most of the gap without another tool:
@@ -592,7 +592,7 @@ client.predict(deployment_name="churn", inputs=payload)
 |---|---|
 | Local scoring server | Built in |
 | Docker image | Built in (`build-docker`) |
-| Spark UDF | `mlflow.pyfunc.spark_udf` — batch scoring at scale |
+| Spark UDF | `mlflow.pyfunc.spark_udf`: batch scoring at scale |
 | SageMaker / Azure ML / Databricks | Plugins or vendor integrations |
 | Kubernetes | The container, plus your own manifests |
 
@@ -610,7 +610,7 @@ Two serving internals worth knowing:
 
 **Workers matter.** The default scoring server runs a single worker; `--workers N` uses more. For real throughput, `--enable-mlserver` swaps in MLServer, which supports adaptive batching and is the better base for a container.
 
-**The `/invocations` contract is fixed.** Four payload shapes — `dataframe_split`, `dataframe_records`, `instances`, `inputs` — plus `params` for signature params. Anything calling your endpoint is coding against that contract, so a signature change is a breaking API change.
+**The `/invocations` contract is fixed.** Four payload shapes (`dataframe_split`, `dataframe_records`, `instances`, `inputs`) plus `params` for signature params. Anything calling your endpoint is coding against that contract, so a signature change is a breaking API change.
 
 <div class="callout warn">
   <span class="ct">Changing a signature is a breaking change for every caller</span>
@@ -632,7 +632,7 @@ Two serving internals worth knowing:
 
 Newer MLflow versions add tracing and GenAI evaluation, and they are increasingly what interviews ask about.
 
-**Tracing** records the internal steps of a call — a chain, a retrieval, a tool use, a model call — as a tree of spans with inputs, outputs, latency, and token counts.
+**Tracing** records the internal steps of a call (a chain, a retrieval, a tool use, a model call) as a tree of spans with inputs, outputs, latency, and token counts.
 
 ```python
 import mlflow
@@ -696,13 +696,13 @@ result = mlflow.evaluate(
 ```
 
 <div class="callout warn">
-  <span class="ct">Traces contain the prompt and the response — treat them as data</span>
+  <span class="ct">Traces contain the prompt and the response: treat them as data</span>
   A trace stores inputs and outputs verbatim. For a customer-facing assistant that means user messages, and potentially personal data, sitting in your tracking backend and in your backups. Decide on redaction and retention before you enable tracing on production traffic, not after.
 </div>
 
 <div class="callout tip">
   <span class="ct">LLM-as-a-judge metrics cost money and vary</span>
-  Every judged row is an API call, so a 5,000-row evaluation has a real bill and a real latency. Judges are also non-deterministic — pin the judge model, fix its version, and report the judged metric with the judge named, or you cannot compare two evaluations honestly.
+  Every judged row is an API call, so a 5,000-row evaluation has a real bill and a real latency. Judges are also non-deterministic, so pin the judge model, fix its version, and report the judged metric with the judge named, or you cannot compare two evaluations.
 </div>
 
 <div class="guide-try">
@@ -808,7 +808,7 @@ with mlflow.start_run(run_name=f"pr {pr} @ {sha}",
 | A job timeout | An unreachable tracking server should not burn thirty minutes |
 
 <div class="callout warn">
-  <span class="ct">CI credentials can write to your registry — scope them</span>
+  <span class="ct">CI credentials can write to your registry: scope them</span>
   A tracking credential that can register models and move aliases is a production-changing credential. On a public repository, a fork pull request holding it means a stranger can promote a model. Use a write-restricted credential for pull requests that can create runs but not move aliases, and keep promotion on a protected-branch workflow.
 </div>
 
@@ -825,15 +825,15 @@ with mlflow.start_run(run_name=f"pr {pr} @ {sha}",
 
 ## Debugging, one level deeper
 
-Beginner had a tab order. Here is what to do when the UI is not enough.
+Beginner had a tab order. When the UI runs out, work through these.
 
 <ol class="guide-steps">
-  <li><b>Separate the two stores in your head</b>Metadata failures are backend-store problems (database, permissions, migrations). Missing files are artifact-store problems (credentials, URI, network). The symptoms are completely different.</li>
-  <li><b>Read the artifact URI on the run, not the config</b><code>run.info.artifact_uri</code> is what that run actually used. A run created before a config change points at the old location forever.</li>
-  <li><b>Reproduce the serving path, not your notebook</b><code>mlflow models predict --env-manager virtualenv</code> exercises exactly what a container would do, with a readable traceback.</li>
+  <li><b>Separate the two stores in your head</b>Metadata failures are backend-store problems (database, permissions, migrations). Missing files are artifact-store problems (credentials, URI, network). The symptoms are different.</li>
+  <li><b>Read the artifact URI on the run, not the config</b><code>run.info.artifact_uri</code> is what that run used. A run created before a config change points at the old location forever.</li>
+  <li><b>Reproduce the serving path, not your notebook</b><code>mlflow models predict --env-manager virtualenv</code> exercises what a container would do, with a readable traceback.</li>
   <li><b>Check the client and server versions</b>A newer client can send fields an older server rejects. <code>mlflow.__version__</code> against the server's footer.</li>
   <li><b>Turn up logging</b><code>MLFLOW_TRACKING_URI</code> plus Python logging at DEBUG on <code>mlflow</code> shows every REST call, which is how you diagnose a hang or a 403.</li>
-  <li><b>Compare a good run against a bad one from the client</b>Params, tags, and the model's requirements — the diff is usually one line long.</li>
+  <li><b>Compare a good run against a bad one from the client</b>Params, tags, and the model's requirements, and the diff is usually one line long.</li>
 </ol>
 
 ```bash
@@ -876,7 +876,7 @@ print("artifacts:", good.info.artifact_uri, "→", bad.info.artifact_uri)
 
 <div class="callout warn">
   <span class="ct">By default, clients talk to the artifact store directly</span>
-  The tracking server hands out an artifact URI and the client reads and writes it itself, which means every user and every CI job needs object-store credentials. That is the single most surprising piece of MLflow's architecture, and it is why "metrics appear but artifacts 404" is so common. Proxied artifact access exists — Senior covers it — and it changes the whole credential story.
+  The tracking server hands out an artifact URI and the client reads and writes it itself, which means every user and every CI job needs object-store credentials. That is the single most surprising piece of MLflow's architecture, and it is why "metrics appear but artifacts 404" is so common. Proxied artifact access exists, Senior covers it, and it changes the whole credential story.
 </div>
 
 <div class="guide-try">
@@ -892,7 +892,7 @@ print("artifacts:", good.info.artifact_uri, "→", bad.info.artifact_uri)
 
 ## Putting it all together
 
-A complete project using everything on this page. Nothing here is new — read it as a whole and you should be able to justify every line.
+A complete project using everything on this page. Nothing here is new. Read it as a whole and you should be able to justify every line.
 
 ```text project layout
 .
@@ -1081,20 +1081,20 @@ Twelve decisions in there are the whole lesson of this page:
 | A `previous` alias set at promotion, so rollback is one call | The registry as a promotion workflow |
 
 <div class="guide-try">
-  <span class="ct">Try it — the one that matters</span>
+  <span class="ct">Try it: the one that matters</span>
   <ol>
     <li>Take this layout into a real project. Get the sweep producing a parent with nested children.</li>
     <li>Wrap your preprocessing into a custom pyfunc with <code>code_paths</code>, and validate it loads in a fresh environment outside the project directory.</li>
     <li>Add threshold validation against the current champion and confirm a marginal model is rejected.</li>
     <li>Promote with a <code>previous</code> alias, then roll back in one call while an endpoint is live.</li>
-    <li>Break the signature on purpose, promote, and watch a caller fail — then decide your team's rule for signature changes.</li>
+    <li>Break the signature on purpose, promote, and watch a caller fail, then decide your team's rule for signature changes.</li>
   </ol>
-  <em>step five is the acceptance test for the whole page. If a signature change can reach production without review, that is a process gap rather than a tooling one — and finding it deliberately is much cheaper than finding it in an incident.</em>
+  <em>step five is the acceptance test for the whole page. If a signature change can reach production without review, that is a process gap rather than a tooling one, and finding it deliberately is much cheaper than finding it in an incident.</em>
 </div>
 
 ## Where you are now
 
-You can structure sweeps as nested runs and drive MLflow entirely from the client API, control what autologging does instead of accepting it, wrap arbitrary preprocessing and postprocessing into a portable custom pyfunc with its own code and dependencies, declare and enforce signatures including call-time params, pin and validate serving environments before they fail, gate promotions on thresholds relative to the current champion, run the registry as a workflow with validation tags and a rollback alias, record dataset lineage and state its limits honestly, deploy to several targets including Spark and containers, trace and evaluate LLM applications, and gate a pull request on model quality.
+You can structure sweeps as nested runs and drive MLflow entirely from the client API, control what autologging does instead of accepting it, wrap arbitrary preprocessing and postprocessing into a portable custom pyfunc with its own code and dependencies, declare and enforce signatures including call-time params, pin and validate serving environments before they fail, gate promotions on thresholds relative to the current champion, run the registry as a workflow with validation tags and a rollback alias, record dataset lineage and state its limits, deploy to several targets including Spark and containers, trace and evaluate LLM applications, and gate a pull request on model quality.
 
 | Can you… | |
 |---|---|
@@ -1106,12 +1106,12 @@ You can structure sweeps as nested runs and drive MLflow entirely from the clien
 | Name how requirements are inferred, and how it fails? | Module introspection; dynamic imports are invisible |
 | Give the command that reproduces the serving path? | `mlflow models predict --env-manager virtualenv` |
 | Explain a relative validation threshold? | Better than the baseline by a minimum margin |
-| Say what dataset logging does *not* prove? | Immutability — a source URI is a name, not a guarantee |
+| Say what dataset logging does *not* prove? | Immutability: a source URI is a name, not a guarantee |
 | Name the rollback mechanism? | Move `champion` to `previous`; one call |
 | Say why signature changes are dangerous with aliases? | Promotion is not a code review, but it is an API change |
 | Name MLflow's most surprising architectural detail? | Clients read and write the artifact store directly |
 
-**Senior takes every one of those topics further** — the self-hosted deployment and its backend and artifact stores, authentication and authorisation including proxied artifact access, multi-tenancy across teams, credential and access design, database scaling and what breaks first, backup and upgrade procedure, artifact cost and retention policy, lineage and audit that satisfies a reviewer, approval trails and separation of duties on promotion, incident playbooks, and where MLflow stops and a feature store, an orchestrator, or a dedicated serving platform begins.
+**Senior takes every one of those topics further:** the self-hosted deployment and its backend and artifact stores, authentication and authorisation including proxied artifact access, multi-tenancy across teams, credential and access design, database scaling and what breaks first, backup and upgrade procedure, artifact cost and retention policy, lineage and audit that satisfies a reviewer, approval trails and separation of duties on promotion, incident playbooks, and where MLflow stops and a feature store, an orchestrator, or a dedicated serving platform begins.
 
 
 

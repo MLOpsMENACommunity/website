@@ -15,7 +15,7 @@ Part one of three. Almost every beginner problem with ClearML comes from one of 
 | Two charts instead of two lines on one chart | Two `title`s used where one title with two `series` was meant | One `title`, several `series` |
 | A metric is missing from the comparison table | It was `print`ed, or only ever a scalar curve | `report_single_value` for anything you want to sort by |
 | File server quota exceeded / disk full | Default `output_uri` sends every artifact and checkpoint there | `output_uri="s3://bucket/clearml"` |
-| Artifact upload is extremely slow | Large object going to the file server over the internet | Object storage in the same region as the compute |
+| Artifact upload is slow | Large object going to the file server over the internet | Object storage in the same region as the compute |
 | `Dataset` content changed under a finished run | The dataset was never finalized | `ds.finalize()`, and consume by explicit version |
 | `get_local_copy()` re-downloads every time | Cache directory not writable, or a different machine each run | Fix cache perms; on ephemeral runners mount a cache volume |
 | Every run is called "Untitled" | No `task_name`, and the script name is generic | Always pass `task_name`; add tags in code |
@@ -24,7 +24,7 @@ Part one of three. Almost every beginner problem with ClearML comes from one of 
 | The task shows `completed` but the model is missing | Weights saved after the script's last ClearML call, or outside a patched framework | Register explicitly with `OutputModel.update_weights` |
 | Credentials committed to git | `clearml.conf` in the repo | Gitignore it globally; env vars in CI |
 | Local run overwrote a "good" task | You reran instead of cloning | Completed tasks are read-only; clone, do not rerun |
-| Metrics stop halfway through a long run | The process was killed (OOM) — task left `in_progress` | Check machine metrics in the UI; the memory curve shows it |
+| Metrics stop halfway through a long run | The process was killed (OOM): task left `in_progress` | Check machine metrics in the UI; the memory curve shows it |
 
 ## The habits that pay off most
 
@@ -52,18 +52,18 @@ Short, self-contained exercises. Each one takes a few minutes and leaves you wit
   <li><b>Fail on an unpushed commit</b>Commit locally, do not push, enqueue. Read the agent's git error. Push and re-enqueue the same task.</li>
   <li><b>Cause the lazy-import failure</b>Move an import inside a function, run locally (fine), then on the agent (<code>ImportError</code>). This is the failure mode that only exists remotely.</li>
   <li><b>Version and consume a dataset</b>Create 1.0.0, add a child 1.1.0 with one extra file, then consume it with <code>alias=</code> and find the recorded id in the training task's config.</li>
-  <li><b>Compare three runs properly</b>Three learning rates, then Compare with "hide identical values" on. If more than one field differs, something in your setup is non-deterministic — find out what.</li>
-  <li><b>Recover a task id from a model</b>Open a registered model in the UI and navigate back to the exact commit that produced it. Time yourself; it should be under ten seconds.</li>
+  <li><b>Compare three runs properly</b>Three learning rates, then Compare with "hide identical values" on. If more than one field differs, something in your setup is non-deterministic, so find out what.</li>
+  <li><b>Recover a task id from a model</b>Open a registered model in the UI and trace it back to the exact commit that produced it. Time yourself; it should be under ten seconds.</li>
 </ol>
 
 ## Debugging order
 
-Follow this rather than guessing — the first two steps answer most problems.
+Follow this rather than guessing. The first two steps answer most problems.
 
 <ol class="guide-steps">
   <li><b>Console tab</b>Your full stdout and stderr. Most failures are ordinary tracebacks and you can stop here.</li>
   <li><b>Execution tab</b>Commit, branch, entry point, working directory, and the installed package list the agent used. A wrong commit or a missing package explains most of the rest.</li>
-  <li><b>Configuration tab</b>The values it actually ran with. On an agent-run clone these come from the server, not your defaults — a surprising value here is usually the whole bug.</li>
+  <li><b>Configuration tab</b>The values it ran with. On an agent-run clone these come from the server, not your defaults, and a surprising value here is usually the whole bug.</li>
   <li><b>Workers &amp; Queues</b>Is an agent watching that queue at all? A task stuck in <code>queued</code> is nearly always this.</li>
   <li><b>Machine metrics</b>The CPU/GPU/memory curves. A run that stops mid-training with no traceback was almost certainly killed for memory, and the curve shows it.</li>
   <li><b>Reproduce locally with the task's own config</b><code>Task.get_task(task_id=…).get_parameters()</code>, then run the script by hand with those values.</li>
@@ -84,7 +84,7 @@ t.mark_stopped()                          # abort a stuck run
 
 ## `Task.init` options worth knowing on day one
 
-Most defaults are right. These five are the ones you will actually reach for.
+Most defaults are right. These five are the ones you will reach for.
 
 ```python
 task = Task.init(
@@ -107,7 +107,7 @@ task = Task.init(
 
 <div class="callout warn">
   <span class="ct"><code>reuse_last_task_id</code> defaults to reusing</span>
-  If you run the same script twice from the same directory without changing anything, ClearML may <em>reuse</em> the previous task rather than creating a new one — which looks like your run vanished. It is a deliberate anti-clutter feature. Pass <code>reuse_last_task_id=False</code> when you want one task per run, which is nearly always during a sweep.
+  If you run the same script twice from the same directory without changing anything, ClearML may <em>reuse</em> the previous task rather than creating a new one, which looks like your run vanished. It is a deliberate anti-clutter feature. Pass <code>reuse_last_task_id=False</code> when you want one task per run, which is nearly always during a sweep.
 </div>
 
 ## Clone, do not rerun
@@ -149,7 +149,7 @@ echo "clearml.conf" >> ~/.gitignore_global
 git config --global core.excludesfile ~/.gitignore_global
 ```
 
-```text ~/clearml.conf — the three edits worth making
+```text ~/clearml.conf: the three edits that matter
 sdk {
   development {
     # Every task on this machine sends artifacts and models to object storage
@@ -177,7 +177,7 @@ python -c "from clearml.config import get_config_object; print(get_config_object
 
 <div class="callout tip">
   <span class="ct">Put the reproduction commands in your README</span>
-  Three lines — <code>pip install -r requirements.txt</code>, <code>clearml-init</code>, <code>python src/train.py</code> — are the most valuable documentation in the repository, because they are simultaneously the instructions and the acceptance test for whether the project is reproducible at all.
+  Three lines (<code>pip install -r requirements.txt</code>, <code>clearml-init</code>, <code>python src/train.py</code>) are the most valuable documentation in the repository, because they are simultaneously the instructions and the acceptance test for whether the project is reproducible at all.
 </div>
 
 ## Writing a tracked script that ages well
@@ -219,7 +219,7 @@ data = Dataset.get(                               # 8. data version recorded
 |---|---|
 | ClearML imported and initialised first | Patching only works before the framework loads |
 | Every tunable value in one connected dict | So a clone is fully reconfigurable from the UI |
-| Read only from `connect`'s return value | So remote overrides actually take effect |
+| Read only from `connect`'s return value | So remote overrides take effect |
 | Seed set from a connected parameter | Otherwise two "identical" runs differ and you cannot tell why |
 | Dataset version as a parameter | A clone can be pointed at new data without a code change |
 | `execute_remotely` on its own line | The one-line switch between local debugging and remote training |
@@ -348,4 +348,4 @@ clearml-agent daemon --queue gpu --docker nvidia/cuda:12.1.0-runtime-ubuntu22.04
 
 Eight details in there are the whole lesson of this page: ClearML imported and initialised before any framework, `output_uri` pointed at object storage, `reuse_last_task_id=False` so no run overwrites another, tags added in code, every knob in one connected dict read back from the return value, the seed and the dataset version as parameters, `execute_remotely` as a one-line local/remote switch, and single values for the two numbers a reviewer will ask about.
 
-**Mid-level tips go deeper on every one of these** — hyperparameter optimisation without wasting GPU hours, agent caching and why the second run is fast, docker mode and `clearml-task` for code you cannot modify, `clearml-session` for remote debugging, dataset squashing and cache strategy on ephemeral runners, the services queue, model promotion as a workflow, and diagnosing "runs locally, fails on the agent" properly.
+**Mid-level tips go deeper on every one of these:** hyperparameter optimisation without wasting GPU hours, agent caching and why the second run is fast, docker mode and `clearml-task` for code you cannot modify, `clearml-session` for remote debugging, dataset squashing and cache strategy on ephemeral runners, the services queue, model promotion as a workflow, and diagnosing "runs locally, fails on the agent" properly.

@@ -1,4 +1,4 @@
-This is part two of three. It picks up exactly where Beginner ended and takes **every topic from there further**, then adds the machinery you have not met yet. Nothing is dropped and nothing is repeated for its own sake — where you already know the basics, we go straight to the depth.
+This is part two of three. It picks up exactly where Beginner ended and takes **every topic from there further**, then adds the machinery you have not met yet. Nothing is dropped and nothing is repeated for its own sake. Where you already know the basics, we go straight to the depth.
 
 ## Where this picks up
 
@@ -15,7 +15,7 @@ This is part two of three. It picks up exactly where Beginner ended and takes **
 | Queues | Priority, multi-queue workers, the services queue, and autoscaling |
 | Pipelines | Controller vs decorator in depth, caching, retries, monitoring, and parameter plumbing |
 | Debugging | `clearml-session`, log levels, reproducing an agent environment locally |
-| — **new** — | HPO with `HyperParameterOptimizer` · `clearml-task` · ClearML Serving · Reports · CI/CD |
+| **new** | HPO with `HyperParameterOptimizer` · `clearml-task` · ClearML Serving · Reports · CI/CD |
 
 Each section starts with the problem it solves, and ends with a **Try it** you can do on a real project in a few minutes.
 
@@ -48,14 +48,14 @@ Task.enqueue(clone, queue_name="gpu")
 | Call | Patches frameworks | Captures environment | Runs now | Use for |
 |---|---|---|---|---|
 | `Task.init` | Yes | Yes | Yes | Your own training script |
-| `Task.create` | No | No — you declare it | No | Launching a script from a controller |
+| `Task.create` | No | No. You declare it | No | Launching a script from a controller |
 | `Task.clone` | No | Inherited | No | Reruns with different parameters |
 
 Two lifecycle behaviours surprise people, and both are documented but easy to miss:
 
 **Reuse.** `Task.init` with default settings may *reuse* the last task created by the same script in the same project if that task has no recorded iterations or artifacts. It exists to stop a debugging session producing forty empty tasks. During a sweep it looks like your runs are vanishing, so pass `reuse_last_task_id=False`.
 
-**Continuation.** `continue_last_task=True` (or `=task_id`) resumes an existing task, appending scalars from the last reported iteration instead of restarting at zero. That is the right tool for a job that got OOM-killed at epoch 40 of 100 — and the wrong tool for a fresh experiment, because the scalar history will be a splice of two runs.
+**Continuation.** `continue_last_task=True` (or `=task_id`) resumes an existing task, appending scalars from the last reported iteration instead of restarting at zero. That is the right tool for a job that got OOM-killed at epoch 40 of 100, and the wrong tool for a fresh experiment, because the scalar history will be a splice of two runs.
 
 ```python
 task = Task.init(
@@ -66,7 +66,7 @@ task = Task.init(
 )
 ```
 
-Task types are more than decoration — they drive UI filtering and, for pipelines and services, actual behaviour:
+Task types are more than decoration. They drive UI filtering and, for pipelines and services, actual behaviour:
 
 | Type | For |
 |---|---|
@@ -80,7 +80,7 @@ Task types are more than decoration — they drive UI filtering and, for pipelin
 
 <div class="callout warn">
   <span class="ct">A distributed run needs one task, not one per rank</span>
-  Under <code>torchrun</code> or <code>accelerate</code>, every rank executes your script. If each calls <code>Task.init</code> you get eight tasks, eight sets of scalars, and a UI you cannot read. Initialise on rank zero and use <code>Task.current_task()</code> elsewhere — or let ClearML's own distributed support attach the workers to the master task.
+  Under <code>torchrun</code> or <code>accelerate</code>, every rank executes your script. If each calls <code>Task.init</code> you get eight tasks, eight sets of scalars, and a UI you cannot read. Initialise on rank zero and use <code>Task.current_task()</code> elsewhere, or let ClearML's own distributed support attach the workers to the master task.
 </div>
 
 ```python distributed pattern
@@ -100,7 +100,7 @@ if current:
   <span class="ct">Try it</span>
   <ol>
     <li>Run the same script twice in a row without <code>reuse_last_task_id=False</code> and check whether you got one task or two.</li>
-    <li>Now add artifacts to the first run and repeat. Note that reuse stops happening once a task has real content.</li>
+    <li>Now add artifacts to the first run and repeat. Reuse stops happening once a task has real content.</li>
     <li>Use <code>Task.create</code> plus <code>Task.enqueue</code> from a controller script to launch a training script you do not modify at all.</li>
     <li>Kill a run at iteration 50, then relaunch with <code>continue_last_task=True</code> and read the scalar chart.</li>
   </ol>
@@ -109,7 +109,7 @@ if current:
 
 ## Automatic capture: the mechanism, and its edges
 
-Beginner said "automagic". Here is what is actually happening, because at this level you have to fix it when it goes wrong.
+Beginner said "automagic". At this level you have to fix it when it goes wrong, so you need the mechanism.
 
 On `Task.init`, the SDK installs **binding patches**. Each supported framework has a binding module that wraps specific functions:
 
@@ -154,7 +154,7 @@ clearml-agent daemon --queue gpu --docker my-registry/train:2.3.0 \
   --force-current-version
 ```
 
-```text clearml.conf on the agent — the settings that matter
+```text clearml.conf on the agent: the settings that matter
 agent {
   package_manager {
     type: pip
@@ -167,18 +167,18 @@ agent {
 
 <div class="callout tip">
   <span class="ct"><code>system_site_packages: true</code> is the single most useful agent setting</span>
-  In docker mode with a prepared image, it tells the agent to use the container's existing packages instead of reinstalling everything into a fresh virtualenv. Setup time drops from minutes to seconds, and you stop fighting CUDA wheel resolution — because the image already resolved it.
+  In docker mode with a prepared image, it tells the agent to use the container's existing packages instead of reinstalling everything into a fresh virtualenv. Setup time drops from minutes to seconds, and you stop fighting CUDA wheel resolution, because the image already resolved it.
 </div>
 
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
-    <li>Look at a completed task's Execution &rarr; Installed Packages and compare it against your <code>pip freeze</code>. Note that it lists what you <em>imported</em>, not everything installed.</li>
+    <li>Look at a completed task's Execution &rarr; Installed Packages and compare it against your <code>pip freeze</code>. It lists what you <em>imported</em>, not everything installed.</li>
     <li>Move one import inside a function, rerun, and confirm the package disappears from the list.</li>
     <li>Call <code>task.set_packages("requirements.txt")</code> and confirm the list is now exactly your file.</li>
     <li>Run an agent in docker mode with <code>system_site_packages: true</code> and time the setup phase against virtualenv mode.</li>
   </ol>
-  <em>a package list that reflects imports rather than the environment, and — in step four — a setup phase that goes from minutes to seconds. That timing difference is the whole argument for prepared images at this level.</em>
+  <em>a package list that reflects imports rather than the environment, and, in step four, a setup phase that goes from minutes to seconds. That timing difference is the whole argument for prepared images at this level.</em>
 </div>
 
 ## Configuration: sections, objects, and references
@@ -240,7 +240,7 @@ pipe.add_step(
 
 <div class="callout warn">
   <span class="ct">Parameter names are section-qualified, and getting it wrong fails silently</span>
-  <code>General/lr</code>, not <code>lr</code>. A connected dict with no <code>name</code> lands in <code>General</code>; <code>argparse</code> lands in <code>Args</code>; a named section uses that name. An override targeting a key that does not exist is <b>not</b> an error — it is simply added as a new, unread parameter, and your step runs with its defaults. Check the executed task's Configuration tab to confirm the override landed.
+  <code>General/lr</code>, not <code>lr</code>. A connected dict with no <code>name</code> lands in <code>General</code>; <code>argparse</code> lands in <code>Args</code>; a named section uses that name. An override targeting a key that does not exist is <b>not</b> an error. It is added as a new, unread parameter, and your step runs with its defaults. Check the executed task's Configuration tab to confirm the override landed.
 </div>
 
 <div class="guide-try">
@@ -313,7 +313,7 @@ agent {
 sdk { storage { cache { default_base_dir: "/mnt/cache/clearml" } } }
 ```
 
-Running workers, in the four shapes you will actually need:
+Running workers, in the four shapes you will need:
 
 ```bash
 # One worker per GPU, both on the same queue
@@ -334,7 +334,7 @@ clearml-agent daemon --queue services --services-mode --cpu-only --detached
 
 <div class="callout warn">
   <span class="ct">Never run pipeline controllers on your GPU queue</span>
-  A controller is a task that mostly sleeps while its steps run. Put it on a GPU worker and it holds that GPU for the pipeline's entire duration doing nothing, while its own GPU steps queue behind it — a self-inflicted deadlock if there is only one worker. Controllers, optimisers, and monitors belong on <code>services</code>.
+  A controller is a task that mostly sleeps while its steps run. Put it on a GPU worker and it holds that GPU for the pipeline's entire duration doing nothing, while its own GPU steps queue behind it, a self-inflicted deadlock if there is only one worker. Controllers, optimisers, and monitors belong on <code>services</code>.
 </div>
 
 <div class="guide-try">
@@ -345,12 +345,12 @@ clearml-agent daemon --queue services --services-mode --cpu-only --detached
     <li>Start two agents on one queue and enqueue three tasks. Watch the third wait.</li>
     <li>Start a services-mode agent and enqueue three pipeline controllers. Confirm all three run at once.</li>
   </ol>
-  <em>the venv cache is usually the biggest single win — a repeated requirement set goes from a multi-minute install to a copy. Step four shows why <code>--services-mode</code> exists: without it, three controllers on one worker run strictly one after another.</em>
+  <em>the venv cache is usually the biggest single win: a repeated requirement set goes from a multi-minute install to a copy. Step four shows why <code>--services-mode</code> exists: without it, three controllers on one worker run strictly one after another.</em>
 </div>
 
 ## `clearml-task`: launching code with no SDK in it
 
-You will often need to run a repository you cannot or should not modify — someone else's training script, an open-source benchmark, a colleague's branch. `clearml-task` builds a task from the outside.
+You will often need to run a repository you cannot or should not modify: someone else's training script, an open-source benchmark, a colleague's branch. `clearml-task` builds a task from the outside.
 
 ```bash
 clearml-task \
@@ -404,7 +404,7 @@ clearml-task --import-offline /path/to/offline-<id>.zip
 
 ## Hyperparameter optimisation
 
-Beginner ran three learning rates by hand. `HyperParameterOptimizer` does that properly: it clones a base task N times, sets parameters from a search strategy, enqueues them, watches the objective, and kills the runs that are clearly losing.
+Beginner ran three learning rates by hand. `HyperParameterOptimizer` does that properly: it clones a base task N times, sets parameters from a search strategy, enqueues them, watches the objective, and kills the runs that are losing.
 
 ```python hpo.py
 from clearml import Task
@@ -460,19 +460,19 @@ The parameters that decide whether this saves GPU hours or wastes them:
 |---|---|
 | `max_number_of_concurrent_tasks` | Parallelism. Must fit your worker count, or trials just queue |
 | `total_max_jobs` | The budget. Set it deliberately, not optimistically |
-| `min_iteration_per_job` | Trials are protected from pruning until here — too low and you kill slow starters |
+| `min_iteration_per_job` | Trials are protected from pruning until here: too low and you kill slow starters |
 | `max_iteration_per_job` | Hard cap; the main lever on cost |
 | `time_limit_per_job` | Wall-clock safety net for a run that hangs |
 | `objective_metric_*` | Must match a reported `title`/`series` **exactly**, or nothing is optimised |
 
 <div class="callout warn">
   <span class="ct">The objective metric must match a reported scalar exactly</span>
-  <code>objective_metric_title="accuracy"</code> with <code>series="val"</code> only works if your base task calls <code>report_scalar("accuracy", "val", …)</code>. A mismatch does not raise — the optimiser simply sees no objective, cannot rank anything, and degenerates into random search that never prunes. Run the base task first, look at the Scalars tab, and copy the exact strings.
+  <code>objective_metric_title="accuracy"</code> with <code>series="val"</code> only works if your base task calls <code>report_scalar("accuracy", "val", …)</code>. A mismatch does not raise. The optimiser sees no objective, cannot rank anything, and degenerates into random search that never prunes. Run the base task first, look at the Scalars tab, and copy the exact strings.
 </div>
 
 <div class="callout tip">
   <span class="ct">The base task must be a completed, working run</span>
-  HPO clones it. If the base task fails, all forty trials fail identically and you have burned a queue. Always validate the base task end to end — including on the agent, not just locally — before pointing an optimiser at it.
+  HPO clones it. If the base task fails, all forty trials fail identically and you have burned a queue. Always validate the base task end to end (including on the agent, not just locally) before pointing an optimiser at it.
 </div>
 
 <div class="guide-try">
@@ -481,14 +481,14 @@ The parameters that decide whether this saves GPU hours or wastes them:
     <li>Run a base task that reports <code>accuracy/val</code> per epoch, and confirm the exact title and series in the UI.</li>
     <li>Launch an Optuna optimiser with a small budget (<code>total_max_jobs=8</code>) against your local agent.</li>
     <li>Open the optimiser task's Plots tab and read the parallel-coordinates and objective-over-time plots.</li>
-    <li>Now misspell the objective series and rerun. Note that nothing errors and no pruning happens.</li>
+    <li>Now misspell the objective series and rerun. Nothing errors and no pruning happens.</li>
   </ol>
-  <em>a live pruning plot showing weak trials dying early — and, in step four, an optimiser that silently does nothing useful. That silent failure is the single most expensive HPO mistake, because you only notice after the budget is spent.</em>
+  <em>a live pruning plot showing weak trials dying early, and, in step four, an optimiser that silently does nothing useful. That silent failure is the single most expensive HPO mistake, because you only notice after the budget is spent.</em>
 </div>
 
 ## Datasets at scale
 
-Beginner created a version and consumed it. Here is the machinery, because dataset decisions are where storage bills and job startup times are decided.
+Beginner created a version and consumed it. The machinery matters now, because dataset decisions are where storage bills and job startup times are decided.
 
 A dataset is a task whose artifacts are **chunked zip archives** plus a file-list state. A child version stores only its own chunks and points at its parents:
 
@@ -498,7 +498,7 @@ iris 1.0.0   ── chunk_000.zip (10k rows)
         └─ 1.2.0 ── chunk_000.zip (relabelled 500)  parents: [1.1.0]
 ```
 
-`get_local_copy()` walks that chain, downloads every needed chunk, and materialises a flattened view. That is cheap for three versions and expensive for three hundred — which is what `squash` is for:
+`get_local_copy()` walks that chain, downloads every needed chunk, and materialises a flattened view. That is cheap for three versions and expensive for three hundred, which is what `squash` is for:
 
 ```python
 from clearml import Dataset
@@ -531,7 +531,7 @@ print(ds.list_files(), ds.file_count, ds.total_size)
 | Method | Use for |
 |---|---|
 | `add_files` | Copy files into the dataset (uploaded as chunks) |
-| `add_external_files` | Register files that stay in your bucket — no copy, no duplication |
+| `add_external_files` | Register files that stay in your bucket: no copy, no duplication |
 | `remove_files` | Delete in a child version; parents are untouched |
 | `get_local_copy` | Read-only, cached, shared across tasks on the machine |
 | `get_mutable_local_copy` | A fresh writable extraction |
@@ -539,13 +539,13 @@ print(ds.list_files(), ds.file_count, ds.total_size)
 | `set_metadata` / `get_logger` | Statistics and plots attached to the data itself |
 
 <div class="callout tip">
-  <span class="ct"><code>add_external_files</code> is the right answer for very large data</span>
-  It records paths and hashes without copying bytes, so a 5 TB bucket becomes a versioned dataset without a second 5 TB copy. The trade is that immutability now depends on <b>your bucket</b> — if someone overwrites the underlying object, the "immutable" version silently changes. Pair it with bucket versioning and a write-restricted prefix, which Senior covers.
+  <span class="ct"><code>add_external_files</code> is the right answer for large data</span>
+  It records paths and hashes without copying bytes, so a 5 TB bucket becomes a versioned dataset without a second 5 TB copy. The trade is that immutability now depends on <b>your bucket</b>. If someone overwrites the underlying object, the "immutable" version silently changes. Pair it with bucket versioning and a write-restricted prefix, which Senior covers.
 </div>
 
 Two operational habits that matter here:
 
-**Chunk size is a real tuning knob.** Default chunking produces many medium zips. Very many small files benefit from larger chunks (fewer requests); a few huge files benefit from smaller ones (better parallelism on download).
+**Chunk size is a real tuning knob.** Default chunking produces many medium zips. Many small files benefit from larger chunks (fewer requests); a few huge files benefit from smaller ones (better parallelism on download).
 
 **Cache placement decides your job startup time.** On ephemeral runners the SDK cache is empty every time, so every job re-downloads the dataset. Mount a persistent volume at `sdk.storage.cache.default_base_dir` and the second job on that node starts immediately.
 
@@ -562,7 +562,7 @@ Two operational habits that matter here:
 
 ## Pipelines properly
 
-Beginner wrote a three-component pipeline. Here is what to know once pipelines become the thing you actually ship.
+Once pipelines become the thing you ship, Beginner's three-component example stops being enough.
 
 The controller API, with everything you need for production:
 
@@ -633,17 +633,17 @@ pipe.start(queue="services")        # start_locally(run_pipeline_steps_locally=T
 |---|---|
 | `cache_executed_step=True` | An unchanged step with unchanged inputs is reused, not rerun |
 | `retry_on_failure=N` | Transient failures (spot preemption, a flaky download) self-heal |
-| `pre_execute_callback` | Conditional steps — return `False` to skip |
+| `pre_execute_callback` | Conditional steps: return `False` to skip |
 | `post_execute_callback` | Promotion gates and aggregate reporting |
 | `monitor_metrics` | The step's metric is mirrored onto the pipeline task, so one page shows everything |
 | `monitor_models` / `monitor_artifacts` | The pipeline surfaces its steps' outputs directly |
 | `add_pipeline_tags=True` | Every step is tagged with the pipeline, so a run is filterable as a unit |
 
-Caching deserves a precise statement, because people expect it to be smarter than it is: a step is reused when its **base task, its parameters, and its code** are unchanged. Change a parameter and it reruns. Change nothing and it is skipped, and the *previous* run's artifacts are wired into the downstream step. It does not hash your input files, so a step reading a mutable path will happily reuse a stale result — which is a good argument for versioned datasets rather than paths.
+Caching deserves a precise statement, because people expect it to be smarter than it is: a step is reused when its **base task, its parameters, and its code** are unchanged. Change a parameter and it reruns. Change nothing and it is skipped, and the *previous* run's artifacts are wired into the downstream step. It does not hash your input files, so a step reading a mutable path will reuse a stale result, which is a good argument for versioned datasets rather than paths.
 
 <div class="callout warn">
   <span class="ct">A pipeline controller is a task, so it needs a worker of its own</span>
-  <code>pipe.start(queue="services")</code> enqueues the controller, which then enqueues its steps. If nothing is watching <code>services</code>, the pipeline never starts and the UI shows a queued controller with no steps — which reads like a broken pipeline but is a missing worker. <code>start_locally()</code> runs the controller in your process instead, which is how you should develop.
+  <code>pipe.start(queue="services")</code> enqueues the controller, which then enqueues its steps. If nothing is watching <code>services</code>, the pipeline never starts and the UI shows a queued controller with no steps, which reads like a broken pipeline but is a missing worker. <code>start_locally()</code> runs the controller in your process instead, which is how you should develop.
 </div>
 
 Scheduling turns a pipeline into a product:
@@ -750,14 +750,14 @@ model.tags = ["candidate"]
 | Field | Why it matters |
 |---|---|
 | `update_design` | The input/output contract, so a consumer can validate shapes |
-| `set_metadata` | Queryable numbers — this is what a promotion gate reads |
+| `set_metadata` | Queryable numbers. This is what a promotion gate reads |
 | `tags` | The routing mechanism; keep the vocabulary small and enforced |
 | `publish()` | Immutability. A published model cannot be silently swapped |
 | Task link | Lineage: weights → task → commit → dataset version |
 
 <div class="callout warn">
   <span class="ct">Tag vocabulary has to be agreed, or the registry is decoration</span>
-  If one person writes <code>prod</code>, another <code>production</code>, and a third <code>live</code>, then serving code querying <code>production</code> silently finds nothing and keeps the old model. Fix a small vocabulary — <code>candidate</code>, <code>staging</code>, <code>production</code>, <code>archived</code> — and set tags from code in the promotion task, never by hand.
+  If one person writes <code>prod</code>, another <code>production</code>, and a third <code>live</code>, then serving code querying <code>production</code> silently finds nothing and keeps the old model. Fix a small vocabulary (<code>candidate</code>, <code>staging</code>, <code>production</code>, <code>archived</code>) and set tags from code in the promotion task, never by hand.
 </div>
 
 <div class="guide-try">
@@ -768,7 +768,7 @@ model.tags = ["candidate"]
     <li>Try to change a published model's weights and read the refusal.</li>
     <li>Write a loader that fetches <code>tags=["production"]</code> and prints the model id, then re-run the promotion and the loader again.</li>
   </ol>
-  <em>a deployment that changed without a code change or a redeploy. Step three matters because "published" is the only thing standing between your gate and someone quietly replacing production weights.</em>
+  <em>a deployment that changed without a code change or a redeploy. Step three matters because "published" is the only thing standing between your gate and someone replacing production weights.</em>
 </div>
 
 ## ClearML Serving
@@ -825,7 +825,7 @@ class Preprocess:
 | `canary` | Weighted split between versions |
 
 <div class="callout warn">
-  <span class="ct">An inference endpoint is a network service — authenticate it</span>
+  <span class="ct">An inference endpoint is a network service: authenticate it</span>
   A ClearML Serving endpoint does not authenticate callers by itself. Put it behind an ingress or API gateway that terminates TLS and enforces authentication, and never expose it directly to the internet. This is the most common oversight when someone stands one up for a demo and then leaves it running.
 </div>
 
@@ -882,7 +882,7 @@ It prints a local URL tunnelled to the remote machine, with Jupyter, a browser V
     <li>Take a task that failed on the agent and start a session with <code>--base-task-id</code>. Reproduce the failure interactively.</li>
     <li>Shut it down and confirm the worker returns to idle in Workers &amp; Queues.</li>
   </ol>
-  <em>the failure reproduced in the environment that produced it, in a browser, in under two minutes. Step three converts the worst class of ClearML bug — "only breaks on the agent" — into an ordinary debugging session.</em>
+  <em>the failure reproduced in the environment that produced it, in a browser, in under two minutes. Step three converts the worst class of ClearML bug, "only breaks on the agent", into an ordinary debugging session.</em>
 </div>
 
 ## ClearML in CI
@@ -980,12 +980,12 @@ if acc < args.min_accuracy:
     <li>Now open one that improves it and confirm the check passes.</li>
     <li>Check what happens if the queue has no agent: how long does your CI job wait before it times out?</li>
   </ol>
-  <em>a red check with a link to a full experiment page. Step four is the operational detail people miss — without a timeout, a missing agent turns into a CI job that burns runner minutes for six hours.</em>
+  <em>a red check with a link to a full experiment page. Step four is the operational detail people miss: without a timeout, a missing agent turns into a CI job that burns runner minutes for six hours.</em>
 </div>
 
 ## Reports and sharing
 
-A tracked experiment is only useful if someone reads it. ClearML Reports are markdown documents that embed **live** task resources — a plot in a report updates when the task does.
+A tracked experiment is only useful if someone reads it. ClearML Reports are markdown documents that embed **live** task resources, so a plot in a report updates when the task does.
 
 | Element | Use |
 |---|---|
@@ -1027,11 +1027,11 @@ print("compare:", f"{task.get_output_log_web_page().split('/output')[0]}")
 
 ## Debugging, one level deeper
 
-Beginner had a tab order. Here is what to do when the tabs are not enough.
+Beginner had a tab order. When the tabs run out, work through these.
 
 <ol class="guide-steps">
   <li><b>Turn up SDK logging</b><code>CLEARML_LOG_LEVEL=DEBUG</code> shows every API call the SDK makes, which is how you diagnose a hang: you can see which request never returned.</li>
-  <li><b>Read the agent's own log, not the task's</b>Setup failures — pip resolution, docker pull, git fetch — happen before your code runs and appear in the agent's stdout, not in the task console.</li>
+  <li><b>Read the agent's own log, not the task's</b>Setup failures (pip resolution, docker pull, git fetch) happen before your code runs and appear in the agent's stdout, not in the task console.</li>
   <li><b>Reproduce the environment with <code>clearml-session --base-task-id</code></b>Interactive access to the exact environment the task got.</li>
   <li><b>Compare a working and a broken task in the UI</b>Details view with "hide identical values" narrows a mystery to a package version or a single parameter in seconds.</li>
   <li><b>Check the diff, not just the commit</b>Two tasks on the same commit can differ by the stored uncommitted patch. <code>task.data.script.diff</code> shows it.</li>
@@ -1072,16 +1072,16 @@ print("commit:", good.data.script.version_num, "→", bad.data.script.version_nu
   <span class="ct">Try it</span>
   <ol>
     <li>Run a script with <code>CLEARML_LOG_LEVEL=DEBUG</code> and read the API calls <code>Task.init</code> makes.</li>
-    <li>Deliberately break the docker image name on a task and find where the error appears — task console or agent log?</li>
+    <li>Deliberately break the docker image name on a task and find where the error appears: task console or agent log?</li>
     <li>Use the programmatic diff above on two of your own tasks that should be identical.</li>
-    <li>Point <code>CLEARML_API_HOST</code> at a wrong port and observe exactly how the hang presents.</li>
+    <li>Point <code>CLEARML_API_HOST</code> at a wrong port and observe how the hang presents.</li>
   </ol>
   <em>step two is the important habit: setup failures are invisible in the UI, and knowing to read the agent's log first saves the half hour you would otherwise spend refreshing the console tab.</em>
 </div>
 
 ## Putting it all together
 
-A complete project using everything on this page. Nothing here is new — read it as a whole and you should be able to justify every line.
+A complete project using everything on this page. Nothing here is new. Read it as a whole and you should be able to justify every line.
 
 ```text project layout
 .
@@ -1215,10 +1215,10 @@ Twelve decisions in there are the whole lesson of this page:
 | Serving follows a tag, so promotion deploys | ClearML Serving |
 
 <div class="guide-try">
-  <span class="ct">Try it — the one that matters</span>
+  <span class="ct">Try it: the one that matters</span>
   <ol>
     <li>Take this layout into a real project. Get the training task green on an agent, in docker mode, with an explicit package list.</li>
-    <li>Run the HPO with a small budget and confirm pruning happens — check the objective plot, not just the task count.</li>
+    <li>Run the HPO with a small budget and confirm pruning happens by checking the objective plot, not just the task count.</li>
     <li>Build the pipeline and run it twice. Confirm the cached step is skipped the second time.</li>
     <li>Wire the dataset trigger, then finalize a new dataset version and let the whole thing run unattended.</li>
     <li>Promote by tag and confirm your serving endpoint picks up the new model with no deploy step.</li>
@@ -1238,14 +1238,14 @@ You can control task creation and reuse precisely, fix requirement detection ins
 | Say why `system_site_packages` matters? | Trust the image; setup drops from minutes to seconds |
 | Explain `--services-mode`? | Many concurrent light tasks; controllers must not hold a GPU |
 | Write a correct HPO objective? | Exact `title`/`series` from the base task's Scalars tab |
-| Say what pipeline caching keys on? | Base task, parameters, and code — **not** input file contents |
+| Say what pipeline caching keys on? | Base task, parameters, and code: **not** input file contents |
 | Name the reference syntax for a step's model? | `${step.models.output.-1.url}` |
 | Explain how promotion reaches serving? | `auto-update` follows a tag; a tag move is a deploy |
 | Say what `clearml-session --base-task-id` gives you? | A shell in the exact environment that failed |
 | Name the first log to read on a setup failure? | The agent's own log, not the task console |
 | Say why fork PRs must not hold ClearML credentials? | Enqueue is remote code execution on your agents |
 
-**Senior takes every one of those topics further** — the self-hosted deployment and its three data stores, the credential and access model across workspaces, multi-tenancy and quota, storage cost and retention policy, Elasticsearch and MongoDB scaling and what breaks first, backup and upgrade procedure, audit and lineage for regulated work, GPU fleet economics and autoscaling, incident playbooks for a lost server or a corrupted index, and where ClearML stops and a feature store, a warehouse, or a dedicated serving stack begins.
+**Senior takes every one of those topics further:** the self-hosted deployment and its three data stores, the credential and access model across workspaces, multi-tenancy and quota, storage cost and retention policy, Elasticsearch and MongoDB scaling and what breaks first, backup and upgrade procedure, audit and lineage for regulated work, GPU fleet economics and autoscaling, incident playbooks for a lost server or a corrupted index, and where ClearML stops and a feature store, a warehouse, or a dedicated serving stack begins.
 
 
 

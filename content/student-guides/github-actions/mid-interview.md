@@ -50,9 +50,9 @@ Part two of three. A cumulative review of **Beginner and Mid-level material**, o
 |---|---|
 | `push` / `pull_request` | Commits land / a PR opens, updates, reopens |
 | `workflow_dispatch` | A human clicks **Run workflow**; supports typed `inputs` |
-| `schedule` | Cron matches — **UTC**, default branch only, **queued** not punctual |
+| `schedule` | Cron matches: **UTC**, default branch only, **queued** not punctual |
 | `release`, `issues`, `issue_comment` | Release published, issue activity |
-| `workflow_run` | Another workflow finished — runs in base-repo context |
+| `workflow_run` | Another workflow finished: runs in base-repo context |
 | `repository_dispatch` | An external API call, payload in `client_payload` |
 
 ```yaml
@@ -97,7 +97,7 @@ key: ${{ runner.os }}-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml')
 
 <div class="callout tip">
   <span class="ct">Two precedence rules</span>
-  Inside <code>if:</code> the <code>${{ }}</code> wrapper is <b>optional</b> — mixing styles in one condition causes confusing partial evaluation. And <code>&amp;&amp;</code>/<code>||</code> return <b>operands, not booleans</b>, which is why <code>${{ inputs.tag || github.sha }}</code> is the default-value idiom.
+  Inside <code>if:</code> the <code>${{ }}</code> wrapper is <b>optional</b>, and mixing styles in one condition causes confusing partial evaluation. <code>&amp;&amp;</code>/<code>||</code> return <b>operands, not booleans</b>, which is why <code>${{ inputs.tag || github.sha }}</code> is the default-value idiom.
 </div>
 
 ### `outcome` versus `conclusion`
@@ -110,7 +110,7 @@ key: ${{ runner.os }}-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml')
   run: echo "failed, but we chose to continue"
 ```
 
-`outcome` is what the step did; `conclusion` is the result after `continue-on-error`. A tolerated failure is `failure` / `success`. At job level the equivalent is `needs.<job>.result` — `success`, `failure`, `cancelled`, or `skipped`.
+`outcome` is what the step did; `conclusion` is the result after `continue-on-error`. A tolerated failure is `failure` / `success`. At job level the equivalent is `needs.<job>.result`: `success`, `failure`, `cancelled`, or `skipped`.
 
 <div class="callout warn">
   <span class="ct"><code>always()</code> is stronger than expected</span>
@@ -148,11 +148,11 @@ GitHub also injects defaults: `GITHUB_REPOSITORY`, `GITHUB_REF`, `GITHUB_REF_NAM
 | Fork pull requests | **Not** provided | Provided |
 | For | Tokens, keys, passwords | Regions, URLs, image names, flags |
 
-Both exist at **three levels** — organisation → repository → environment — most specific winning. `GITHUB_TOKEN` is automatic, per job, repository-scoped, and expires with the job.
+Both exist at **three levels**, organisation → repository → environment, most specific winning. `GITHUB_TOKEN` is automatic, per job, repository-scoped, and expires with the job.
 
 <div class="callout warn">
   <span class="ct">Masking is a safety net, not a mechanism</span>
-  GitHub redacts <b>known</b> values. It cannot redact one you transformed — base64-encode a secret, print it, and the redaction fails. Never print secrets; pass them via <code>env</code> so they never reach a command line.
+  GitHub redacts <b>known</b> values. It cannot redact one you transformed: base64-encode a secret, print it, and the redaction fails. Never print secrets; pass them via <code>env</code> so they never reach a command line.
 </div>
 
 ## Caching
@@ -169,7 +169,7 @@ Both exist at **three levels** — organisation → repository → environment �
 | Piece | Behaviour |
 |---|---|
 | `key` | **Exact** match; a hit restores and **skips the save** |
-| `restore-keys` | Ordered **prefixes** tried on a miss — a partial hit |
+| `restore-keys` | Ordered **prefixes** tried on a miss: a partial hit |
 | Immutability | Never overwritten, so the key must change when content should |
 | Scope | Follows the branch graph; unrelated branches do not share |
 | `cache-hit` | `'true'` **only** on an exact match |
@@ -186,14 +186,14 @@ Both exist at **three levels** — organisation → repository → environment �
   <div class="guide-compare-col bad">
     <h4>Keys that waste money</h4>
     <ul>
-      <li><code>github.sha</code> / <code>run_id</code> — misses <b>every</b> run</li>
-      <li>A fixed string — never invalidates, ships <b>stale</b> deps</li>
-      <li><code>hashFiles('**')</code> — any source edit busts it</li>
+      <li><code>github.sha</code> / <code>run_id</code>: misses <b>every</b> run</li>
+      <li>A fixed string: never invalidates, ships <b>stale</b> deps</li>
+      <li><code>hashFiles('**')</code>: any source edit busts it</li>
     </ul>
   </div>
 </div>
 
-Cache the **download** directory (`~/.npm`, `~/.cache/pip`, `~/.m2`), never an installed tree — restoring `node_modules` or a virtualenv brings platform-specific binaries and half-resolved state.
+Cache the **download** directory (`~/.npm`, `~/.cache/pip`, `~/.m2`), never an installed tree, because restoring `node_modules` or a virtualenv brings platform-specific binaries and half-resolved state.
 
 ## Artifacts
 
@@ -235,7 +235,7 @@ jobs:
       - run: echo "build: ${{ needs.build.result }}"
 ```
 
-A job that `needs` a matrix job sees a **single aggregated result**. Job outputs are size-limited and **not secret** — pass identifiers and JSON, never credentials or files.
+A job that `needs` a matrix job sees a **single aggregated result**. Job outputs are size-limited and **not secret**, so pass identifiers and JSON, never credentials or files.
 
 ## Matrix in depth
 
@@ -283,7 +283,7 @@ Hostname is `localhost` when steps run on the runner, but the **service name** o
 
 <div class="guide-compare">
   <div class="guide-compare-col good">
-    <h4>Reusable workflow — <em>job</em> level</h4>
+    <h4>Reusable workflow: <em>job</em> level</h4>
     <ul>
       <li><code>on: workflow_call</code> with typed <code>inputs</code>, <code>secrets</code>, <code>outputs</code></li>
       <li>Brings its own jobs, runners, <code>permissions</code></li>
@@ -292,7 +292,7 @@ Hostname is `localhost` when steps run on the runner, but the **service name** o
     </ul>
   </div>
   <div class="guide-compare-col bad">
-    <h4>Composite action — <em>step</em> level</h4>
+    <h4>Composite action: <em>step</em> level</h4>
     <ul>
       <li>Runs in the caller's job on the caller's runner</li>
       <li>No jobs, no matrices, no own runner</li>
@@ -319,7 +319,7 @@ The doubled path is correct: the first `.github` is the repository, the second t
 | Feature | Gives you |
 |---|---|
 | `environment: production` | Scoped secrets and variables, required reviewers, wait timers, branch restrictions, deployment history |
-| `permissions` | The token's scope — declaring **any** scope sets every undeclared one to `none` |
+| `permissions` | The token's scope: declaring **any** scope sets every undeclared one to `none` |
 | `concurrency` | One active run per group, optionally cancelling the older |
 | `needs` | Ordering plus outputs |
 | `timeout-minutes` | A ceiling below the six-hour default |
@@ -354,21 +354,21 @@ concurrency: { group: deploy-production, cancel-in-progress: false }
 ## Common interview questions
 
 <ol class="guide-steps">
-  <li><b>CI takes 25 minutes and people have stopped waiting.</b>Measure first from the run timings. Then in order of leverage: <em>do less work</em> — concurrency cancellation, path filters, conditions; <em>reuse work</em> — dependency caching, prebuilt images; <em>parallelise</em> — shard the suite across a matrix, by measured duration rather than file count. Move slow end-to-end tests to a nightly schedule with a smoke subset on the PR. Reaching for a bigger runner first is the answer of someone who has not measured.</li>
-  <li><b>The build job makes a binary and the deploy job cannot find it.</b>Separate jobs, separate machines. Upload an artifact and download it — or merge the jobs if splitting bought nothing.</li>
+  <li><b>CI takes 25 minutes and people have stopped waiting.</b>Measure first from the run timings. Then in order of leverage: <em>do less work</em> with concurrency cancellation, path filters, and conditions; <em>reuse work</em> with dependency caching and prebuilt images; <em>parallelise</em> by sharding the suite across a matrix, by measured duration rather than file count. Move slow end-to-end tests to a nightly schedule with a smoke subset on the PR. Reaching for a bigger runner first is the answer of someone who has not measured.</li>
+  <li><b>The build job makes a binary and the deploy job cannot find it.</b>Separate jobs, separate machines. Upload an artifact and download it, or merge the jobs if splitting bought nothing.</li>
   <li><b>The cache never helps. Debug it.</b>Print the key and <code>cache-hit</code>. A key containing <code>github.sha</code> misses every run; a fixed key never invalidates and ships stale dependencies. Correct keys hash the lockfile with <code>restore-keys</code> as a prefix fallback. Also check you are caching the download directory, not an installed tree.</li>
   <li><b>Same twelve-step pipeline in eleven repositories.</b>A reusable workflow in the organisation <code>.github</code> repository, versioned with a moving major tag, driven by typed <code>inputs</code>. Composite actions for the smaller repeated fragments inside it. Pass secrets explicitly rather than with <code>inherit</code>.</li>
   <li><b>Tests pass locally, fail in CI on the first run only.</b>A service container with no health check, or a dependency that happens to exist on your laptop. Add the health check and pin the setup versions.</li>
-  <li><b>A deploy must wait for a human.</b>An environment with required reviewers — the job pauses before its first step and the approval is recorded. Put the production credential on the <b>environment</b> rather than the repository, so ordinary CI cannot read it at all.</li>
+  <li><b>A deploy must wait for a human.</b>An environment with required reviewers: the job pauses before its first step and the approval is recorded. Put the production credential on the <b>environment</b> rather than the repository, so ordinary CI cannot read it at all.</li>
   <li><b>Test Python 3.10–3.13, but 3.13 may fail.</b>Matrix with <code>fail-fast: false</code>, an <code>include</code> entry carrying <code>experimental: true</code>, and <code>continue-on-error: ${{ matrix.experimental == true }}</code>.</li>
-  <li><b>Two merges deployed at once and one overwrote the other.</b>A <code>concurrency</code> group on the deploy job keyed on the environment with <code>cancel-in-progress: false</code>. Then make the deploy idempotent — concurrency is a guard, not a correctness property.</li>
-  <li><b>Explain <code>outcome</code> versus <code>conclusion</code>.</b><code>outcome</code> is the raw step result; <code>conclusion</code> is after <code>continue-on-error</code>. A tolerated failure is <code>failure</code>/<code>success</code> respectively — use <code>outcome</code> to react to the real result.</li>
+  <li><b>Two merges deployed at once and one overwrote the other.</b>A <code>concurrency</code> group on the deploy job keyed on the environment with <code>cancel-in-progress: false</code>. Then make the deploy idempotent, because concurrency is a guard, not a correctness property.</li>
+  <li><b>Explain <code>outcome</code> versus <code>conclusion</code>.</b><code>outcome</code> is the raw step result; <code>conclusion</code> is after <code>continue-on-error</code>. A tolerated failure is <code>failure</code>/<code>success</code> respectively, so use <code>outcome</code> to react to the real result.</li>
   <li><b>Reusable workflow or composite action?</b>Reusable workflow for a whole stage needing its own jobs, runners, or permissions. Composite action for a repeated step sequence inside an existing job. If you need a matrix or a different runner, it must be a workflow.</li>
-  <li><b>A required check never reports and the PR cannot merge.</b>A path filter skipped its workflow. Add a same-named lightweight workflow on the excluded paths that succeeds immediately — or make the check not required.</li>
+  <li><b>A required check never reports and the PR cannot merge.</b>A path filter skipped its workflow. Add a same-named lightweight workflow on the excluded paths that succeeds immediately, or make the check not required.</li>
   <li><b>How do you build a matrix from something computed at runtime?</b>An earlier job emits JSON to <code>$GITHUB_OUTPUT</code>; the matrix reads it with <code>fromJSON(needs.discover.outputs.list)</code>. The monorepo pattern: diff against the base to find changed services, then build only those.</li>
-  <li><b>How do you run a job against a real database?</b><code>services:</code> with a health check, connecting on <code>localhost</code> — or the service name if the job runs in a container. Beyond two or three containers, bring your own Compose file started in a <code>run</code> step.</li>
+  <li><b>How do you run a job against a real database?</b><code>services:</code> with a health check, connecting on <code>localhost</code>, or the service name if the job runs in a container. Beyond two or three containers, bring your own Compose file started in a <code>run</code> step.</li>
   <li><b>How would you chain two workflows?</b><code>workflow_run</code> on the second, gated by <code>github.event.workflow_run.conclusion == 'success'</code>, downloading the first run's artifacts with <code>run-id</code>. Note this runs in the base-repository context with a writable token, which matters for security.</li>
-  <li><b>What does <code>always()</code> actually do, and when is it wrong?</b>It runs even when the workflow is cancelled — so an <code>always()</code> step can keep alive a run someone is stopping. For cleanup that should respect cancellation, use <code>!cancelled()</code>.</li>
+  <li><b>What does <code>always()</code> do, and when is it wrong?</b>It runs even when the workflow is cancelled, so an <code>always()</code> step can keep alive a run someone is stopping. For cleanup that should respect cancellation, use <code>!cancelled()</code>.</li>
   <li><b>How do you report results without making people download a zip?</b>Write Markdown to <code>$GITHUB_STEP_SUMMARY</code>. It renders on the run page and costs one line.</li>
 </ol>
 

@@ -1,6 +1,6 @@
-This is part three of three. It closes the series by taking **every topic from Beginner and Mid one level further** — each one now has a security, scale, or ownership dimension — and adds the work you own when data versioning is your responsibility rather than your tool.
+This is part three of three. It closes the series by taking **every topic from Beginner and Mid one level further** (each one now has a security, scale, or ownership dimension) and adds the work you own when data versioning is your responsibility rather than your tool.
 
-Up to this point the questions have been about making a pipeline reproduce. From here they are different: who can read and who can overwrite the data, whether a result from eighteen months ago can still be reconstructed and proven, what your storage actually costs, what happens when a customer asks you to delete their records from an immutable content-addressed store, and where DVC stops being the right tool.
+Up to this point the questions have been about making a pipeline reproduce. From here they are different: who can read and who can overwrite the data, whether a result from eighteen months ago can still be reconstructed and proven, what your storage costs, what happens when a customer asks you to delete their records from an immutable content-addressed store, and where DVC stops being the right tool.
 
 ## Where this picks up
 
@@ -8,26 +8,26 @@ Up to this point the questions have been about making a pipeline reproduce. From
 |---|---|
 | Remotes | The **trust model**: who reads, who writes, and credentials that are never stored |
 | `.dvc/config.local` | OIDC and workload identity, so there is nothing to leak |
-| The cache is immutable | Object lock, retention, versioning — and what they do to `dvc gc` |
+| The cache is immutable | Object lock, retention, versioning, and what they do to `dvc gc` |
 | `push: false`, remote tiering | A real cost model: storage class, egress, request charges, lifecycle |
 | Hashing performance | Terabyte scale, sharding strategy, and when to stop using DVC |
 | `dvc import` | Data registries as a **product**, with a release cadence and consumers |
 | `dvc.lock` | Lineage, provenance, and audit trails that satisfy a regulator |
-| Deleting data | GDPR erasure against a content-addressed store — the hard problem |
+| Deleting data | GDPR erasure against a content-addressed store: the hard problem |
 | CI | Self-hosted and GPU runners, fork trust, and CML reporting |
 | Experiments | Fleet-level tracking, model registries, and promotion gates |
 | Debugging | Incident playbooks: corrupted cache, lost remote, unreproducible model |
-| — **new** — | Access model · retention policy · cost governance · platform ownership · where DVC ends |
+| **new** | Access model · retention policy · cost governance · platform ownership · where DVC ends |
 
 I am starting with the trust model, because every other decision in this track depends on it.
 
 ## The trust model: the bucket decides, not DVC
 
-A DVC remote is a storage bucket. Everything about who can do what to your data is decided in the storage provider, not in DVC — and DVC's design means the consequences differ from what people expect.
+A DVC remote is a storage bucket. Everything about who can do what to your data is decided in the storage provider, not in DVC, and DVC's design means the consequences differ from what people expect.
 
 <div class="guide-arch" style="--arch-cols:3">
   <div class="arch-lane" style="--lane-cols:3">
-    <span class="arch-label">principals — and the permission each one actually needs</span>
+    <span class="arch-label">principals, and the permission each one needs</span>
     <div class="arch-node"><b>Developer</b><small>Read everywhere · write on a <em>dev</em> prefix only</small></div>
     <div class="arch-node" data-kind="worker"><b>CI on a protected branch</b><small>Read + write for <code>dvc push</code>. Never delete</small></div>
     <div class="arch-node" data-kind="danger"><b>CI on a fork PR</b><small><b>Read only.</b> Any write is an open door</small></div>
@@ -36,7 +36,7 @@ A DVC remote is a storage bucket. Everything about who can do what to your data 
   <i class="arch-edge" data-dir="down"></i>
   <i class="arch-edge" data-dir="down" data-flow="optional"></i>
   <div class="arch-lane" style="--lane-cols:3">
-    <span class="arch-label">the remote — three prefixes, three policies</span>
+    <span class="arch-label">the remote: three prefixes, three policies</span>
     <div class="arch-node" data-kind="store"><b><code>ml-data-prod/dvc/</code></b><small>read: everyone · write: CI on main · <b>delete: nobody</b></small></div>
     <div class="arch-node" data-kind="store"><b><code>ml-data-dev/dvc/</code></b><small>read+write: developers · delete: lifecycle only</small></div>
     <div class="arch-node" data-kind="store"><b><code>ml-data-public/dvc/</code></b><small>read: anonymous and fork CI · write: CI on main</small></div>
@@ -47,7 +47,7 @@ A DVC remote is a storage bucket. Everything about who can do what to your data 
   <div class="arch-node" data-kind="danger"><b>Write ⇒ silent overwrite</b><small>An object at a hash path can be replaced. Every commit referencing it now resolves to wrong bytes, with no error</small></div>
   <div class="arch-node" data-kind="worker"><b><code>verify true</code></b><small>Re-hash on download, so corruption is refused instead of restored</small></div>
   <div class="arch-node" data-kind="danger"><b><code>gc --cloud</code></b><small>Permanent deletion, scoped by whatever the running client can see</small></div>
-  <p class="arch-note"><b>Why write matters more than it looks:</b> content addressing makes an identical push a no-op, which reads as harmless — but the same permission lets a client put different bytes at that hash. Bucket versioning is what makes that survivable, and it is the highest-priority change on this page.</p>
+  <p class="arch-note"><b>Why write matters more than it looks:</b> content addressing makes an identical push a no-op, which reads as harmless, but the same permission lets a client put different bytes at that hash. Bucket versioning is what makes that survivable, and it is the highest-priority change on this page.</p>
 </div>
 
 | Actor | Needs | Should not have |
@@ -61,7 +61,7 @@ A DVC remote is a storage bucket. Everything about who can do what to your data 
 
 Three properties of DVC's model make the access question sharper than it looks:
 
-**Content-addressed writes are silent overwrites.** Pushing an object writes to a path derived from its hash. Identical content is a no-op — but a client that can write can also *replace* an object at a hash path with different bytes, and every commit referencing that hash now resolves to the wrong data with no error anywhere. That is the reason write access matters more than it first appears.
+**Content-addressed writes are silent overwrites.** Pushing an object writes to a path derived from its hash. Identical content is a no-op, but a client that can write can also *replace* an object at a hash path with different bytes, and every commit referencing that hash now resolves to the wrong data with no error anywhere. That is the reason write access matters more than it first appears.
 
 **A pointer is not proof.** `dvc.lock` records the hash DVC expected. Nothing verifies the bytes on download unless you ask it to:
 
@@ -74,10 +74,10 @@ dvc pull --verify                          # or per-invocation
 
 <div class="callout warn">
   <span class="ct">The single most dangerous command in DVC</span>
-  <code>dvc gc --cloud --workspace</code> deletes every remote object not needed by the <b>currently checked-out</b> revision. On a repository with twenty branches that is a catastrophic, unrecoverable data loss — and it exits zero. Remove delete permission from human credentials entirely, do retention with a separate audited job, and enable object versioning so a mistake is survivable.
+  <code>dvc gc --cloud --workspace</code> deletes every remote object not needed by the <b>currently checked-out</b> revision. On a repository with twenty branches that is a catastrophic, unrecoverable data loss, and it exits zero. Remove delete permission from human credentials entirely, do retention with a separate audited job, and enable object versioning so a mistake is survivable.
 </div>
 
-The access shape that actually works:
+The access shape that works:
 
 ```text bucket layout and policy
 s3://ml-data-prod/dvc/            ← read: everyone   write: CI on main only   delete: nobody
@@ -143,7 +143,7 @@ dvc doctor                                              # confirm the driver see
 
 <div class="callout warn">
   <span class="ct">A fork pull request must never hold a write credential</span>
-  Fork CI runs contributor code with whatever identity the job holds. If that identity can write to your data remote, a contributor can overwrite datasets at will. Give fork builds a read-only remote or no remote at all, and split the workflow so the privileged half — <code>dvc push</code>, promotion, registry updates — never executes fork-supplied code.
+  Fork CI runs contributor code with whatever identity the job holds. If that identity can write to your data remote, a contributor can overwrite datasets at will. Give fork builds a read-only remote or no remote at all, and split the workflow so the privileged half (<code>dvc push</code>, promotion, registry updates) never executes fork-supplied code.
 </div>
 
 <div class="guide-try">
@@ -154,7 +154,7 @@ dvc doctor                                              # confirm the driver see
     <li>Try to assume that role from a throwaway branch and confirm it is refused.</li>
     <li>Delete the old secret from your CI settings and confirm nothing breaks.</li>
   </ol>
-  <em>a pipeline with no stored credential, and a refusal when the branch does not match. Step three is the one that proves the trust policy is actually scoped rather than merely present.</em>
+  <em>a pipeline with no stored credential, and a refusal when the branch does not match. Step three is the one that proves the trust policy is scoped rather than present.</em>
 </div>
 
 ## Immutability, retention, and object lock
@@ -177,7 +177,7 @@ aws s3api put-object-lock-configuration --bucket ml-data-prod \
 |---|---|---|
 | Bucket versioning | An overwrite or delete is recoverable | Storage for old versions |
 | Object lock, governance mode | Deletion needs a specific privilege | Operational friction |
-| Object lock, compliance mode | Deletion is impossible until expiry, **for anyone** | Cannot be undone — including by you |
+| Object lock, compliance mode | Deletion is impossible until expiry, **for anyone** | Cannot be undone: including by you |
 | Lifecycle to cold storage | Cheaper long-term retention | Retrieval latency and cost |
 | MFA delete | A second factor for destructive operations | Slower emergency response |
 
@@ -206,7 +206,7 @@ The interaction with `dvc gc` is the part people miss:
 
 <div class="callout warn">
   <span class="ct">Compliance-mode object lock and GDPR are in direct tension</span>
-  Compliance mode means nobody can delete an object before expiry — including you, including in response to a lawful erasure request. If you are subject to both retention and erasure obligations, the resolution is architectural: keep personal data out of the immutable store, or store it encrypted per-subject so erasure means destroying a key. Decide this before enabling compliance mode, because it cannot be walked back.
+  Compliance mode means nobody can delete an object before expiry, including you, and including in response to a lawful erasure request. If you are subject to both retention and erasure obligations, the resolution is architectural: keep personal data out of the immutable store, or store it encrypted per-subject so erasure means destroying a key. Decide this before enabling compliance mode, because it cannot be walked back.
 </div>
 
 <div class="guide-try">
@@ -217,12 +217,12 @@ The interaction with `dvc gc` is the part people miss:
     <li>Write a lifecycle rule transitioning objects older than 90 days to a colder class, and check the estimated saving.</li>
     <li>Run <code>dvc gc --cloud --dry-run --all-commits</code> and read carefully how many objects it proposes to remove.</li>
   </ol>
-  <em>a recovered overwrite and a refused deletion — the two properties that make a data remote trustworthy. Step four is the reality check: the number is usually large enough to make you want a lifecycle policy instead.</em>
+  <em>a recovered overwrite and a refused deletion, the two properties that make a data remote trustworthy. Step four is the reality check: the number is usually large enough to make you want a lifecycle policy instead.</em>
 </div>
 
-## Cost: what your data actually costs
+## Cost: what your data costs
 
-Mid introduced `push: false` as a cost lever. Here is the model, because "storage is cheap" stops being true at the point where a team runs sweeps.
+Mid introduced `push: false` as a cost lever. "Storage is cheap" stops being true once a team runs sweeps, so the full cost model matters.
 
 Four charges apply, and only the first is the one people think about:
 
@@ -311,11 +311,11 @@ dvc add --to-remote data/huge.parquet            # transfer straight to the remo
 dvc import-url --no-download s3://…/huge.parquet  # track without pulling
 ```
 
-`version_aware` is worth understanding at this scale: instead of hash-addressed objects, DVC stores files at their natural paths and relies on the bucket's own versioning for history. That makes the bucket browsable and readable by non-DVC tools — a real benefit when a data engineering team needs the same files — at the cost of losing cross-file deduplication.
+`version_aware` matters at this scale: instead of hash-addressed objects, DVC stores files at their natural paths and relies on the bucket's own versioning for history. That makes the bucket browsable and readable by non-DVC tools, a real benefit when a data engineering team needs the same files, at the cost of losing cross-file deduplication.
 
 <div class="callout warn">
   <span class="ct">There is a point where DVC is the wrong tool</span>
-  A billion-row table appended to hourly, queried by SQL, and shared with analysts is not a DVC problem — it is a table-format problem. Iceberg, Delta Lake, and Hudi give you time travel over that shape natively, and DVC would be duplicating the warehouse. Track the <b>query and the result's hash</b> so your pipeline is reproducible, and let the lakehouse version the table. Saying this clearly is a senior signal; insisting DVC handles everything is not.
+  A billion-row table appended to hourly, queried by SQL, and shared with analysts is a table-format problem rather than a DVC one. Iceberg, Delta Lake, and Hudi give you time travel over that shape natively, and DVC would be duplicating the warehouse. Track the <b>query and the result's hash</b> so your pipeline is reproducible, and let the lakehouse version the table. Saying this is a senior signal; insisting DVC handles everything is not.
 </div>
 
 <div class="guide-try">
@@ -386,7 +386,7 @@ stages:
 
 <div class="callout warn">
   <span class="ct">The failure mode of a shared registry</span>
-  A team needs one extra column, cannot get it added quickly, and forks the dataset. Six months later there are nine variants and no canonical source. The fix is <b>turnaround time on requests</b>, not policy — if a reasonable schema change takes three weeks, forking is the rational choice and you will lose. Treat the registry as a product with a service level, or do not call it canonical.
+  A team needs one extra column, cannot get it added quickly, and forks the dataset. Six months later there are nine variants and no canonical source. The fix is <b>turnaround time on requests</b>, not policy. If a reasonable schema change takes three weeks, forking is the rational choice and you will lose. Treat the registry as a product with a service level, or do not call it canonical.
 </div>
 
 <div class="guide-try">
@@ -402,7 +402,7 @@ stages:
 
 ## Lineage, provenance, and audit
 
-`dvc.lock` already records which inputs produced which outputs. For regulated work you need to turn that into an answer a reviewer or an auditor accepts — and the gap between the two is smaller than it looks, but it is not zero.
+`dvc.lock` already records which inputs produced which outputs. For regulated work you need to turn that into an answer a reviewer or an auditor accepts, and the gap between the two is smaller than it looks, but it is not zero.
 
 The question is always some form of: *"This model made a decision affecting a customer. Prove what trained it."*
 
@@ -423,7 +423,7 @@ dvc metrics diff <old-sha> <new-sha>
 
 | Question | Answered by |
 |---|---|
-| Which data trained this model? | `dvc.lock` at that commit — every dep hash |
+| Which data trained this model? | `dvc.lock` at that commit: every dep hash |
 | Which code version? | The Git commit itself |
 | Which parameters? | `params.yaml` at that commit |
 | What were the metrics? | `metrics.json`, committed in Git |
@@ -455,7 +455,7 @@ live.log_params({
 
 <div class="callout tip">
   <span class="ct">The strongest audit answer is a rebuild</span>
-  Documentation of lineage is weaker than a demonstration of it. A scheduled job that checks out a random past release, runs <code>dvc pull</code> and <code>dvc repro</code>, and asserts the metrics match is worth more than any lineage diagram — because it fails loudly the day reproducibility breaks, rather than the day an auditor asks.
+  Documentation of lineage is weaker than a demonstration of it. A scheduled job that checks out a random past release, runs <code>dvc pull</code> and <code>dvc repro</code>, and asserts the metrics match is worth more than any lineage diagram, because it fails loudly the day reproducibility breaks, rather than the day an auditor asks.
 </div>
 
 <div class="guide-try">
@@ -466,12 +466,12 @@ live.log_params({
     <li>List everything that revision does <em>not</em> pin: Python version, wheel versions, GPU driver, container digest.</li>
     <li>Add a hash-pinned lock file and the Dockerfile to a stage's <code>deps</code>, and confirm changing either invalidates the stage.</li>
   </ol>
-  <em>a model traced back to a commit in one command, and an honest list of what is still unpinned. Step three is the useful one — most teams discover their reproducibility stops at the environment boundary.</em>
+  <em>a model traced back to a commit in one command, and an honest list of what is still unpinned. Step three is the useful one: most teams discover their reproducibility stops at the environment boundary.</em>
 </div>
 
 ## Deleting data from a content-addressed store
 
-This is the hardest problem in the guide, and it is worth being precise because the naive answer is wrong.
+This is the hardest problem in the guide, and precision matters because the naive answer is wrong.
 
 A subject exercises their right to erasure. Their records are in `customers-2024-03.parquet`, which is in your DVC cache, on your remote, in three developers' local caches, and referenced by every commit that trained a model on it.
 
@@ -481,7 +481,7 @@ A subject exercises their right to erasure. Their records are in `customers-2024
   <div class="guide-compare-col good">
     <h4>What works: design for erasure</h4>
     <ul>
-      <li>Keep personal data out of the versioned store entirely — version <b>derived, aggregated, or pseudonymised</b> data</li>
+      <li>Keep personal data out of the versioned store entirely: version <b>derived, aggregated, or pseudonymised</b> data</li>
       <li>Crypto-shredding: encrypt per subject, delete the key</li>
       <li>Partition by subject or cohort so deletion is scoped</li>
       <li>Keep raw personal data in a governed system with real deletion, and let DVC track only its hash</li>
@@ -491,7 +491,7 @@ A subject exercises their right to erasure. Their records are in `customers-2024
     <h4>What does not work</h4>
     <ul>
       <li>Deleting the object and hoping nothing referenced it</li>
-      <li>Rewriting Git history — the bytes are elsewhere</li>
+      <li>Rewriting Git history, since the bytes are elsewhere</li>
       <li>Compliance-mode object lock plus an erasure obligation</li>
       <li>"We will handle it when someone asks"</li>
     </ul>
@@ -504,14 +504,14 @@ If you are already in the bad situation, the sequence is:
   <li><b>Establish the blast radius</b>Which hashes contain the data, and which commits, tags, and models reference those hashes. This is a <code>git log -S</code> over <code>dvc.lock</code> and every <code>.dvc</code> file.</li>
   <li><b>Decide what must survive</b>Usually the model and its metrics must remain auditable while the training data must go. That is an acceptable outcome in most regimes, and it needs to be written down.</li>
   <li><b>Rebuild the dataset without the subject</b>Produce a new version, push it, and update the pointers on active branches.</li>
-  <li><b>Delete the old objects everywhere</b>Remote, all local caches, all CI caches, and any registry mirror. Note that old versions in a versioned bucket count.</li>
+  <li><b>Delete the old objects everywhere</b>Remote, all local caches, all CI caches, and any registry mirror. Old versions in a versioned bucket count.</li>
   <li><b>Record the tombstone</b>A committed note stating which hash was erased, when, why, and under what authority. An unresolvable pointer with no explanation is worse than one with a documented reason.</li>
   <li><b>Close the class</b>Move personal data out of the versioned store so the next request is a key deletion rather than an incident.</li>
 </ol>
 
 <div class="callout warn">
-  <span class="ct">Content addressing and erasure are fundamentally in tension</span>
-  A content-addressed, immutable, widely replicated store is exactly the wrong shape for "make this specific record disappear everywhere". That is not a DVC flaw — it is the same tension in Git, in backups, and in any append-only log. The resolution is always architectural and always upstream of the versioning tool: <b>do not put erasable data in an immutable store.</b>
+  <span class="ct">Content addressing and erasure are in tension</span>
+  A content-addressed, immutable, widely replicated store is exactly the wrong shape for "make this specific record disappear everywhere". Git has the same tension, and so do backups and any append-only log. The resolution is always architectural and always upstream of the versioning tool: <b>do not put erasable data in an immutable store.</b>
 </div>
 
 <div class="guide-try">
@@ -522,12 +522,12 @@ If you are already in the bad situation, the sequence is:
     <li>Design the alternative: what would the pipeline look like if the versioned artifact were pseudonymised or aggregated instead?</li>
     <li>Write the one-page erasure runbook for your own project, including who authorises it.</li>
   </ol>
-  <em>usually an uncomfortable number in step two, and a redesign in step three that is smaller than expected. Writing the runbook before you need it is the whole exercise — this is not a problem to think about for the first time under a thirty-day deadline.</em>
+  <em>usually an uncomfortable number in step two, and a redesign in step three that is smaller than expected. Writing the runbook before you need it is the whole exercise. This is not a problem to think about for the first time under a thirty-day deadline.</em>
 </div>
 
 ## CI/CD at scale, and CML
 
-Mid put `dvc repro` in CI on a hosted runner. Real training needs GPUs, long timeouts, and data locality — and reporting that a reviewer actually reads.
+Mid put `dvc repro` in CI on a hosted runner. Real training needs GPUs, long timeouts, and data locality, and reporting that a reviewer reads.
 
 ```yaml .github/workflows/train.yml
 name: Train
@@ -581,7 +581,7 @@ Four scale concerns and their answers:
 | Concern | Answer |
 |---|---|
 | Training needs a GPU for six hours | Self-hosted runner, or a cloud runner provisioned per job and destroyed after |
-| Data locality | Runner in the same region as the bucket — egress often exceeds compute cost |
+| Data locality | Runner in the same region as the bucket: egress often exceeds compute cost |
 | Cold start on every run | Persistent runner with a warm `.dvc/cache`, or a cache action keyed on `dvc.lock` |
 | Reviewer visibility | CML comments with metrics, parameter, and data diffs plus rendered plots |
 
@@ -598,12 +598,12 @@ Four scale concerns and their answers:
     <li>Measure the run with a warm <code>.dvc/cache</code> against a cold one.</li>
     <li>Check what identity your pull-request job holds, and whether a fork build would receive it.</li>
   </ol>
-  <em>a pull-request comment a reviewer can act on without running anything, and a measurable cold-start cost. Step four is the security check that most teams have never actually verified.</em>
+  <em>a pull-request comment a reviewer can act on without running anything, and a measurable cold-start cost. Step four is the security check that most teams have never verified.</em>
 </div>
 
 ## Where DVC stops
 
-Knowing the boundary is itself a senior signal, and stating it clearly is worth more than defending DVC for every shape of data.
+Naming the boundary is itself a senior signal, and it lands better than defending DVC for every shape of data.
 
 <div class="guide-compare">
   <div class="guide-compare-col good">
@@ -630,17 +630,17 @@ Knowing the boundary is itself a senior signal, and stating it clearly is worth 
 
 | Tool | Solves | Overlaps DVC on |
 |---|---|---|
-| **Iceberg / Delta / Hudi** | Time travel and schema evolution over huge tables | Data versioning — but for tables, not files |
+| **Iceberg / Delta / Hudi** | Time travel and schema evolution over huge tables | Data versioning, but for tables, not files |
 | **A feature store** | Consistent features online and offline, point-in-time correctness | Nothing much; it is a serving concern |
 | **MLflow / W&B** | Experiment tracking and a model registry, with a UI | Experiments and metrics; DVC ties them to Git instead |
 | **LakeFS** | Git-like branching over an entire object store | Data versioning, at bucket rather than repo granularity |
-| **Airflow / Dagster / Prefect** | Scheduling, retries, distributed orchestration | Pipelines — but DVC has no scheduler |
+| **Airflow / Dagster / Prefect** | Scheduling, retries, distributed orchestration | Pipelines, but DVC has no scheduler |
 
 The combination that works in practice: **DVC for file-shaped data and reproducible pipelines, a table format for warehouse-shaped data, an orchestrator for scheduling, and DVC's own experiment tracking or MLflow for the model registry.** They compose because they solve different problems; the mistake is expecting any one of them to do all four.
 
 <div class="callout tip">
   <span class="ct">The honest answer about the DVC-plus-orchestrator question</span>
-  DVC has no scheduler, no retries, and no distributed execution. For a nightly retrain you run <code>dvc repro</code> <em>from</em> Airflow or GitHub Actions — the orchestrator schedules, DVC decides what actually needs to run and guarantees the lineage. Presenting DVC as an Airflow replacement is a red flag in an interview; presenting it as the reproducibility layer underneath one is correct.
+  DVC has no scheduler, no retries, and no distributed execution. For a nightly retrain you run <code>dvc repro</code> <em>from</em> Airflow or GitHub Actions: the orchestrator schedules, DVC decides what needs to run and guarantees the lineage. Presenting DVC as an Airflow replacement is a red flag in an interview; presenting it as the reproducibility layer underneath one is correct.
 </div>
 
 <div class="guide-try">
@@ -677,14 +677,14 @@ Once more than one team versions data, the highest-leverage work stops being tec
 
 <div class="callout warn">
   <span class="ct">The scheduled reproduction check is the metric that matters</span>
-  Pick a random past release each week, check it out on a clean runner, <code>dvc pull</code>, <code>dvc repro</code>, and assert the metrics match. That single job converts "reproducible" from a claim into a monitored property — and it fails on the day an upstream dependency, a deleted object, or an unpinned library breaks it, rather than on the day someone needs it.
+  Pick a random past release each week, check it out on a clean runner, <code>dvc pull</code>, <code>dvc repro</code>, and assert the metrics match. That single job converts "reproducible" from a claim into a monitored property, and it fails on the day an upstream dependency, a deleted object, or an unpinned library breaks it, rather than on the day someone needs it.
 </div>
 
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
     <li>Build a template repository containing a working pipeline, the CI workflow, and the shared <code>.dvc/config</code>. Use it for one real project.</li>
-    <li>Collect two of the metrics above across your repositories — unreferenced experiment bytes is usually the most revealing.</li>
+    <li>Collect two of the metrics above across your repositories. Unreferenced experiment bytes is usually the most revealing.</li>
     <li>Add the scheduled reproduction check for one release and let it run for a fortnight.</li>
     <li>Write the one-paragraph policy you would publish alongside the template, including how fast you will answer a request to change it.</li>
   </ol>
@@ -697,20 +697,20 @@ Under pressure, ordering matters more than knowledge. Five shapes, with the firs
 
 ### A remote object is corrupt or missing
 
-Confirm it first — `dvc pull -v` names the hash and the remote. Then check whether bucket versioning has a previous version of that key; if so, restore it and you are done. If not, find any machine or CI cache that still holds the object (`find .dvc/cache -name '<rest-of-hash>'`) and push from there. If nothing has it, the data is gone: identify every commit referencing the hash, rebuild the artifact if its inputs survive, and record a tombstone if it cannot be rebuilt. Then turn on `verify true` and versioning so the next occurrence is recoverable.
+Confirm it first: `dvc pull -v` names the hash and the remote. Then check whether bucket versioning has a previous version of that key; if so, restore it and you are done. If not, find any machine or CI cache that still holds the object (`find .dvc/cache -name '<rest-of-hash>'`) and push from there. If nothing has it, the data is gone: identify every commit referencing the hash, rebuild the artifact if its inputs survive, and record a tombstone if it cannot be rebuilt. Then turn on `verify true` and versioning so the next occurrence is recoverable.
 
 ### `dvc gc --cloud` deleted live data
 
-Stop all pushes immediately, because a subsequent push can overwrite the delete markers you need. Restore from bucket versioning — this is the entire reason versioning is non-optional. Then remove delete permission from every human credential and move retention to an audited lifecycle policy. The post-mortem action is a permission change, not a training session.
+Stop all pushes immediately, because a subsequent push can overwrite the delete markers you need. Restore from bucket versioning. This is the entire reason versioning is non-optional. Then remove delete permission from every human credential and move retention to an audited lifecycle policy. The post-mortem action is a permission change, not a training session.
 
 ### A model cannot be reproduced
 
-Work through the layers in order, because each is cheaper to check than the next: is the code commit findable, does `dvc pull` succeed for every dep in `dvc.lock`, does `dvc repro --dry` report up to date, and does an actual rerun produce matching metrics. The break is almost always the last two, and almost always the environment — an unpinned wheel, a different CUDA version, an undeclared random seed. Fix it by adding the missing pin to `deps`, not by documenting the discrepancy.
+Work through the layers in order, because each is cheaper to check than the next: is the code commit findable, does `dvc pull` succeed for every dep in `dvc.lock`, does `dvc repro --dry` report up to date, and does an actual rerun produce matching metrics. The break is almost always the last two, and almost always the environment: an unpinned wheel, a different CUDA version, an undeclared random seed. Fix it by adding the missing pin to `deps`, not by documenting the discrepancy.
 
 ### The cache filled the disk mid-sweep
 
 <div class="guide-timeline">
-  <div class="guide-timeline-item"><span>0m</span><strong>Stop the queue</strong><small><code>dvc queue stop</code>. Do not delete anything yet — a half-written cache object is worse than a full disk.</small></div>
+  <div class="guide-timeline-item"><span>0m</span><strong>Stop the queue</strong><small><code>dvc queue stop</code>. Do not delete anything yet, because a half-written cache object is worse than a full disk.</small></div>
   <div class="guide-timeline-item"><span>2m</span><strong>Measure before deleting</strong><small><code>du -sh .dvc/cache</code> and <code>dvc gc --dry-run --all-commits</code>. Know what is reachable.</small></div>
   <div class="guide-timeline-item"><span>5m</span><strong>Drop experiment refs first</strong><small><code>dvc exp remove --all</code> makes sweep artifacts unreachable, then <code>dvc gc --all-commits</code> reclaims them safely.</small></div>
   <div class="guide-timeline-item"><span>10m</span><strong>Move the cache if needed</strong><small><code>dvc cache dir --local /mnt/big/cache</code> rather than fighting a small root disk.</small></div>
@@ -719,7 +719,7 @@ Work through the layers in order, because each is cheaper to check than the next
 
 ### A credential leaked
 
-Rotate before anything else — the credential may already be in a log, a cache, or a fork. Then audit the bucket's access logs for the exposure window, looking specifically for writes and deletes rather than only reads. Replace the mechanism, not just the value: if a long-lived key leaked, the fix is OIDC, because rotating a key you still store only resets the clock.
+Rotate before anything else, because the credential may already be in a log, a cache, or a fork. Then audit the bucket's access logs for the exposure window, looking specifically for writes and deletes rather than only reads. Replace the mechanism, not just the value: if a long-lived key leaked, the fix is OIDC, because rotating a key you still store only resets the clock.
 
 <div class="guide-try">
   <span class="ct">Try it</span>
@@ -734,11 +734,11 @@ Rotate before anything else — the credential may already be in a log, a cache,
 
 ## The review checklist
 
-This is the artefact to take away from this level. Run it against any DVC project — your own, or one you are reviewing — and it catches nearly everything in this guide before it becomes an incident.
+Take this checklist away from this level. Run it against any DVC project (your own, or one you are reviewing) and it catches nearly everything covered here before it becomes an incident.
 
 | Check | Looking for | Level |
 |---|---|---|
-| Is `dvc.lock` committed and never hand-edited? | The record of what actually ran | Beginner |
+| Is `dvc.lock` committed and never hand-edited? | The record of what ran | Beginner |
 | Are all scripts and config files in `deps`? | No silent skips | Beginner |
 | Is `params.yaml` used instead of hard-coded values? | Config changes invalidate stages | Beginner |
 | Do metrics and plots use `cache: false`? | Diffable in Git without a pull | Beginner |
@@ -761,12 +761,12 @@ This is the artefact to take away from this level. Run it against any DVC projec
 
 <div class="callout tip">
   <span class="ct">Automate the mechanical half</span>
-  Several of these rows are machine-checkable: <code>dvc status</code> in CI, a grep for credentials in <code>.dvc/config</code>, a check that <code>dvc.lock</code> is committed whenever <code>dvc.yaml</code> changes, and a script asserting bucket versioning is on. Put those in CI and reserve human review for the judgement calls — is that external dep genuinely immutable, does this dataset contain personal data, is `push: false` the right call here.
+  Several of these rows are machine-checkable: <code>dvc status</code> in CI, a grep for credentials in <code>.dvc/config</code>, a check that <code>dvc.lock</code> is committed whenever <code>dvc.yaml</code> changes, and a script asserting bucket versioning is on. Put those in CI and reserve human review for the judgement calls: is that external dep immutable, does this dataset contain personal data, is `push: false` the right call here.
 </div>
 
 ## The complete picture
 
-The series' final artefact — every level's topics, hardened. Nothing in it is new.
+The series' final artefact: every level's topics, hardened. Nothing in it is new.
 
 ```yaml dvc.yaml
 vars:
@@ -873,14 +873,14 @@ aws s3api get-bucket-versioning --bucket ml-data-prod    # confirm survivability
 ```
 
 <div class="guide-try">
-  <span class="ct">Try it — the final exercise</span>
+  <span class="ct">Try it: the final exercise</span>
   <ol>
     <li>Build this end to end on a real project: pinned environment declared as a dependency, sharded inputs, tiered remotes, OIDC in CI, and the <code>dvc status</code> gate.</li>
     <li>Verify each control actively rather than trusting it: corrupt an object and confirm <code>verify</code> refuses it, try to delete from the remote with a developer credential and confirm refusal, try to edit a protected output in place, and push from a fork build and confirm it fails.</li>
     <li>Reproduce a release from three months ago on a clean runner and confirm the metrics match.</li>
     <li>Then hand it to a colleague and ask them to run the review checklist against it.</li>
   </ol>
-  <em>several refusals and one successful historical reproduction. A control you have never watched refuse anything is decoration — step two is the difference between a project that looks governed and one that is. The colleague review will find something you did not, which is the point.</em>
+  <em>several refusals and one successful historical reproduction. A control you have never watched refuse anything is decoration. Step two is the difference between a project that looks governed and one that is. The colleague review will find something you did not, which is the point.</em>
 </div>
 
 ## Where the series leaves you
@@ -899,17 +899,17 @@ You should now be able to look at a DVC project and see not just what it does bu
 
 | Can you… | |
 |---|---|
-| Explain what a `.dvc` file contains and why? | A hash, size, path — Git-sized, content-addressed |
+| Explain what a `.dvc` file contains and why? | A hash, size, path: Git-sized, content-addressed |
 | Say how `dvc repro` decides what to run? | Hashes in `dvc.lock` versus current inputs |
 | Name the most dangerous DVC command? | `dvc gc --cloud --workspace` |
 | Say why write access to a remote is a big deal? | An object at a hash path can be replaced silently |
 | Give the mechanism that catches corruption? | `verify true`, and bucket versioning to recover |
 | Explain how CI gets credentials with nothing stored? | OIDC with a branch-pinned trust policy |
-| Say what `dvc.lock` does *not* pin? | The environment — pin and declare it |
+| Say what `dvc.lock` does *not* pin? | The environment: pin and declare it |
 | Name the fix for a million small files? | Shard them; measure the difference |
 | Describe a data registry as a product? | Dated immutable paths, tags, README, owner, SLA |
 | Explain why erasure conflicts with content addressing? | Immutable, replicated, hash-addressed by design |
 | Say where DVC stops? | Tables, streaming, online features, scheduling |
 | Name the metric that proves reproducibility? | A scheduled rebuild of a past release |
 
-That review instinct is the most valuable thing in this guide, because — exactly as with pipelines and containers — most data incidents are prevented at review time rather than at recovery time.
+That review instinct outlasts any specific command, because, as with pipelines and containers, most data incidents are prevented at review time rather than at recovery time.

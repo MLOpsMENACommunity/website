@@ -19,13 +19,13 @@ Part one of three. Almost every beginner problem with MLflow comes from one of t
 | Metric chart has one point per run only | Metric logged once, outside the loop | Log inside the loop with a step |
 | Serving returns confident nonsense | No signature; columns reordered or retyped | `infer_signature(...)` or `input_example=` |
 | Serving fails on load with an import error | Environment mismatch with the training env | Default `--env-manager virtualenv`, not `local` |
-| `mlflow models serve` is very slow to start | Building a fresh virtualenv each time | Fine in production; use `--env-manager local` for quick checks |
+| `mlflow models serve` is slow to start | Building a fresh virtualenv each time | Fine in production; use `--env-manager local` for quick checks |
 | `Model does not have the "python_function" flavor` | Logged with a save API instead of a log/flavour API | Log through a flavour module, e.g. `mlflow.sklearn.log_model` |
 | Two runs are indistinguishable | No `run_name`, no tags | Name and tag in code |
 | `transition_model_version_stage` warnings | Deprecated stages API | Use aliases |
 | A promoted model cannot be traced to code | Run executed from a dirty tree | Commit first; MLflow stores the commit, not a diff |
 | Disk filling in `mlruns/` | Every run keeps a full model copy | An artifact store with lifecycle rules; log models deliberately |
-| `search_runs` returns nothing | Filter string quoting — params are strings | `params.max_depth = '5'`, quoted |
+| `search_runs` returns nothing | Filter string quoting: params are strings | `params.max_depth = '5'`, quoted |
 
 ## The habits that pay off most
 
@@ -53,21 +53,21 @@ Short, self-contained exercises. Each one takes a few minutes and leaves you wit
   <li><b>Move an alias, change a deployment</b>Register two versions, point <code>champion</code> at one, load by alias, then move the alias and rerun the identical code.</li>
   <li><b>Serve without a server</b><code>mlflow models predict -m runs:/…/model -i input.json --env-manager virtualenv</code>. Watch it build the environment from the logged requirements.</li>
   <li><b>Autolog a grid search</b>Run a six-candidate <code>GridSearchCV</code> under autolog and look at the parent's child runs.</li>
-  <li><b>Query your own history</b><code>mlflow.search_runs</code> with a filter on a metric and a tag. Note that params compare as quoted strings.</li>
+  <li><b>Query your own history</b><code>mlflow.search_runs</code> with a filter on a metric and a tag. Params compare as quoted strings.</li>
   <li><b>Reproduce a run from what MLflow recorded</b>Pick an old run and try to rebuild it from its tags and params alone. Write down what was missing.</li>
 </ol>
 
 ## Debugging order
 
-Follow this rather than guessing — the first two steps answer most problems.
+Follow this rather than guessing, since the first two steps answer most problems.
 
 <ol class="guide-steps">
   <li><b>Print the tracking URI and experiment</b><code>mlflow.get_tracking_uri()</code> and <code>mlflow.get_experiment_by_name(...)</code>. If the run is not where you expected, nothing else matters.</li>
   <li><b>Check the run's status and artifact URI</b><code>client.get_run(id).info</code>. A <code>RUNNING</code> status means the process died; an unreachable <code>artifact_uri</code> explains missing files.</li>
-  <li><b>Read the params, not your code</b>Under autolog especially, the recorded params are what actually ran.</li>
+  <li><b>Read the params, not your code</b>Under autolog especially, the recorded params are what ran.</li>
   <li><b>Read the <code>mlflow.*</code> tags</b>Source file, git commit, user, run type. A surprising commit explains a surprising result.</li>
   <li><b>Open the model's <code>MLmodel</code> and <code>requirements.txt</code></b>Every load and serve failure is answered here. Compare against the environment doing the loading.</li>
-  <li><b>Reproduce the load path without a server</b><code>mlflow models predict --env-manager virtualenv</code> exercises exactly what serving would do, with a traceback you can read.</li>
+  <li><b>Reproduce the load path without a server</b><code>mlflow models predict --env-manager virtualenv</code> exercises what serving would do, with a traceback you can read.</li>
 </ol>
 
 ```python a debugging snippet worth keeping
@@ -122,16 +122,16 @@ with mlflow.start_run(run_id="a1b2c3d4e5f64718") as run:
 
 <div class="callout warn">
   <span class="ct">A nested run without <code>nested=True</code> raises</span>
-  Calling <code>start_run</code> while another run is active is an error unless you pass <code>nested=True</code>. In a notebook this often means a previous cell left a run open — which is another reason the context manager is not optional.
+  Calling <code>start_run</code> while another run is active is an error unless you pass <code>nested=True</code>. In a notebook this often means a previous cell left a run open, which is another reason the context manager is not optional.
 </div>
 
-## Param, metric, tag, artifact — the decision
+## Param, metric, tag, artifact: the decision
 
 Half of all beginner MLflow confusion lives here, and two questions resolve it: **is it a number I might plot?** and **might I change my mind about it after the run?**
 
 <div class="guide-compare">
   <div class="guide-compare-col good">
-    <h4>Param — configuration</h4>
+    <h4>Param: configuration</h4>
     <ul>
       <li>Hyperparameters, seed, feature-set version</li>
       <li>Set once, at the top of the run</li>
@@ -140,7 +140,7 @@ Half of all beginner MLflow confusion lives here, and two questions resolve it: 
     </ul>
   </div>
   <div class="guide-compare-col bad">
-    <h4>Metric — measurement</h4>
+    <h4>Metric: measurement</h4>
     <ul>
       <li>Loss, AUC, latency, cost, training minutes</li>
       <li>Logged with a <code>step</code>, so it is a series</li>
@@ -150,7 +150,7 @@ Half of all beginner MLflow confusion lives here, and two questions resolve it: 
   </div>
 </div>
 
-Tags are the third axis and the most underused: mutable, searchable labels that let you reclassify runs after the fact. `broken`, `paper-v2`, `keep`, `dataset=v3` — these are what make old runs findable.
+Tags are the third axis and the most underused: mutable, searchable labels that let you reclassify runs after the fact. `broken`, `paper-v2`, `keep`, `dataset=v3`. These are what make old runs findable.
 
 Artifacts are everything that is a file. The rule: if a reviewer would want to look at it, log it as an artifact rather than describing it in a metric.
 
@@ -190,7 +190,7 @@ outputs/
 
 <div class="callout tip">
   <span class="ct">Put the reproduction commands in your README</span>
-  Three lines — <code>pip install -r requirements.txt</code>, the <code>export MLFLOW_TRACKING_URI=…</code>, and <code>mlflow run . -P …</code> — are the most valuable documentation in the repository, because they are simultaneously the instructions and the test of whether the project is reproducible at all.
+  Three lines (<code>pip install -r requirements.txt</code>, the <code>export MLFLOW_TRACKING_URI=…</code>, and <code>mlflow run. -P …</code>) are the most valuable documentation in the repository, because they are both the instructions and the test of whether the project is reproducible at all.
 </div>
 
 ## Writing a tracked script that ages well
@@ -365,4 +365,4 @@ mlflow models serve -m "models:/churn-classifier@champion" --port 5001
 
 Eight details in there are the whole lesson of this page: one tracking URI in the environment, a named experiment, autolog enabled before the estimator with `log_models=False`, a run named and tagged at creation, the seed and data version as params, a signature on every logged model, promotion by moving an alias with an explicit margin, and an `MLproject` so the run is one typed command.
 
-**Mid-level tips go deeper on every one of these** — nested runs and sweep hygiene, custom `pyfunc` models for preprocessing that has to travel with the model, dependency pinning that actually holds, dataset tracking and lineage, promotion gates in CI, `mlflow.evaluate` validation thresholds, tracing and LLM evaluation, deployment targets, and diagnosing "loads locally, fails in serving".
+**Mid-level tips go deeper on every one of these:** nested runs and sweep hygiene, custom `pyfunc` models for preprocessing that has to travel with the model, dependency pinning that holds, dataset tracking and lineage, promotion gates in CI, `mlflow.evaluate` validation thresholds, tracing and LLM evaluation, deployment targets, and diagnosing "loads locally, fails in serving".

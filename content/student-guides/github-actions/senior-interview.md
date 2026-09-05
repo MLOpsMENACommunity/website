@@ -1,6 +1,6 @@
-Part three of three, and the one to read if you only read one. A cumulative review of **the entire series** — foundations, pipeline machinery, and the security and platform work a senior owns — organised by topic rather than by level. About fifty minutes. Fast review first, common questions at the end.
+Part three of three, and the one to read if you only read one. A cumulative review of **the entire series** (foundations, pipeline machinery, and the security and platform work a senior owns) organised by topic rather than by level. About fifty minutes. Fast review first, common questions at the end.
 
-## Part one — foundations
+## Part one: foundations
 
 <div class="flow">
   <div class="node">EVENT<small>push / PR / cron</small></div>
@@ -52,7 +52,7 @@ jobs:
   </div>
 </div>
 
-`run` is a shell command; `uses` is a published action configured with `with:` — mutually exclusive in one step. `needs` builds the dependency graph and grants access to the earlier job's outputs.
+`run` is a shell command; `uses` is a published action configured with `with:`, and they are mutually exclusive in one step. `needs` builds the dependency graph and grants access to the earlier job's outputs.
 
 ### Triggers
 
@@ -60,9 +60,9 @@ jobs:
 |---|---|
 | `push` / `pull_request` | Commits land / a PR opens, updates, reopens |
 | `workflow_dispatch` | A human clicks **Run workflow**; supports typed `inputs` |
-| `schedule` | Cron matches — **UTC**, default branch only, queued not punctual |
+| `schedule` | Cron matches: **UTC**, default branch only, queued not punctual |
 | `release`, `issues`, `issue_comment` | Release published, issue activity |
-| `workflow_run` | Another workflow finished — base-repo context |
+| `workflow_run` | Another workflow finished: base-repo context |
 | `repository_dispatch` | External API call, payload in `client_payload` |
 
 ```yaml
@@ -91,7 +91,7 @@ The runner is new per job; the shell is new per step.
 | `if` never matches on main | `github.ref` is `refs/heads/main` | Compare the full ref |
 | `python-version: 3.10` → 3.1 | YAML numeric | Quote versions |
 
-## Part two — pipeline machinery
+## Part two: pipeline machinery
 
 ### Expressions and contexts
 
@@ -113,7 +113,7 @@ if: contains(fromJSON('["main","develop"]'), github.ref_name)
 
 Inside `if:` the `${{ }}` wrapper is **optional**; `&&`/`||` return **operands not booleans**, which is why `${{ inputs.tag || github.sha }}` is the default-value idiom.
 
-**`outcome` vs `conclusion`:** raw step result vs result after `continue-on-error`. A tolerated failure is `failure` / `success`. **`always()` runs even on cancellation** — use `!cancelled()` for cleanup that should stop.
+**`outcome` vs `conclusion`:** raw step result vs result after `continue-on-error`. A tolerated failure is `failure` / `success`. **`always()` runs even on cancellation**, so use `!cancelled()` for cleanup that should stop.
 
 ### The four special files
 
@@ -126,7 +126,7 @@ Inside `if:` the `${{ }}` wrapper is **optional**; `&&`/`||` return **operands n
     echo "| coverage | 91% |"       >> "$GITHUB_STEP_SUMMARY"  # run page
 ```
 
-Not readable in the writing step; **none cross a job boundary**. Across jobs: **outputs for strings, artifacts for files** — job outputs are size-limited and not secret.
+Not readable in the writing step; **none cross a job boundary**. Across jobs: **outputs for strings, artifacts for files**, and job outputs are size-limited and not secret.
 
 ### Secrets versus variables
 
@@ -137,7 +137,7 @@ Not readable in the writing step; **none cross a job boundary**. Across jobs: **
 | Fork pull requests | **Not** provided | Provided |
 | For | Tokens, keys, passwords | Regions, URLs, flags |
 
-Three levels — organisation → repository → environment — most specific wins. `GITHUB_TOKEN` is automatic, per job, repository-scoped, expires with the job. **Pass secrets via `env`, never into a command line**, and never echo them: masking cannot redact a value you transformed.
+Three levels, organisation → repository → environment, most specific wins. `GITHUB_TOKEN` is automatic, per job, repository-scoped, expires with the job. **Pass secrets via `env`, never into a command line**, and never echo them: masking cannot redact a value you transformed.
 
 ### Caching and artifacts
 
@@ -182,13 +182,13 @@ jobs:
 
 Matrix axes multiply, `exclude` removes, `include` adds; `fail-fast: true` by default; `max-parallel` for shared resources; 256-job ceiling; **adding an axis renames a required check**.
 
-Service containers need a **health check** — its absence is the entire explanation for "fails on the first run, passes on the re-run". Hostname is `localhost` from the runner, the **service name** from inside a `container:`.
+Service containers need a **health check**, and its absence is the entire explanation for "fails on the first run, passes on the re-run". Hostname is `localhost` from the runner, the **service name** from inside a `container:`.
 
 ### Reuse, environments, concurrency
 
 <div class="guide-compare">
   <div class="guide-compare-col good">
-    <h4>Reusable workflow — job level</h4>
+    <h4>Reusable workflow: job level</h4>
     <ul>
       <li><code>on: workflow_call</code>, typed inputs, explicit secrets, outputs</li>
       <li>Own jobs, runners, <code>permissions</code></li>
@@ -196,7 +196,7 @@ Service containers need a **health check** — its absence is the entire explana
     </ul>
   </div>
   <div class="guide-compare-col bad">
-    <h4>Composite action — step level</h4>
+    <h4>Composite action: step level</h4>
     <ul>
       <li>Runs in the caller's job on the caller's runner</li>
       <li>No jobs, no matrices, no own runner</li>
@@ -212,9 +212,9 @@ concurrency: { group: '${{ github.workflow }}-${{ github.ref }}', cancel-in-prog
 concurrency: { group: deploy-production, cancel-in-progress: false }
 ```
 
-An **environment** gives scoped secrets and variables, required reviewers, wait timers, branch restrictions, and deployment history. A **required check skipped by a path filter** blocks a PR forever — fix with a same-named stub workflow.
+An **environment** gives scoped secrets and variables, required reviewers, wait timers, branch restrictions, and deployment history. A **required check skipped by a path filter** blocks a PR forever, fixed with a same-named stub workflow.
 
-## Part three — trust, security, and scale
+## Part three: trust, security, and scale
 
 ### The trust model
 
@@ -229,7 +229,7 @@ Three properties decide exposure: **whose code runs**, **whether secrets are pre
 
 <div class="callout warn">
   <span class="ct">The answer that must be instant</span>
-  <code>pull_request_target</code> plus checking out <code>github.event.pull_request.head.sha</code> executes <b>untrusted fork code</b> in a job holding <b>your secrets and a writable token</b>. Safe shapes: never check out the head ref, or split privilege — an unprivileged <code>pull_request</code> job builds and uploads an artifact, and a separate <code>workflow_run</code> job consumes it without executing fork code.
+  <code>pull_request_target</code> plus checking out <code>github.event.pull_request.head.sha</code> executes <b>untrusted fork code</b> in a job holding <b>your secrets and a writable token</b>. Safe shapes: never check out the head ref, or split privilege so that an unprivileged <code>pull_request</code> job builds and uploads an artifact, and a separate <code>workflow_run</code> job consumes it without executing fork code.
 </div>
 
 ### Script injection
@@ -266,7 +266,7 @@ jobs:
       id-token: write       # required for OIDC
 ```
 
-**Declaring any scope sets every undeclared scope to `none`** — the whole mechanism. Set the organisation default to read-only and make workflows opt in. A reusable workflow **receives the caller's token** and cannot exceed it. `GITHUB_TOKEN` **cannot reach another repository** — use a GitHub App installation token (scoped, short-lived, attributable) rather than a PAT (a human's full access, no job-bound expiry).
+**Declaring any scope sets every undeclared scope to `none`**, which is the whole mechanism. Set the organisation default to read-only and make workflows opt in. A reusable workflow **receives the caller's token** and cannot exceed it. `GITHUB_TOKEN` **cannot reach another repository**, so use a GitHub App installation token (scoped, short-lived, attributable) rather than a PAT (a human's full access, no job-bound expiry).
 
 ### OIDC
 
@@ -279,7 +279,7 @@ jobs:
 
 <div class="callout warn">
   <span class="ct">Where OIDC is almost always wrong</span>
-  A trust policy matching <code>repo:my-org/*:*</code> lets <b>any branch of any repository</b> assume the role — including a branch an attacker opens a PR from. Constrain the <code>sub</code> claim to <code>repo:org/repo:ref:refs/heads/main</code>, or better <code>…:environment:production</code>. Then verify from a throwaway branch — it must be refused.
+  A trust policy matching <code>repo:my-org/*:*</code> lets <b>any branch of any repository</b> assume the role, including a branch an attacker opens a PR from. Constrain the <code>sub</code> claim to <code>repo:org/repo:ref:refs/heads/main</code>, or better <code>…:environment:production</code>. Then verify from a throwaway branch. It must be refused.
 </div>
 
 ### Supply chain
@@ -287,13 +287,13 @@ jobs:
 | Control | Removes |
 |---|---|
 | SHA-pin third-party actions | A moving tag repointed at malicious code |
-| Dependabot on `github-actions` | Pins going stale — pinning without updating is its own failure |
+| Dependabot on `github-actions` | Pins going stale: pinning without updating is its own failure |
 | Organisation allow-list | Unvetted actions entering via any repository |
 | `contents: read` default | A compromised step's ability to push |
 | Environment protection | An automated path to production without review |
 | Attestations / provenance | Being unable to prove what built an artifact |
 
-Two surfaces worth raising unprompted: **caches are a write surface** — a PR branch can poison a cache a later `main` run restores; and **self-hosted runners on public repositories** combine untrusted code with persistent state.
+Two surfaces worth raising unprompted: **caches are a write surface**, since a PR branch can poison a cache a later `main` run restores; and **self-hosted runners on public repositories** combine untrusted code with persistent state.
 
 ### Container builds, custom actions, runners, cost
 
@@ -314,11 +314,11 @@ Two surfaces worth raising unprompted: **caches are a write surface** — a PR b
 | JavaScript | Node on the runner | Logic, API calls, cross-platform | Bundled `dist/` must be committed |
 | Docker | A container on the runner | Any toolchain | Linux only, pull cost per job |
 
-Hosted runners by default; larger hosted before self-hosted; self-hosted only for GPU, licences, or VPC reach — and then **ephemeral, repo-scoped, network-segmented, never fork-schedulable**. Windows bills ~2× Linux, macOS ~10×.
+Hosted runners by default; larger hosted before self-hosted; self-hosted only for GPU, licences, or VPC reach, and then **ephemeral, repo-scoped, network-segmented, never fork-schedulable**. Windows bills ~2× Linux, macOS ~10×.
 
 ### Platform, observability, ML
 
-Standardise with reusable workflows in an organisation `.github` repository, CODEOWNERS on the workflow folder, a moving major tag, and a **canary repository before moving it**. Enforce with policy, not documentation — and keep upstream turnaround fast, because if a reasonable change takes two weeks, forking is rational and you will lose.
+Standardise with reusable workflows in an organisation `.github` repository, CODEOWNERS on the workflow folder, a moving major tag, and a **canary repository before moving it**. Enforce with policy, not documentation, and keep upstream turnaround fast, because if a reasonable change takes two weeks, forking is rational and you will lose.
 
 Four numbers turn "CI is slow" into a funded priority: **median and p95 duration · failure rate split into real failures and flakes · queue time · cost by workflow and runner label.**
 
@@ -341,24 +341,24 @@ For ML: **Actions is the orchestrator and audit trail, not the compute.** Valida
 ## Common interview questions
 
 <ol class="guide-steps">
-  <li><b>Explain <code>pull_request</code> versus <code>pull_request_target</code>, and the pattern that makes the second dangerous.</b>Fork PRs under <code>pull_request</code> get no secrets and a read-only token — deliberately harmless. <code>pull_request_target</code> runs in the base repository's context with secrets and a writable token; combined with checking out <code>head.sha</code> it executes untrusted fork code with full credentials. Never check out the head ref there; split across <code>pull_request</code> and <code>workflow_run</code> if you need both.</li>
+  <li><b>Explain <code>pull_request</code> versus <code>pull_request_target</code>, and the pattern that makes the second dangerous.</b>Fork PRs under <code>pull_request</code> get no secrets and a read-only token, which is harmless by design. <code>pull_request_target</code> runs in the base repository's context with secrets and a writable token; combined with checking out <code>head.sha</code> it executes untrusted fork code with full credentials. Never check out the head ref there; split across <code>pull_request</code> and <code>workflow_run</code> if you need both.</li>
   <li><b>Write a <code>permissions</code> block for a workflow that publishes a package and deploys with OIDC.</b><code>contents: read</code> at workflow level as a floor; on the publish job <code>packages: write</code> plus <code>contents: write</code> only if it tags; on the deploy job <code>id-token: write</code> and <code>contents: read</code>. Declaring any scope zeroes the rest, which is the point.</li>
   <li><b>Describe a safe OIDC trust policy and one that looks fine but is not.</b>Safe: <code>sub</code> constrained to <code>repo:org/repo:environment:production</code>, making the approval part of the identity. Unsafe: <code>repo:org/*:*</code>, satisfiable by any branch of any repository including a fork PR branch. Verify by attempting assume-role from a throwaway branch.</li>
-  <li><b>A secret appeared in a public build log an hour ago.</b>Rotate first — assume it is already scraped. Then revoke, delete the log and run, find the line that printed it, and close the class: secrets through <code>env</code> and never interpolated, plus OIDC so there is nothing to leak.</li>
+  <li><b>A secret appeared in a public build log an hour ago.</b>Rotate first, and assume it is already scraped. Then revoke, delete the log and run, find the line that printed it, and close the class: secrets through <code>env</code> and never interpolated, plus OIDC so there is nothing to leak.</li>
   <li><b>Give three supply-chain controls ordered by risk removed.</b>SHA-pin third-party actions; default the token to <code>contents: read</code>; organisation allow-list plus Dependabot so pins do not go stale.</li>
   <li><b>CI takes 25 minutes and people have stopped waiting.</b>Measure first. Then in order of leverage: do less work (concurrency cancellation, path filters, conditions), reuse work (caching, prebuilt images), parallelise (matrix sharded by duration). Move slow suites to a schedule with a smoke subset on the PR. A bigger runner first is the answer of someone who has not measured.</li>
-  <li><b>Every deploy since Tuesday shipped the wrong build.</b>Cache and artifact names before the code — a never-invalidating key, or two matrix cells uploading the same artifact name, both produce this and neither appears in a diff. Then deploy by immutable SHA tag or digest.</li>
+  <li><b>Every deploy since Tuesday shipped the wrong build.</b>Cache and artifact names before the code: a never-invalidating key, or two matrix cells uploading the same artifact name, both produce this and neither appears in a diff. Then deploy by immutable SHA tag or digest.</li>
   <li><b>CI is 30% flaky and people re-run until green.</b>Re-running destroys the signal. Measure which jobs fail and how, then remove causes in order: missing service health checks, matrix cells sharing a fixture, unpinned external dependencies, timing assumptions. Quarantine what you cannot fix into a named non-blocking job.</li>
   <li><b>A third-party action you depend on was compromised.</b>Find every repository referencing it and at what ref, revoke every secret those workflows could reach, replace with a vetted SHA or internal fork, then close the class with pinning, an allow-list, and Dependabot.</li>
   <li><b>How do you standardise CI across sixty repositories?</b>Reusable workflows in an organisation <code>.github</code> repository with CODEOWNERS; consumers pin a major tag you move on release; canary one repository first; inputs as a public API; enforced by branch protection and an allow-list. Keep upstream turnaround fast or teams fork.</li>
   <li><b>Choose between composite, JavaScript, and Docker actions.</b>Composite for a repeated step sequence, but it cannot define jobs, matrices, or its own runner. JavaScript for real logic and identical cross-platform behaviour, at the cost of a committed <code>dist/</code>. Docker for an arbitrary toolchain, at the cost of Linux-only and a pull per job.</li>
   <li><b>What changes when the pipeline trains a model?</b>Lint, tests, caching, environments, and OIDC carry over. New: data validation as a gate, metric thresholds that fail the job, comparison against the deployed model, and lineage linking commit and dataset version to the artifact. Actions orchestrates and records; it does not train.</li>
-  <li><b>How would you migrate from Jenkins?</b>Inventory jobs; port leaf jobs first to prove runners, network, and credentials; run both systems in parallel with Actions non-blocking; move required checks one at a time; decommission deliberately. Do not port Jenkinsfile logic verbatim — much of it works around a persistent workspace Actions does not have.</li>
-  <li><b>GitHub App token or PAT?</b>The App: scoped to chosen repositories, short-lived, attributable to automation. A PAT carries a human's full access, outlives the job, and appears as that person — breaking least privilege and accountability.</li>
+  <li><b>How would you migrate from Jenkins?</b>Inventory jobs; port leaf jobs first to prove runners, network, and credentials; run both systems in parallel with Actions non-blocking; move required checks one at a time; decommission deliberately. Do not port Jenkinsfile logic verbatim, because much of it works around a persistent workspace Actions does not have.</li>
+  <li><b>GitHub App token or PAT?</b>The App: scoped to chosen repositories, short-lived, attributable to automation. A PAT carries a human's full access, outlives the job, and appears as that person, breaking least privilege and accountability.</li>
   <li><b>Where does a cache become a security problem?</b>When a lower-privilege context can write one a trusted run restores. Anything executable restored from cache is code you did not review. Cache dependency downloads, verify what you execute, never cache build outputs you then run.</li>
-  <li><b>How do you keep a production credential away from ordinary CI?</b>Put it on a protected <b>environment</b>, not the repository — only a job declaring that environment and passing its gate can read it. Better still, remove it: OIDC plus a role whose trust policy names that environment.</li>
+  <li><b>How do you keep a production credential away from ordinary CI?</b>Put it on a protected <b>environment</b>, not the repository, so only a job declaring that environment and passing its gate can read it. Better still, remove it: OIDC plus a role whose trust policy names that environment.</li>
   <li><b>How would you argue for investment in CI?</b>With the four numbers pulled from the REST API and trended. "CI is slow" is an opinion; "p95 on our main pipeline is 27 minutes and 18% of runs are re-runs" is a priority.</li>
-  <li><b>Everything went red at once. First three moves?</b>Establish blast radius — simultaneous failure everywhere points at a shared workflow release, an action release, or a runner image change. Compare against the last green run for environmental differences. Re-run one failed job with debug logging rather than the whole pipeline.</li>
+  <li><b>Everything went red at once. First three moves?</b>Establish blast radius: simultaneous failure everywhere points at a shared workflow release, an action release, or a runner image change. Compare against the last green run for environmental differences. Re-run one failed job with debug logging rather than the whole pipeline.</li>
 </ol>
 
 ## Final self-test

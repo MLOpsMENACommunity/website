@@ -12,7 +12,7 @@ Part two of three. A cumulative review of **Beginner and Mid-level material**, o
   <div class="node">SERVING<small>batch, REST, Docker</small></div>
 </div>
 
-> MLflow has four components: Tracking for runs, Models for framework-agnostic packaging, a Registry for named versions and moveable aliases, and Projects for reproducible entry points. The core idea is the model format — a directory with an `MLmodel` manifest declaring flavours, a signature, and an environment — which is why the same artifact loads in a batch job, a REST server, or a container.
+> MLflow has four components: Tracking for runs, Models for framework-agnostic packaging, a Registry for named versions and moveable aliases, and Projects for reproducible entry points. The core idea is the model format (a directory with an `MLmodel` manifest declaring flavours, a signature, and an environment) which is why the same artifact loads in a batch job, a REST server, or a container.
 
 **Two stores:** a backend store for metadata (`--backend-store-uri`) and an artifact store for files (`--default-artifact-root`). **The registry needs a database backend.** **Params are immutable, metrics have steps, tags are mutable.** **Consume by alias**, so promotion is a pointer move. **MLflow records the commit, not a diff.**
 
@@ -37,8 +37,8 @@ Nesting is stored as the `mlflow.parentRunId` tag, so children are queryable:
 
 | Need | Use |
 |---|---|
-| A normal script | Fluent API — writes to the active run |
-| Threads, async, another run, bulk, registry | Client API — explicit run id, no global state |
+| A normal script | Fluent API: writes to the active run |
+| Threads, async, another run, bulk, registry | Client API: explicit run id, no global state |
 | Thousands of metric points | `client.log_batch(...)` |
 | Resuming a run to add metrics | `start_run(run_id=...)` |
 
@@ -63,7 +63,7 @@ Three behaviours to state without prompting: **autolog creates a run if none is 
 
 <div class="callout warn">
   <span class="ct">Autolog plus your own `log_model` gives two models per run</span>
-  Autolog's model has no signature of yours and no <code>registered_model_name</code>. Two <code>model/</code> directories in one run with nothing stating which is authoritative is a real source of confusion — set <code>log_models=False</code> and log it explicitly.
+  Autolog's model has no signature of yours and no <code>registered_model_name</code>. Two <code>model/</code> directories in one run with nothing stating which is authoritative is a real source of confusion, so set <code>log_models=False</code> and log it explicitly.
 </div>
 
 ## Custom `pyfunc` models
@@ -97,7 +97,7 @@ mlflow.pyfunc.log_model(
 | `predict(context, input, params)` | The whole inference contract, including postprocessing |
 | `artifacts` | Files copied in and re-pathed at load time |
 | `code_paths` | Your modules, so the model imports nothing from your repo |
-| Signature `params` | Validated call-time knobs — threshold, top-k, temperature |
+| Signature `params` | Validated call-time knobs: threshold, top-k, temperature |
 
 <div class="callout warn">
   <span class="ct">Missing `code_paths` is the top cause of "loads locally, fails in serving"</span>
@@ -111,12 +111,12 @@ Requirements are inferred at log time by introspecting loaded modules and pinnin
 | Control | Use |
 |---|---|
 | `extra_pip_requirements=[...]` | Add a pin inference could not see |
-| `pip_requirements=[...]` or a file | Replace inference — do this for custom pyfunc models |
+| `pip_requirements=[...]` or a file | Replace inference: do this for custom pyfunc models |
 | `mlflow.pyfunc.get_model_dependencies(uri)` | Print what would be installed |
 | `mlflow models predict --env-manager virtualenv` | Reproduce the serving path exactly |
 | `validate_serving_input(uri, payload)` | Check the signature contract without a server |
 
-**Inference sees imports, not intent.** A dynamic `importlib` call, or an import inside a branch that never ran, is invisible — and the model then fails to load elsewhere.
+**Inference sees imports, not intent.** A dynamic `importlib` call, or an import inside a branch that never ran, is invisible, and the model then fails to load elsewhere.
 
 ## Evaluation with thresholds
 
@@ -154,10 +154,10 @@ mlflow.evaluate(
 |---|---|
 | `champion` | What production serves |
 | `challenger` | Under evaluation or shadow-scored |
-| `previous` | The rollback target — set it at promotion time |
+| `previous` | The rollback target: set it at promotion time |
 | `baseline` | A fixed reference for relative comparisons |
 
-Stages (`Staging`/`Production`, `transition_model_version_stage`) are deprecated — recognise them in old code, write aliases.
+Stages (`Staging`/`Production`, `transition_model_version_stage`) are deprecated, so recognise them in old code and write aliases.
 
 ## Dataset lineage
 
@@ -170,7 +170,7 @@ Records a name, a source URI, a content **digest**, a schema, and a profile. Con
 
 <div class="callout warn">
   <span class="ct">Dataset tracking is lineage annotation, not data versioning</span>
-  The digest describes the frame you profiled; it does not stop someone overwriting the object at that URI. Immutability comes from the storage side — versioned buckets, dated immutable prefixes, or a table format with time travel. Saying this out loud is a strong senior signal.
+  The digest describes the frame you profiled; it does not stop someone overwriting the object at that URI. Immutability comes from the storage side: versioned buckets, dated immutable prefixes, or a table format with time travel. Saying this out loud is a strong senior signal.
 </div>
 
 ## Deployment targets
@@ -208,7 +208,7 @@ with mlflow.start_span(name="rerank", span_type="RERANKER") as span:
 | Trace | One end-to-end request |
 | Span | One step, with type, inputs, outputs, timing, attributes |
 | `span_type` | `LLM`, `RETRIEVER`, `RERANKER`, `TOOL`, `CHAIN`, `PARSER` |
-| GenAI metrics | `answer_correctness`, `faithfulness`, `answer_relevance` — LLM-as-a-judge |
+| GenAI metrics | `answer_correctness`, `faithfulness`, `answer_relevance`: LLM-as-a-judge |
 
 Two things to say without prompting: **traces store prompts and responses verbatim**, so they are data with retention and redaction obligations; and **judged metrics cost money and vary**, so pin the judge model and name it alongside the score.
 
@@ -249,26 +249,26 @@ Separate `*/ci` experiment, tags per pull request, credentials from secrets, a j
 ## Common interview questions
 
 <ol class="guide-steps">
-  <li><b>When do you use the client API instead of the fluent API?</b>When there is no single active run to write to: multi-threaded or async code, a job writing into a run it is not executing inside, bulk logging via <code>log_batch</code>, and anything in the registry. The fluent API is global state keyed on the active run, which is exactly what breaks in those cases.</li>
+  <li><b>When do you use the client API instead of the fluent API?</b>When there is no single active run to write to: multi-threaded or async code, a job writing into a run it is not executing inside, bulk logging via <code>log_batch</code>, and anything in the registry. The fluent API is global state keyed on the active run, which is what breaks in those cases.</li>
   <li><b>Someone says MLflow is slow. Where do you look first?</b>The metric logging rate. A <code>log_metric</code> per training batch is one HTTP round trip per point, so a long run can make tens of thousands of calls and slow both the trainer and the server. The fix is to log per epoch or accumulate and use <code>log_batch</code>. After that, check backend database load and whether clients are hammering search endpoints.</li>
-  <li><b>What exactly does autologging patch, and how do you control it?</b>It wraps framework functions — <code>fit</code> and search classes for scikit-learn, trainer hooks for Lightning, <code>train</code> for the boosting libraries, chain calls for LangChain. Control comes from its keyword arguments: <code>log_models=False</code> so you log the model with your own signature and registration, <code>log_input_examples=False</code> so training data is not embedded in the artifact, <code>max_tuning_runs</code> to cap child runs, and <code>exclusive=True</code> so it stays out of a hand-instrumented run.</li>
-  <li><b>Why would you write a custom pyfunc model?</b>Because a model is rarely just an estimator. A fitted scaler, a vocabulary, a decision threshold, and postprocessing all have to travel with it, or every consumer reimplements them. A <code>PythonModel</code> with <code>load_context</code> and <code>predict</code> packages all of it as one artifact with one environment, and it loads through the same <code>pyfunc</code> interface as anything else — so serving needs no special casing.</li>
+  <li><b>What exactly does autologging patch, and how do you control it?</b>It wraps framework functions: <code>fit</code> and search classes for scikit-learn, trainer hooks for Lightning, <code>train</code> for the boosting libraries, chain calls for LangChain. Control comes from its keyword arguments: <code>log_models=False</code> so you log the model with your own signature and registration, <code>log_input_examples=False</code> so training data is not embedded in the artifact, <code>max_tuning_runs</code> to cap child runs, and <code>exclusive=True</code> so it stays out of a hand-instrumented run.</li>
+  <li><b>Why would you write a custom pyfunc model?</b>Because a model is rarely just an estimator. A fitted scaler, a vocabulary, a decision threshold, and postprocessing all have to travel with it, or every consumer reimplements them. A <code>PythonModel</code> with <code>load_context</code> and <code>predict</code> packages all of it as one artifact with one environment, and it loads through the same <code>pyfunc</code> interface as anything else, so serving needs no special casing.</li>
   <li><b>Why does a custom pyfunc need <code>code_paths</code>?</b>Because the model is pickled by reference to its class, so loading requires that module to be importable. On your machine the repo is on the path and it works; in a serving container it fails with <code>ModuleNotFoundError</code>. <code>code_paths</code> copies the modules into the artifact so the model is self-contained.</li>
-  <li><b>What are signature params, and why are they useful?</b>A declared schema of call-time parameters — a threshold, a top-k, a temperature — with types and defaults. They are validated and documented like inputs, exposed by the scoring server, and they let a caller vary behaviour without a second endpoint or a redeploy. It is one of the more underused features.</li>
-  <li><b>How does MLflow decide a model's dependencies, and how does that fail?</b>At log time it introspects loaded modules and pins the resolved distributions. It fails when an import is dynamic or inside a branch that never executed — the dependency is invisible and the model will not load elsewhere. For anything custom, declare <code>pip_requirements</code> explicitly, and validate with <code>mlflow models predict --env-manager virtualenv</code> before shipping.</li>
-  <li><b>How do you make an evaluation into a gate?</b><code>mlflow.evaluate</code> with <code>validation_thresholds</code> raises <code>ModelValidationFailedException</code> when a metric fails, so a CI job simply exits non-zero with the failing metric named. Pass the current champion as <code>baseline_model</code> and use <code>min_relative_change</code>, so the gate means "better than production by a real margin" rather than "above a number we cleared last year".</li>
+  <li><b>What are signature params, and why are they useful?</b>A declared schema of call-time parameters (a threshold, a top-k, a temperature) with types and defaults. They are validated and documented like inputs, exposed by the scoring server, and they let a caller vary behaviour without a second endpoint or a redeploy. It is one of the more underused features.</li>
+  <li><b>How does MLflow decide a model's dependencies, and how does that fail?</b>At log time it introspects loaded modules and pins the resolved distributions. It fails when an import is dynamic or inside a branch that never executed, so the dependency is invisible and the model will not load elsewhere. For anything custom, declare <code>pip_requirements</code> explicitly, and validate with <code>mlflow models predict --env-manager virtualenv</code> before shipping.</li>
+  <li><b>How do you make an evaluation into a gate?</b><code>mlflow.evaluate</code> with <code>validation_thresholds</code> raises <code>ModelValidationFailedException</code> when a metric fails, so a CI job exits non-zero with the failing metric named. Pass the current champion as <code>baseline_model</code> and use <code>min_relative_change</code>, so the gate means "better than production by a real margin" rather than "above a number we cleared last year".</li>
   <li><b>Why do relative thresholds matter more than absolute ones?</b>An absolute floor passes forever once you clear it, so it stops discriminating. A relative threshold against the current champion rejects improvements inside the noise band, which changes the conversation from "the number went up" to "is this difference real". It is also the only version of the gate that keeps working as the model improves.</li>
-  <li><b>Design a promotion workflow on the registry.</b>Training registers a version tagged <code>validated=false</code>. A validation job evaluates it on a holdout set against the champion with thresholds, then tags <code>validated=true</code> and records the metric. A promotion job selects among validated versions, sets <code>previous</code> to the outgoing champion, moves <code>champion</code>, and tags who approved it. Consumers load <code>models:/name@champion</code>, so rollback is moving <code>champion</code> back to <code>previous</code> — one call, no redeploy.</li>
+  <li><b>Design a promotion workflow on the registry.</b>Training registers a version tagged <code>validated=false</code>. A validation job evaluates it on a holdout set against the champion with thresholds, then tags <code>validated=true</code> and records the metric. A promotion job selects among validated versions, sets <code>previous</code> to the outgoing champion, moves <code>champion</code>, and tags who approved it. Consumers load <code>models:/name@champion</code>, so rollback is moving <code>champion</code> back to <code>previous</code>: one call, no redeploy.</li>
   <li><b>How do you roll back a model?</b>Move the <code>champion</code> alias to the <code>previous</code> alias's version. That works only if you set <code>previous</code> at promotion time; without it, rollback means hunting for the last good version number during an incident. It is a one-line habit that turns rollback into a rehearsable action.</li>
-  <li><b>What does dataset logging give you, and what does it not?</b>It records a name, a source URI, a content digest, a schema, and a profile, so a run states what it read and two runs can be compared by digest. It does not give immutability: nothing stops someone overwriting the object at that URI, and MLflow will not notice. Real versioning comes from the storage side — versioned buckets, dated immutable prefixes, or a table format with time travel.</li>
+  <li><b>What does dataset logging give you, and what does it not?</b>It records a name, a source URI, a content digest, a schema, and a profile, so a run states what it read and two runs can be compared by digest. It does not give immutability: nothing stops someone overwriting the object at that URI, and MLflow will not notice. Real versioning comes from the storage side: versioned buckets, dated immutable prefixes, or a table format with time travel.</li>
   <li><b>What are the deployment options, and which do you reach for?</b>In practice, a batch job with <code>pyfunc.load_model</code> covers most cases and needs no infrastructure. Beyond that: <code>mlflow models serve</code> for a local endpoint, <code>build-docker --enable-mlserver</code> for a container to hand to a platform team, <code>spark_udf</code> for large-scale batch, and the deployments API for managed targets. The point of the pyfunc contract is that all of them load the same artifact.</li>
-  <li><b>Why is changing a model's signature risky?</b>Because promotion moves an alias with no code change, so a renamed column or a tightened type can reach production without anyone reviewing an API diff — and every caller coding against <code>/invocations</code> breaks. Treat the signature as a public interface: additive changes only, or publish a new registered model name and migrate consumers deliberately.</li>
-  <li><b>What is MLflow Tracing for?</b>Recording the internal structure of a call — retrieval, reranking, tool use, model calls — as a tree of spans with inputs, outputs, timing, and attributes. It is how you debug a RAG or agent application, where the failure is usually in retrieval rather than in the model. Autolog integrations trace popular frameworks; <code>@mlflow.trace</code> and <code>start_span</code> cover your own code.</li>
-  <li><b>What are the risks with tracing and LLM-as-a-judge evaluation?</b>Traces store prompts and responses verbatim, so on production traffic they hold user data — that is a redaction and retention decision to make before enabling, not after. Judged metrics are API calls, so a large evaluation has a real bill and real latency, and judges are non-deterministic — pin the judge model and report it alongside the score, or two evaluations are not comparable.</li>
+  <li><b>Why is changing a model's signature risky?</b>Because promotion moves an alias with no code change, so a renamed column or a tightened type can reach production without anyone reviewing an API diff, and every caller coding against <code>/invocations</code> breaks. Treat the signature as a public interface: additive changes only, or publish a new registered model name and migrate consumers deliberately.</li>
+  <li><b>What is MLflow Tracing for?</b>Recording the internal structure of a call (retrieval, reranking, tool use, model calls) as a tree of spans with inputs, outputs, timing, and attributes. It is how you debug a RAG or agent application, where the failure is usually in retrieval rather than in the model. Autolog integrations trace popular frameworks; <code>@mlflow.trace</code> and <code>start_span</code> cover your own code.</li>
+  <li><b>What are the risks with tracing and LLM-as-a-judge evaluation?</b>Traces store prompts and responses verbatim, so on production traffic they hold user data. That is a redaction and retention decision to make before enabling, not after. Judged metrics are API calls, so a large evaluation has a real bill and real latency, and judges are non-deterministic, so pin the judge model and report it alongside the score, or two evaluations are not comparable.</li>
   <li><b>Sketch a CI gate for model quality.</b>On pull request, install pinned requirements, train with a short budget into a dedicated <code>*/ci</code> experiment tagged with the PR and commit, evaluate against the champion with thresholds so a regression raises, print the run URL into the log, and set a job timeout. Credentials come from secrets, and the pull-request credential can create runs but not move aliases.</li>
   <li><b>Metrics appear in the UI but artifacts 404. What is happening?</b>The client could reach the tracking server but not the artifact store. By default MLflow hands out an artifact URI and the client reads and writes object storage directly, so every user and CI job needs storage credentials. Either give them credentials or enable proxied artifact access so the tracking server brokers the transfer.</li>
-  <li><b>An old run's artifacts are unreachable after you changed the artifact root. Why?</b>The artifact URI is stored per run at creation time, not resolved from current config. Changing <code>--default-artifact-root</code> affects new runs only. You either keep the old location readable or migrate the objects and rewrite the URIs — which is why the artifact root is a decision worth getting right early.</li>
-  <li><b>Give an honest reason not to use MLflow.</b>It does not execute anything. There is no agent, no queue, no scheduler — so remote execution, retries, and dependency graphs are your orchestrator's problem. If you wanted tracking and execution in one system, something like ClearML fits better. MLflow's value is being a narrow, widely-supported standard for tracking and model packaging, and that narrowness is deliberate.</li>
+  <li><b>An old run's artifacts are unreachable after you changed the artifact root. Why?</b>The artifact URI is stored per run at creation time, not resolved from current config. Changing <code>--default-artifact-root</code> affects new runs only. You either keep the old location readable or migrate the objects and rewrite the URIs, which is why the artifact root is a decision worth getting right early.</li>
+  <li><b>Give an honest reason not to use MLflow.</b>It does not execute anything. There is no agent, no queue, no scheduler, so remote execution, retries, and dependency graphs are your orchestrator's problem. If you wanted tracking and execution in one system, something like ClearML fits better. MLflow's value is being a narrow, widely-supported standard for tracking and model packaging, and that narrowness is deliberate.</li>
 </ol>
 
 ## Final self-test

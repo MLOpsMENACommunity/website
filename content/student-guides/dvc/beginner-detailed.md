@@ -1,6 +1,6 @@
-This is part one of three. It covers **everything you need to do real work with DVC** — not a teaser. By the end you can version a dataset, reproduce a pipeline, share data with a colleague through remote storage, compare experiment metrics, and answer "which data produced this model?" with a commit hash. Mid-level and Senior take the same topics further; nothing here is thrown away.
+This is part one of three. It covers **everything you need to do real work with DVC**, not a teaser. By the end you can version a dataset, reproduce a pipeline, share data with a colleague through remote storage, compare experiment metrics, and answer "which data produced this model?" with a commit hash. Mid-level and Senior take the same topics further; nothing here is thrown away.
 
-Each section ends with a **Try it** task. Do them as you go — they take a few minutes each, and these ideas only stick once you have watched `dvc repro` skip a stage it did not need to run.
+Each section ends with a **Try it** task. Do them as you go. They take a few minutes each, and these ideas only stick once you have watched `dvc repro` skip a stage it did not need to run.
 
 ## The problem DVC solves: code in Git, data elsewhere
 
@@ -18,18 +18,18 @@ So teams do the obvious thing and keep data out of Git. Then the real problem st
   <div class="node">ONE COMMIT<small>reproduces both</small></div>
 </div>
 
-**DVC's central trick is to store a small text pointer in Git and the actual bytes somewhere cheap.** The pointer file is a few hundred bytes and contains a content hash. Git versions the pointer; DVC moves the bytes. One `git checkout` then brings back the exact code *and* tells DVC exactly which data belongs to it.
+**DVC's central trick is to store a small text pointer in Git and the actual bytes somewhere cheap.** The pointer file is a few hundred bytes and contains a content hash. Git versions the pointer; DVC moves the bytes. One `git checkout` then brings back the exact code *and* tells DVC which data belongs to it.
 
 That single idea gives you four things, and they are the reason DVC exists rather than a bespoke script:
 
 <div class="cards">
-  <div class="card"><div class="icon">🔗</div><h4>Data tied to commits</h4><p>Every commit records exactly which dataset and which model it used. "Which data produced this?" becomes a lookup.</p></div>
-  <div class="card"><div class="icon">🔁</div><h4>Reproducible pipelines</h4><p>Declare stages and dependencies once. DVC reruns only what actually changed.</p></div>
+  <div class="card"><div class="icon">🔗</div><h4>Data tied to commits</h4><p>Every commit records which dataset and which model it used. "Which data produced this?" becomes a lookup.</p></div>
+  <div class="card"><div class="icon">🔁</div><h4>Reproducible pipelines</h4><p>Declare stages and dependencies once. DVC reruns only what changed.</p></div>
   <div class="card"><div class="icon">☁️</div><h4>Shared storage</h4><p>Push data to S3, GCS, Azure, or an SSH box. A colleague clones and pulls, and has your exact files.</p></div>
   <div class="card"><div class="icon">📊</div><h4>Comparable experiments</h4><p>Metrics and parameters are versioned alongside the code, so comparing two runs is a command, not archaeology.</p></div>
 </div>
 
-You need remarkably little to follow along: Python, Git, and a folder. A tiny CSV and a five-line training script are genuinely the best place to start, because a broken pipeline costs you nothing.
+You need little to follow along: Python, Git, and a folder. A tiny CSV and a five-line training script are the best place to start, because a broken pipeline costs you nothing.
 
 <div class="guide-try">
   <span class="ct">Try it</span>
@@ -38,7 +38,7 @@ You need remarkably little to follow along: Python, Git, and a folder. A tiny CS
     <li>Look for files matching <code>*_final*</code>, <code>*_v2*</code>, <code>*_backup*</code>, or a date in the name. Count them.</li>
     <li>Pick the newest model artifact you have and try to name, precisely, the exact file that trained it.</li>
   </ol>
-  <em>either a repository bloated by data, or a folder full of manually versioned filenames — usually both. That third question is the one DVC turns from an archaeology exercise into a command.</em>
+  <em>either a repository bloated by data, or a folder full of manually versioned filenames, usually both. That third question is the one DVC turns from an archaeology exercise into a command.</em>
 </div>
 
 ## Install and initialise
@@ -50,7 +50,7 @@ pip install "dvc[s3]"        # or dvc[gs], dvc[azure], dvc[ssh], dvc[all]
 dvc --version
 ```
 
-The bracketed extra pulls in the driver for your remote storage. Plain `pip install dvc` works fine for local experimentation and then fails with a confusing "URL is not supported" the moment you configure an S3 remote — so install the extra you need up front.
+The bracketed extra pulls in the driver for your remote storage. Plain `pip install dvc` works fine for local experimentation and then fails with a confusing "URL is not supported" the moment you configure an S3 remote, so install the extra you need up front.
 
 ```bash
 git init                     # DVC needs a Git repository
@@ -62,7 +62,7 @@ git status
 
 | Path | Purpose |
 |---|---|
-| `.dvc/config` | Your project's DVC configuration — remotes, cache settings. **Committed** |
+| `.dvc/config` | Your project's DVC configuration: remotes, cache settings. **Committed** |
 | `.dvc/.gitignore` | Keeps DVC's internal cache and temp files out of Git |
 | `.dvcignore` | Optional; excludes paths from DVC's own scanning, like `.gitignore` |
 | `.dvc/cache/` | Where content lands locally, addressed by hash. **Not committed** |
@@ -72,7 +72,7 @@ git commit -m "Initialise DVC"
 ```
 
 <div class="callout note">
-  <span class="ct">DVC does not replace Git — it needs it</span>
+  <span class="ct">DVC does not replace Git. It needs it</span>
   Every DVC operation assumes a Git repository underneath. DVC writes small text files; Git versions them. If you find yourself wondering "do I <code>git add</code> this?", the answer is almost always yes for anything DVC creates that is not inside <code>.dvc/cache</code>, and DVC tells you the exact command to run.
 </div>
 
@@ -84,7 +84,7 @@ git commit -m "Initialise DVC"
     <li>Open <code>.dvc/.gitignore</code> and note that <code>/cache</code> is listed.</li>
     <li>Commit, then run <code>dvc doctor</code> and read the output.</li>
   </ol>
-  <em>a clean initialisation with three or four staged files, and a <code>.gitignore</code> that already excludes the cache. <code>dvc doctor</code> prints your platform, version, and which remote drivers are available — worth knowing about now, because it is the first thing to run when something behaves oddly.</em>
+  <em>a clean initialisation with three or four staged files, and a <code>.gitignore</code> that already excludes the cache. <code>dvc doctor</code> prints your platform, version, and which remote drivers are available, worth knowing about now because it is the first thing to run when something behaves oddly.</em>
 </div>
 
 ## Your first tracked dataset, in four commands
@@ -100,7 +100,7 @@ git add data/raw.csv.dvc data/.gitignore
 git commit -m "Track the raw dataset"
 ```
 
-Now look at what actually happened, because this is the whole mental model:
+Now look at what happened, because this is the whole mental model:
 
 ```bash
 cat data/raw.csv.dvc
@@ -114,14 +114,14 @@ outs:
   path: raw.csv
 ```
 
-That is it. A hash, a size, and a path. **The file itself is not in Git** — `data/.gitignore` now contains `/raw.csv`, which DVC wrote for you, so Git will never try to store it.
+The `.dvc` file holds a hash, a size, and a path. **The file itself is not in Git**. `data/.gitignore` now contains `/raw.csv`, which DVC wrote for you, so Git will never try to store it.
 
 ```bash
 cat data/.gitignore          # /raw.csv
 git status                   # clean; the CSV is ignored
 ```
 
-And the bytes went into DVC's cache, filed under that hash:
+The bytes went into DVC's cache, filed under that hash:
 
 ```bash
 ls .dvc/cache/files/md5/8f/2c4b19e0a7d3f1c6b8a2e4d7091f3b
@@ -144,7 +144,7 @@ ls .dvc/cache/files/md5/8f/2c4b19e0a7d3f1c6b8a2e4d7091f3b
 
 <div class="callout warn">
   <span class="ct">Do not <code>git add</code> the data file itself</span>
-  If you ever see the data file appear in <code>git status</code>, something is wrong — usually a missing or edited <code>.gitignore</code> entry. Committing the file to Git as well as DVC defeats the whole purpose and doubles your storage. <code>git status</code> being clean after <code>dvc add</code> is the signal that it worked.
+  If you ever see the data file appear in <code>git status</code>, something is wrong, usually a missing or edited <code>.gitignore</code> entry. Committing the file to Git as well as DVC defeats the whole purpose and doubles your storage. <code>git status</code> being clean after <code>dvc add</code> is the signal that it worked.
 </div>
 
 <div class="guide-try">
@@ -162,7 +162,7 @@ ls .dvc/cache/files/md5/8f/2c4b19e0a7d3f1c6b8a2e4d7091f3b
 
 Understanding this saves you from a whole category of confusion later, and it takes two minutes.
 
-DVC's cache is **content-addressable**: a file's location is derived from the hash of its contents. Two identical files, whatever they are called, occupy one cache entry. Change one byte and you get a completely different hash and a new entry.
+DVC's cache is **content-addressable**: a file's location is derived from the hash of its contents. Two identical files, whatever they are called, occupy one cache entry. Change one byte and you get a different hash and a new entry.
 
 ```bash
 dvc add data/raw.csv         # hash A
@@ -170,7 +170,7 @@ echo "one more row" >> data/raw.csv
 dvc add data/raw.csv         # hash B — a new entry; A is still there
 ```
 
-That has an important consequence: **the cache accumulates.** Every version you have ever added is still on disk until you clean it up, which is exactly what makes going back in time possible — and also why the cache grows.
+That has an important consequence: **the cache accumulates.** Every version you have ever added is still on disk until you clean it up, which is what makes going back in time possible, and also why the cache grows.
 
 By default DVC does not copy the file into your workspace, it **links** it from the cache, so you are not storing two copies:
 
@@ -178,7 +178,7 @@ By default DVC does not copy the file into your workspace, it **links** it from 
 |---|---|---|
 | `reflink` | Copy-on-write; fast, safe, and space-efficient | APFS, Btrfs, XFS where supported |
 | `copy` | A real second copy. Safe, uses double the space | The fallback everywhere |
-| `hardlink` / `symlink` | One inode, no extra space — but **editing in place corrupts the cache** | Opt-in |
+| `hardlink` / `symlink` | One inode, no extra space, but **editing in place corrupts the cache** | Opt-in |
 
 ```bash
 dvc config cache.type reflink,copy      # try reflink, fall back to a copy
@@ -203,7 +203,7 @@ dvc config core.check_link_support true
 
 ## Going back in time: two commands, in order
 
-This is the payoff, and it is worth doing on purpose early so you trust it.
+This is the payoff. Do it on purpose early so you trust it.
 
 ```bash
 # Make a second version and commit it
@@ -240,14 +240,14 @@ dvc status
     <ul>
       <li>Moves data files to match the pointers</li>
       <li>Reads from the local cache</li>
-      <li>Fails if the cache does not have that version — then you need <code>dvc pull</code></li>
+      <li>Fails if the cache does not have that version, so then you need <code>dvc pull</code></li>
     </ul>
   </div>
 </div>
 
 <div class="callout tip">
   <span class="ct">Install the Git hooks and stop thinking about it</span>
-  <code>dvc install</code> adds Git hooks that run <code>dvc checkout</code> after <code>git checkout</code>, and warn you about unpushed data before <code>git push</code>. It removes the most common source of "why is my data the wrong version?" — a forgotten second command.
+  <code>dvc install</code> adds Git hooks that run <code>dvc checkout</code> after <code>git checkout</code>, and warn you about unpushed data before <code>git push</code>. It removes the most common source of "why is my data the wrong version?" A forgotten second command.
 </div>
 
 <div class="guide-try">
@@ -257,14 +257,14 @@ dvc status
     <li>Use <code>git log --oneline</code> to find the first commit, then <code>git checkout &lt;sha&gt; data/raw.csv.dvc</code>.</li>
     <li>Run <code>dvc status</code> <em>before</em> <code>dvc checkout</code> and read what it reports.</li>
     <li>Run <code>dvc checkout</code>, confirm the file matches v1, then return to the latest with <code>git checkout HEAD data/raw.csv.dvc &amp;&amp; dvc checkout</code>.</li>
-    <li>Now run <code>dvc install</code> and repeat step two — notice you no longer need step four.</li>
+    <li>Now run <code>dvc install</code> and repeat step two, and notice you no longer need step four.</li>
   </ol>
   <em>the intermediate state where the pointer and the file disagree, which <code>dvc status</code> names precisely. Seeing that state once means you will recognise it instantly, and <code>dvc install</code> means you rarely have to.</em>
 </div>
 
-## Remote storage: where the bytes actually live
+## Remote storage: where the bytes live
 
-So far everything lives on your machine. A remote is where the bytes go so a colleague — or a CI runner, or a training box — can get them.
+So far everything lives on your machine. A remote is where the bytes go so a colleague (or a CI runner, or a training box) can get them.
 
 ```bash
 # Local folder: perfect for learning, and genuinely useful for a shared NAS
@@ -286,7 +286,7 @@ git add .dvc/config
 git commit -m "Configure the default DVC remote"
 ```
 
-The `-d` makes it the default, so `dvc push` and `dvc pull` need no arguments. The configuration lands in `.dvc/config`, which **is** committed — it contains the location, not the credentials.
+The `-d` makes it the default, so `dvc push` and `dvc pull` need no arguments. The configuration lands in `.dvc/config`, which **is** committed. It contains the location, not the credentials.
 
 ```bash
 dvc push                     # upload cached content to the remote
@@ -299,16 +299,16 @@ Those four are the whole workflow, and the mental model mirrors Git exactly:
 
 <div class="guide-arch" style="--arch-cols:4">
   <div class="arch-lane" style="--lane-cols:2">
-    <span class="arch-label">versioned in git — small, diffable, reviewable</span>
+    <span class="arch-label">versioned in git: small, diffable, reviewable</span>
     <div class="arch-node" data-kind="entry"><b>Code &amp; <code>dvc.yaml</code></b><small>Scripts, stages, params</small></div>
-    <div class="arch-node" data-kind="entry"><b><code>*.dvc</code> · <code>dvc.lock</code></b><small>Hash, size, path — a few hundred bytes</small></div>
+    <div class="arch-node" data-kind="entry"><b><code>*.dvc</code> · <code>dvc.lock</code></b><small>Hash, size, path: a few hundred bytes</small></div>
   </div>
-  <div class="arch-node"><b>Workspace</b><small>The files you actually open</small></div>
+  <div class="arch-node"><b>Workspace</b><small>The files you open</small></div>
   <i class="arch-edge" data-dir="right"></i>
   <div class="arch-node" data-kind="store"><b><code>.dvc/cache</code></b><small>Content-addressed, local, gitignored</small></div>
   <i class="arch-edge" data-dir="right"></i>
   <div class="arch-node" data-kind="external"><b>Remote</b><small>S3 · GCS · Azure · SSH</small></div>
-  <div class="arch-node" data-kind="store"><b>Hash addresses the bytes</b><small><code>files/md5/8f/2c4b…</code> — the same layout in cache and remote</small></div>
+  <div class="arch-node" data-kind="store"><b>Hash addresses the bytes</b><small><code>files/md5/8f/2c4b…</code>, the same layout in cache and remote</small></div>
   <div class="arch-node" data-kind="worker"><b><code>dvc add</code> · <code>checkout</code></b><small>Workspace ↔ cache</small></div>
   <div class="arch-node" data-kind="worker"><b><code>dvc push</code> · <code>pull</code> · <code>fetch</code></b><small>Cache ↔ remote</small></div>
   <div class="arch-node" data-kind="danger"><b><code>dvc gc --cloud</code></b><small>Deletes on the remote. Not recoverable</small></div>
@@ -325,18 +325,18 @@ Those four are the whole workflow, and the mental model mirrors Git exactly:
 
 <div class="callout warn">
   <span class="ct">Credentials do not belong in <code>.dvc/config</code></span>
-  That file is committed, so a secret in it is a secret in your history. Use the cloud provider's normal mechanism — <code>AWS_ACCESS_KEY_ID</code> in the environment, an IAM role, <code>gcloud auth</code>, an SSH agent. If you must store something per-machine, DVC has a <b>local</b> config for exactly that, covered in the next section.
+  That file is committed, so a secret in it is a secret in your history. Use the cloud provider's normal mechanism: <code>AWS_ACCESS_KEY_ID</code> in the environment, an IAM role, <code>gcloud auth</code>, an SSH agent. If you must store something per-machine, DVC has a <b>local</b> config for exactly that, covered in the next section.
 </div>
 
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
     <li>Add a local-folder remote pointing at <code>/tmp/dvc-storage</code> and commit <code>.dvc/config</code>.</li>
-    <li>Run <code>dvc push</code>, then look inside <code>/tmp/dvc-storage</code> — the same hash-based layout as the cache.</li>
+    <li>Run <code>dvc push</code>, then look inside <code>/tmp/dvc-storage</code> for the same hash-based layout as the cache.</li>
     <li>Run <code>dvc status -c</code> and confirm everything is up to date.</li>
     <li>Now simulate a colleague: <code>rm -rf .dvc/cache data/raw.csv</code>, then <code>dvc pull</code>.</li>
   </ol>
-  <em>your file comes back from the remote after you deleted both it and the local cache. That is the moment DVC stops being an abstraction and starts being useful — and the remote's directory layout being identical to the cache is not a coincidence.</em>
+  <em>your file comes back from the remote after you deleted both it and the local cache. That is the moment DVC stops being an abstraction and starts being useful, and the remote's directory layout being identical to the cache is not a coincidence.</em>
 </div>
 
 ## Two config files: committed versus local
@@ -364,7 +364,7 @@ dvc config --local core.jobs 8                  # more parallel transfers on a f
 
 <div class="callout tip">
   <span class="ct">A read-only remote for people who should not push</span>
-  You can define several remotes and give one to contributors who need to <code>pull</code> but must not <code>push</code>. Access control lives in the storage provider, not in DVC — but declaring the remote in <code>.dvc/config</code> means everyone at least agrees on where the data is.
+  You can define several remotes and give one to contributors who need to <code>pull</code> but must not <code>push</code>. Access control lives in the storage provider, not in DVC, but declaring the remote in <code>.dvc/config</code> means everyone at least agrees on where the data is.
 </div>
 
 <div class="guide-try">
@@ -396,7 +396,7 @@ outs:
   path: images
 ```
 
-The `.dir` suffix marks this as a **directory hash** — the hash of a small JSON listing that maps every file in the tree to its own hash. Individual files are still deduplicated in the cache, so adding a directory where one image changed uploads exactly one new object.
+The `.dir` suffix marks this as a **directory hash**, the hash of a small JSON listing that maps every file in the tree to its own hash. Individual files are still deduplicated in the cache, so adding a directory where one image changed uploads exactly one new object.
 
 | Property | Single file | Directory |
 |---|---|---|
@@ -407,7 +407,7 @@ The `.dir` suffix marks this as a **directory hash** — the hash of a small JSO
 
 <div class="callout warn">
   <span class="ct">Directories with hundreds of thousands of small files are slow</span>
-  DVC hashes every file, so <code>dvc add</code> on a tree of 500,000 tiny images takes a long time and produces a large listing. If that is your situation, the answer is usually to package the files — tar shards, Parquet, WebDataset, LMDB — which is faster for DVC <em>and</em> faster for your data loader. Mid level covers this properly.
+  DVC hashes every file, so <code>dvc add</code> on a tree of 500,000 tiny images takes a long time and produces a large listing. If that is your situation, the answer is usually to package the files (tar shards, Parquet, WebDataset, LMDB) which is faster for DVC <em>and</em> faster for your data loader. Mid level covers this properly.
 </div>
 
 <div class="guide-try">
@@ -423,9 +423,9 @@ The `.dir` suffix marks this as a **directory hash** — the hash of a small JSO
 
 ## Pipelines: from `dvc add` to `dvc.yaml`
 
-`dvc add` versions data somebody produced. A **pipeline** versions the *process*, which is what makes a result reproducible rather than merely recorded.
+`dvc add` versions data somebody produced. A **pipeline** versions the *process*, which is what makes a result reproducible rather than recorded.
 
-The idea is a dependency graph. Each stage declares what it needs and what it makes, and DVC reruns a stage only when one of its declared inputs actually changed.
+The idea is a dependency graph. Each stage declares what it needs and what it makes, and DVC reruns a stage only when one of its declared inputs changed.
 
 ```yaml dvc.yaml
 stages:
@@ -456,7 +456,7 @@ Four keys carry almost all of the meaning:
 
 | Key | Means |
 |---|---|
-| `cmd` | The command to run. Any executable — Python, R, a shell script, a binary |
+| `cmd` | The command to run. Any executable: Python, R, a shell script, a binary |
 | `deps` | Inputs. If any changes, this stage is out of date |
 | `outs` | Outputs. DVC tracks these, caches them, and gitignores them for you |
 | `params` | Values read from `params.yaml`, so a config change invalidates the stage |
@@ -483,7 +483,7 @@ Notice what you no longer do: **you do not `dvc add` a pipeline output.** `outs`
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
-    <li>Write two tiny scripts — one that reads a CSV and writes another, one that reads that and writes a text file — and the <code>dvc.yaml</code> above to match.</li>
+    <li>Write two tiny scripts (one that reads a CSV and writes another, one that reads that and writes a text file) and the <code>dvc.yaml</code> above to match.</li>
     <li>Run <code>dvc repro</code> and watch both stages execute in order.</li>
     <li>Run <code>dvc repro</code> again with no changes and read the output.</li>
     <li>Try to <code>dvc add</code> one of the outputs and read the error.</li>
@@ -493,7 +493,7 @@ Notice what you no longer do: **you do not `dvc add` a pipeline output.** `outs`
 
 ## `dvc.lock`, and how DVC knows what changed
 
-`dvc.yaml` is what you wrote. **`dvc.lock` is what actually happened**, and it is the file that makes reproducibility real.
+`dvc.yaml` is what you wrote. **`dvc.lock` is what happened**, and it is the file that makes reproducibility real.
 
 ```yaml dvc.lock
 schema: '2.0'
@@ -516,7 +516,7 @@ stages:
       size: 987654
 ```
 
-Every dependency and output is recorded with its exact hash at the moment the stage last ran successfully. That is how `dvc repro` decides what to do — it hashes the current inputs and compares them against the lock.
+Every dependency and output is recorded with its exact hash at the moment the stage last ran successfully. That is how `dvc repro` decides what to do. It hashes the current inputs and compares them against the lock.
 
 <div class="guide-timeline">
   <div class="guide-timeline-item"><span>1</span><strong>Read the graph</strong><small>DVC builds the dependency order from <code>deps</code> and <code>outs</code> across all stages.</small></div>
@@ -543,9 +543,9 @@ dvc status                   # which stages are out of date, and why
   <span class="ct">Try it</span>
   <ol>
     <li>Run <code>dvc repro</code>, then open <code>dvc.lock</code> and find the hash of <code>data/raw.csv</code>.</li>
-    <li>Compare it with the hash in <code>data/raw.csv.dvc</code> — they match.</li>
-    <li>Edit one comment in <code>src/train.py</code> and run <code>dvc status</code>. Note that only <code>train</code> is out of date.</li>
-    <li>Now edit <code>src/prepare.py</code> instead and run <code>dvc status</code> again. Note that <b>both</b> stages are affected.</li>
+    <li>Compare it with the hash in <code>data/raw.csv.dvc</code>. They match.</li>
+    <li>Edit one comment in <code>src/train.py</code> and run <code>dvc status</code>. Only <code>train</code> is out of date.</li>
+    <li>Now edit <code>src/prepare.py</code> instead and run <code>dvc status</code> again. <b>both</b> stages are affected.</li>
     <li>Run <code>dvc dag</code> and check the picture matches your expectation.</li>
   </ol>
   <em>a change to a late stage affects only that stage, while a change to an early one cascades downstream. Watching that cascade is what turns "DVC caches things" into "DVC understands my pipeline".</em>
@@ -593,7 +593,7 @@ model = RandomForestClassifier(
 )
 ```
 
-Now changing a number in `params.yaml` marks the stage out of date, exactly as changing the code would. You can list individual keys as above, or `- train` to depend on the whole section.
+Now changing a number in `params.yaml` marks the stage out of date, as changing the code would. You can list individual keys as above, or `- train` to depend on the whole section.
 
 ```bash
 dvc params diff              # what changed since the last commit
@@ -610,7 +610,7 @@ dvc params diff HEAD~3       # or against any revision
   <ol>
     <li>Move one hard-coded number from your training script into <code>params.yaml</code> and declare it in <code>dvc.yaml</code>.</li>
     <li>Run <code>dvc repro</code>, then run it again and confirm the stage is skipped.</li>
-    <li>Change the value in <code>params.yaml</code> and run <code>dvc status</code> — the stage is out of date, with the parameter named.</li>
+    <li>Change the value in <code>params.yaml</code> and run <code>dvc status</code>. The stage is out of date, with the parameter named.</li>
     <li>Run <code>dvc repro</code>, then <code>dvc params diff</code>.</li>
   </ol>
   <em>DVC reporting the specific parameter that changed rather than a vague "modified". That precision in <code>dvc status</code> is what makes a long pipeline debuggable.</em>
@@ -680,9 +680,9 @@ The `cache: false` on those outputs is deliberate and worth understanding: metri
     <li>Add an <code>evaluate</code> stage that writes a <code>metrics.json</code> with two or three numbers.</li>
     <li>Run <code>dvc repro</code>, commit, then change a parameter and repro again.</li>
     <li>Run <code>dvc metrics diff</code> and read the before/after/change columns.</li>
-    <li>Add a plot output — a CSV of two columns is enough — and run <code>dvc plots diff HEAD~1</code>, then open the HTML it produces.</li>
+    <li>Add a plot output, a CSV of two columns is enough, and run <code>dvc plots diff HEAD~1</code>, then open the HTML it produces.</li>
   </ol>
-  <em>a table showing exactly how your numbers moved between two commits, and an overlaid chart of two revisions. That diff is the artifact you paste into a pull request, and it is the single most persuasive thing DVC produces.</em>
+  <em>a table showing how your numbers moved between two commits, and an overlaid chart of two revisions. That diff is the artifact you paste into a pull request, and it is the single most persuasive thing DVC produces.</em>
 </div>
 
 ## Experiments: cheap runs, no commits
@@ -704,7 +704,7 @@ dvc exp show
 dvc exp show --only-changed          # hide columns that are identical everywhere
 ```
 
-`dvc exp show` prints a table of every experiment with its parameters and metrics side by side — which is the fastest way to see that `max_depth=8` beat both neighbours.
+`dvc exp show` prints a table of every experiment with its parameters and metrics side by side, which is the fastest way to see that `max_depth=8` beat both neighbours.
 
 ```text
  ───────────────────────────────────────────────────────────────
@@ -752,7 +752,7 @@ dvc exp gc --workspace                # garbage-collect experiments not referenc
 
 <div class="callout tip">
   <span class="ct">Experiments still require a clean-ish workspace</span>
-  <code>dvc exp run</code> works from your current state, so uncommitted code changes are included — which is usually what you want while iterating. But it means two experiments run at different times can differ by code you forgot about. Commit the code, vary the parameters.
+  <code>dvc exp run</code> works from your current state, so uncommitted code changes are included, which is usually what you want while iterating. But it means two experiments run at different times can differ by code you forgot about. Commit the code, vary the parameters.
 </div>
 
 <div class="guide-try">
@@ -787,7 +787,7 @@ The difference between the last two is the whole point:
 |---|---|---|
 | Downloads the file | Yes | Yes |
 | Records the source | **No** | Yes, in a `.dvc` file |
-| Can be updated later | No — download again by hand | `dvc update` |
+| Can be updated later | No: download again by hand | `dvc update` |
 | Knows the source revision | No | Yes, pinned to a commit |
 
 ```bash
@@ -799,7 +799,7 @@ dvc update datasets/train.parquet.dvc         # pull the newer upstream version
 
 <div class="callout tip">
   <span class="ct">A "data registry" is just a DVC repo with no code</span>
-  Many teams keep one repository whose only job is to track canonical datasets. Consumers <code>dvc import</code> from it. There is nothing special about it — it is the pattern that emerges naturally once two projects need the same data, and Senior level covers running one properly.
+  Many teams keep one repository whose only job is to track canonical datasets. Consumers <code>dvc import</code> from it. There is nothing special about it. It is the pattern that emerges naturally once two projects need the same data, and Senior level covers running one properly.
 </div>
 
 <div class="guide-try">
@@ -826,7 +826,7 @@ dvc gc --cloud               # also clean the remote (dangerous, read below)
 dvc gc --dry-run --workspace # show what would go, delete nothing
 ```
 
-The flags are all about **which revisions count as "in use"**. The default — no flag at all — is `--workspace`, which is the most aggressive: anything not needed by the files currently checked out is deleted.
+The flags are all about **which revisions count as "in use"**. The default, no flag at all, is `--workspace`, which is the most aggressive: anything not needed by the files currently checked out is deleted.
 
 <div class="callout warn">
   <span class="ct"><code>dvc gc</code> deletes data, and <code>--cloud</code> deletes shared data</span>
@@ -851,7 +851,7 @@ dvc cache dir /mnt/big/cache # move it, e.g. off a small root disk
   <ol>
     <li>Create three versions of a dataset, committing each, so the cache has three entries.</li>
     <li>Run <code>du -sh .dvc/cache</code> and note the size.</li>
-    <li>Run <code>dvc gc --dry-run --workspace</code> and read exactly what it proposes to delete.</li>
+    <li>Run <code>dvc gc --dry-run --workspace</code> and read what it proposes to delete.</li>
     <li>Now run <code>dvc gc --dry-run --all-commits</code> and compare the two lists.</li>
   </ol>
   <em><code>--workspace</code> proposes deleting the two older versions; <code>--all-commits</code> proposes deleting nothing, because every version is still reachable from a commit. Understanding that difference before you run it for real is the point of this exercise.</em>
@@ -863,11 +863,11 @@ Debugging DVC has an order, and following it beats guessing.
 
 <ol class="guide-steps">
   <li><b>Run <code>dvc status</code> first</b>It names the stage, the specific dependency, and the reason. Most problems are answered here and you can stop.</li>
-  <li><b>Then <code>dvc status -c</code></b>Compares your cache against the remote. This is the answer to "my colleague cannot pull my data" — you never pushed it.</li>
+  <li><b>Then <code>dvc status -c</code></b>Compares your cache against the remote. This is the answer to "my colleague cannot pull my data". You never pushed it.</li>
   <li><b>Check the graph with <code>dvc dag</code></b>A stage that never reruns often has a missing <code>deps</code> entry; a cycle error means two stages each claim the other's output.</li>
   <li><b>Run the <code>cmd</code> by hand</b>Copy the command out of <code>dvc.yaml</code> and run it in your shell. If it fails there, DVC is innocent and you are debugging your script.</li>
-  <li><b>Force a rerun with <code>dvc repro -f</code></b>Ignores the lock and reruns everything. If forcing fixes it, your <code>deps</code> are incomplete — the real fix is declaring the missing dependency.</li>
-  <li><b>Add <code>-v</code> for verbose output</b><code>dvc repro -v</code> or <code>dvc pull -v</code> prints what DVC is actually doing, including which remote it contacted and why a transfer failed.</li>
+  <li><b>Force a rerun with <code>dvc repro -f</code></b>Ignores the lock and reruns everything. If forcing fixes it, your <code>deps</code> are incomplete, and the real fix is declaring the missing dependency.</li>
+  <li><b>Add <code>-v</code> for verbose output</b><code>dvc repro -v</code> or <code>dvc pull -v</code> prints what DVC is doing, including which remote it contacted and why a transfer failed.</li>
 </ol>
 
 Four failures cover most of what you will hit at this level, and each has a one-line cause:
@@ -890,19 +890,19 @@ dvc repro -s train --single-item   # exactly one stage, no upstream
 ```
 
 <div class="guide-try">
-  <span class="ct">Try it — cause each failure on purpose</span>
+  <span class="ct">Try it: cause each failure on purpose</span>
   <ol>
     <li>Remove a script from a stage's <code>deps</code>, change the script, and confirm <code>dvc repro</code> skips the stage.</li>
     <li>Try to <code>dvc add</code> a pipeline output and read the exact error text.</li>
     <li>Delete your local cache and try <code>dvc checkout</code> without having pushed. Read the error, then <code>dvc pull</code>.</li>
     <li>For each one, get to the answer with <code>dvc status</code> rather than by remembering what you broke.</li>
   </ol>
-  <em>three recognisable errors and one silent skip. The silent skip in step one is the dangerous one, because nothing fails — it is why declaring every input in <code>deps</code> matters more than any other habit at this level.</em>
+  <em>three recognisable errors and one silent skip. The silent skip in step one is the dangerous one, because nothing fails. It is why declaring every input in <code>deps</code> matters more than any other habit at this level.</em>
 </div>
 
 ## Putting it all together
 
-Everything above in one project. Nothing here is new — read it as a whole and you should be able to justify every line.
+Everything above in one project. Nothing here is new. Read it as a whole and you should be able to justify every line.
 
 ```text project layout
 .
@@ -1002,7 +1002,7 @@ Ten decisions in there are the whole lesson of this page:
 | Data in a remote, pointers in Git | The problem DVC solves |
 | `.dvc/config` committed, `config.local` not | Local versus committed configuration |
 | `dvc add` for inputs you did not generate | Your first tracked dataset |
-| `outs` — never `dvc add` — for generated files | Pipelines |
+| `outs`: never `dvc add`: for generated files | Pipelines |
 | Every script listed in `deps` | `dvc.lock` and how DVC knows |
 | `dvc.lock` committed, never edited | `dvc.lock` and how DVC knows |
 | Hyperparameters in `params.yaml` | Parameters |
@@ -1011,19 +1011,19 @@ Ten decisions in there are the whole lesson of this page:
 | `dvc gc --dry-run` before any cleanup | Garbage collection |
 
 <div class="guide-try">
-  <span class="ct">Try it — the one that matters</span>
+  <span class="ct">Try it: the one that matters</span>
   <ol>
-    <li>Take this structure into a project you actually work on, adapting the stages to your own scripts.</li>
+    <li>Take this structure into a project you work on, adapting the stages to your own scripts.</li>
     <li>Get <code>dvc repro</code> to a state where a second run reports everything up to date.</li>
     <li>Push to a real remote, then clone the repository into a different directory, <code>dvc pull</code>, and <code>dvc repro</code>. Confirm it reports up to date rather than rebuilding.</li>
     <li>Change one parameter, repro, and produce a <code>dvc metrics diff</code> you would be happy to paste into a pull request.</li>
   </ol>
-  <em>a fresh clone that reproduces your result without rerunning anything — which is the strongest possible evidence that the pipeline is genuinely reproducible. This exercise is worth more than the rest of the page combined.</em>
+  <em>a fresh clone that reproduces your result without rerunning anything, which is the strongest possible evidence that the pipeline is reproducible. Do this one even if you skip every other exercise.</em>
 </div>
 
 ## What you can now do, and what comes next
 
-You can version datasets and models with Git-sized pointers, restore any past version, share data through remote storage, express your workflow as a dependency graph that reruns only what changed, parameterise it, record metrics and plots that diff across commits, run and compare experiments without polluting history, depend on datasets from other repositories, keep your disk under control, and debug a pipeline methodically. That is a working practitioner's toolkit — enough to own the data and reproducibility story on a real project.
+You can version datasets and models with Git-sized pointers, restore any past version, share data through remote storage, express your workflow as a dependency graph that reruns only what changed, parameterise it, record metrics and plots that diff across commits, run and compare experiments without polluting history, depend on datasets from other repositories, keep your disk under control, and debug a pipeline methodically. That is a working practitioner's toolkit, enough to own the data and reproducibility story on a real project.
 
 | Can you… | |
 |---|---|
@@ -1039,6 +1039,6 @@ You can version datasets and models with Git-sized pointers, restore any past ve
 | Say what `dvc gc --workspace` deletes? | Everything not needed by the current checkout |
 | Name the first command when something is wrong? | `dvc status`, then `dvc status -c` |
 
-**Mid-level takes every one of those topics further** — the hashing and link internals that explain performance, `dvc.yaml` templating with `foreach` and `matrix`, output modifiers like `persist` and `cache: false`, external and cloud-versioned outputs, `dvc import-url`, multiple and per-role remotes, experiment queues and cloud-based experiments, the CI patterns that make `dvc repro` a pull-request check, DVCLive for in-training logging, and monorepo layouts.
+**Mid-level takes every one of those topics further:** the hashing and link internals that explain performance, `dvc.yaml` templating with `foreach` and `matrix`, output modifiers like `persist` and `cache: false`, external and cloud-versioned outputs, `dvc import-url`, multiple and per-role remotes, experiment queues and cloud-based experiments, the CI patterns that make `dvc repro` a pull-request check, DVCLive for in-training logging, and monorepo layouts.
 
 **Senior then covers what you own when data versioning is your responsibility**: the trust and access model across remotes, credentials that are never stored, immutability and retention on the storage side, cost and lifecycle policy, hashing at terabyte scale, data registries as a product, lineage and audit for regulated work, GDPR deletion against an immutable cache, CI/CD for data with self-hosted runners, and where DVC stops and a feature store or lakehouse begins.

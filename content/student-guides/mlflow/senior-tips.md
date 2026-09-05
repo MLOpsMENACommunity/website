@@ -2,7 +2,7 @@ Part three of three. The problems at this level are rarely about syntax. They ar
 
 ## Common errors at this level
 
-Cumulative — everything from Beginner and Mid still applies. These cause incidents rather than failed runs.
+Cumulative. Everything from Beginner and Mid still applies. These cause incidents rather than failed runs.
 
 | Symptom | Real cause | Fix |
 |---|---|---|
@@ -35,24 +35,24 @@ Cumulative — everything from Beginner and Mid still applies. These cause incid
 <div class="cards">
   <div class="card"><div class="icon">🚦</div><h4>Alias write belongs to one job</h4><p>Researchers register; a gated CI account promotes. This is the single highest-value control in MLflow.</p></div>
   <div class="card"><div class="icon">🛡️</div><h4>Proxied artifacts</h4><p><code>--serve-artifacts</code> so only the server holds bucket keys and access follows MLflow permissions.</p></div>
-  <div class="card"><div class="icon">🗄️</div><h4>Bucket versioning + write restriction</h4><p>Together they make "version 7" actually mean version 7, and a bad delete survivable.</p></div>
+  <div class="card"><div class="icon">🗄️</div><h4>Bucket versioning + write restriction</h4><p>Together they make "version 7" mean version 7, and a bad delete survivable.</p></div>
   <div class="card"><div class="icon">💽</div><h4>Alert on database disk first</h4><p>When it fills, logging, the UI, and alias resolution stop together. One alert prevents the worst outage.</p></div>
-  <div class="card"><div class="icon">🔄</div><h4>Restore, do not just back up</h4><p>Database and bucket, rehearsed quarterly, with a published RTO — and verify a model download.</p></div>
+  <div class="card"><div class="icon">🔄</div><h4>Restore, do not just back up</h4><p>Database and bucket, rehearsed quarterly, with a published RTO, and verify a model download.</p></div>
   <div class="card"><div class="icon">#️⃣</div><h4>Digests, not tags</h4><p>Base image by digest plus hash-pinned serving requirements. The difference between reproducible and probably.</p></div>
   <div class="card"><div class="icon">🧪</div><h4>Weekly rebuild of the champion</h4><p>The only mechanism that turns reproducibility from a claim into a monitored property.</p></div>
-  <div class="card"><div class="icon">🧱</div><h4>A wrapper, not a wiki</h4><p>Experiment path, tags, registered name, requirements, guards — all defaults. The only governance that survives a deadline.</p></div>
+  <div class="card"><div class="icon">🧱</div><h4>A wrapper, not a wiki</h4><p>Experiment path, tags, registered name, requirements, guards: all defaults. The only governance that survives a deadline.</p></div>
 </div>
 
 ## Practice cards
 
 <ol class="guide-steps">
   <li><b>Test the promotion boundary</b>With a researcher credential, try to move a production alias. If it works, stop and fix that before anything else on this page.</li>
-  <li><b>Replace a version's bytes</b>On a test bucket, overwrite the object behind a registered version and load it. Nothing warns you — that is the demonstration.</li>
+  <li><b>Replace a version's bytes</b>On a test bucket, overwrite the object behind a registered version and load it. Nothing warns you. That is the demonstration.</li>
   <li><b>Restore and time it</b>Database and bucket onto a scratch host. Verify login, metrics, alias resolution, <b>a model download</b>, and a new run. Publish the number.</li>
   <li><b>Fill the database</b>On a test instance, fill the backend disk and watch logging, the UI, and alias resolution fail together.</li>
   <li><b>Prove the serving decoupling</b>Stop the tracking server while a batch job runs. If it dies, you resolve the alias per request.</li>
   <li><b>Rebuild the champion</b>From only what MLflow recorded. Compare the metric, then list every layer that run does not pin.</li>
-  <li><b>Generate a lineage report</b>Code, data, config, approval — in one command. Note which of the four is missing.</li>
+  <li><b>Generate a lineage report</b>Code, data, config, and approval in one command. Note which of the four is missing.</li>
   <li><b>Audit artifacts for identifiers</b>Search prediction files and embedded input examples. Decide what is in scope for erasure.</li>
   <li><b>Dry-run retention</b>Read the list, the bytes it would free, and confirm the registry-reference exemption works.</li>
   <li><b>Run the checklist on someone else's project</b>It will find something, and it teaches you how much of this is convention rather than enforcement.</li>
@@ -122,7 +122,7 @@ mlflow gc --backend-store-uri "$PG" --older-than 30d
 
 <div class="callout warn">
   <span class="ct">Do step one today</span>
-  Everything else on this list protects against accident. Alias permissions protect production from anyone with credentials — and on a default install that is every person and every job that can reach the server. It is a ten-minute change with the largest blast radius on the page.
+  Everything else on this list protects against accident. Alias permissions protect production from anyone with credentials, and on a default install that is every person and every job that can reach the server. It is a ten-minute change with the largest blast radius on the page.
 </div>
 
 ## Verifying, not assuming
@@ -133,7 +133,7 @@ Every claim here is checkable in minutes. Assumed properties are the ones that f
 |---|---|
 | "Only CI can promote" | Try to move an alias with a researcher credential |
 | "We have backups" | Restore onto a scratch host and download a model |
-| "The registry is authoritative" | Resolve `@champion` and compare with what is actually serving |
+| "The registry is authoritative" | Resolve `@champion` and compare with what is serving |
 | "Versions are immutable" | Overwrite the object behind one on a test bucket and load it |
 | "We are reproducible" | Rebuild the champion and compare within a tolerance |
 | "Serving survives a tracking outage" | Stop the server while a batch job runs |
@@ -177,7 +177,7 @@ docker ps --format '{{.Names}}\t{{.Image}}' | grep mlflow      # is the tag pinn
 
 <div class="callout tip">
   <span class="ct">Turn the assertions into a scheduled run</span>
-  Those four assertions are a continuously-verified statement about your production model: clean tree, recorded data, an approval record, and a rollback target. Run them weekly as a tracked run and you find out when someone breaks one of those properties — instead of finding out during an audit.
+  Those four assertions are a continuously-verified statement about your production model: clean tree, recorded data, an approval record, and a rollback target. Run them weekly as a tracked run and you find out when someone breaks one of those properties. Instead of finding out during an audit.
 </div>
 
 ## Cost governance
@@ -193,7 +193,7 @@ Cost becomes your problem the moment MLflow is shared, and it is a measurement p
 | Which team spent it? | Mandatory `team` and `cost_centre` tags plus prefixes |
 | What would lifecycle save? | Bytes older than each tier boundary, per prefix |
 
-```python platform/cost_report.py — weekly, itself a tracked run
+```python platform/cost_report.py: weekly, itself a tracked run
 import mlflow
 from collections import defaultdict
 
@@ -244,14 +244,14 @@ Four incidents, each with a first action, a verification, and the prevention. Ke
 <ol class="guide-steps">
   <li><b>Check whether serving survived</b>If it cached its model at startup, this is an inconvenience rather than an outage. Establish that first.</li>
   <li><b>Stand up the same pinned image</b>A different version runs schema migrations on top of an incident.</li>
-  <li><b>Point it at the existing database</b>The server is stateless — if the database is intact you are minutes away.</li>
+  <li><b>Point it at the existing database</b>The server is stateless. If the database is intact you are minutes away.</li>
   <li><b>Verify in order</b>Login → a known run's metrics → alias resolution → a model download → a new run logging.</li>
   <li><b>Reconcile</b>Interrupted runs are stuck in <code>RUNNING</code>; close them and record the metric tail that was lost.</li>
 </ol>
 
-**The backend database is full.** Everything stops together: logging, the UI, and alias resolution. Free space or fail over to a replica, then fix the cause — usually per-batch metric writes or no retention. Prevention: an 80% disk alert and `mlflow gc` on a schedule.
+**The backend database is full.** Everything stops together: logging, the UI, and alias resolution. Free space or fail over to a replica, then fix the cause, usually per-batch metric writes or no retention. Prevention: an 80% disk alert and `mlflow gc` on a schedule.
 
-**A model version's artifacts are unreadable.** Roll `champion` back to `previous` first, then investigate: a bucket delete marker or overwrite, a lifecycle rule that expired the object, or an artifact root that changed after the run was created. Recover from bucket versioning if it is enabled — and if it is not, that is the finding.
+**A model version's artifacts are unreadable.** Roll `champion` back to `previous` first, then investigate: a bucket delete marker or overwrite, a lifecycle rule that expired the object, or an artifact root that changed after the run was created. Recover from bucket versioning if it is enabled, and if it is not, that is the finding.
 
 **The wrong model is live.** Move `champion` to `previous` immediately. Then read the version's `promotion_audit` tag to establish what happened, and check whether the promoter should have been able to do it. If a researcher moved it, this is an access-control finding, not a mistake.
 
@@ -266,7 +266,7 @@ Four incidents, each with a first action, a verification, and the prevention. Ke
 
 <div class="callout tip">
   <span class="ct">A playbook is only real once someone else has followed it</span>
-  Have a person who did not build the platform work through one and write down where they got stuck. Those gaps — an unstated hostname, an assumed credential, a missing permission — are exactly the ones that matter at 2am.
+  Have a person who did not build the platform work through one and write down where they got stuck. Those gaps (an unstated hostname, an assumed credential, a missing permission) are exactly the ones that matter at 2am.
 </div>
 
 ## Machine-learning specifics
@@ -303,10 +303,10 @@ A few things are MLflow-and-ML rather than general platform work, and they come 
 | **Backend** | Postgres or MySQL? Disk and connection alerts at 80%? |
 | **Backups** | Database **and** bucket? Restored last quarter? Model download verified? RTO published? |
 | **Pinning** | Server image tag pinned? Client/server aligned? Base images by digest? |
-| **Retention** | Scheduled, dry-run gated, registry-aware? Is `mlflow gc` actually running? |
+| **Retention** | Scheduled, dry-run gated, registry-aware? Is `mlflow gc` running? |
 | **Logging discipline** | Per epoch, not per batch? No `search_runs` in loops? |
 | **Reproducibility** | Dirty-tree guard? Dataset input required? Explicit serving requirements? |
-| **Rebuild check** | Weekly, against the champion, with a tolerance — and green? |
+| **Rebuild check** | Weekly, against the champion, with a tolerance, and green? |
 | **Lineage** | Code, data, config, and approval for the champion in one command? |
 | **Promotion** | Threshold-gated against a baseline, with an audit tag and a named reviewer? |
 | **Rollback** | Is `previous` set at every promotion? Rehearsed? |
@@ -317,4 +317,4 @@ A few things are MLflow-and-ML rather than general platform work, and they come 
 | **Cost** | Storage growth published per team? Lifecycle verified against the registry? |
 | **Boundaries** | Documented where MLflow stops and what owns orchestration, data, and serving? |
 
-Nobody passes this on the first attempt. Two failures matter disproportionately: **unrestricted alias permissions** and **an untested restore** — one means anyone can change production with no record, the other means a bad day becomes a permanent loss. Rank by blast radius rather than by effort, fix those two first, and publish the exceptions you are choosing to live with along with the reason. A checklist with argued exceptions is a better artefact than a green one, because it shows the trade-offs were deliberate and it gives whoever inherits the platform a map instead of a mystery.
+Nobody passes this on the first attempt. Two failures matter disproportionately: **unrestricted alias permissions** and **an untested restore**: one means anyone can change production with no record, the other means a bad day becomes a permanent loss. Rank by blast radius rather than by effort, fix those two first, and publish the exceptions you are choosing to live with along with the reason. A checklist with argued exceptions is a better artefact than a green one, because it shows the trade-offs were deliberate and it gives whoever inherits the platform a map instead of a mystery.

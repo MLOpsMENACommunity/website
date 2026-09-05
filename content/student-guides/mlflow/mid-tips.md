@@ -2,7 +2,7 @@ Part two of three. The problems at this level are no longer "why is nothing logg
 
 ## Common errors at this level
 
-Cumulative — everything from Beginner still applies. These are the failures that cost hours rather than minutes.
+Cumulative. Everything from Beginner still applies. These are the failures that cost hours rather than minutes.
 
 | Symptom | Real cause | Fix |
 |---|---|---|
@@ -24,7 +24,7 @@ Cumulative — everything from Beginner still applies. These are the failures th
 | A `nested=True` run raises | A previous run was never closed | Context manager everywhere, including notebooks |
 | Threads write to each other's runs | Fluent API's single global active run | Client API with explicit run ids |
 | `search_runs` returns nothing obvious | Params compare as strings | `params.max_depth = '5'`, quoted |
-| A "reproducible" run cannot be rebuilt | Dirty tree — MLflow stores the commit, not a diff | Commit first; treat dirty runs as scratch |
+| A "reproducible" run cannot be rebuilt | Dirty tree: MLflow stores the commit, not a diff | Commit first; treat dirty runs as scratch |
 | Dataset digest changed but nothing warned | Someone overwrote the source URI | Dated immutable prefixes; digests are annotation |
 | LLM evaluation bill was a surprise | Judged metrics are one API call per row | Sample rows; pin and name the judge |
 | Traces contain customer messages | Tracing stores inputs verbatim | Redaction and retention decided before enabling |
@@ -53,7 +53,7 @@ Cumulative — everything from Beginner still applies. These are the failures th
   <li><b>Reject a noise-level model</b>Add <code>baseline_model</code> and <code>min_relative_change=0.005</code>, then try to promote something 0.0004 better.</li>
   <li><b>Rehearse a rollback</b>Serve <code>@champion</code>, promote a new version, then move <code>champion</code> back to <code>previous</code> while the endpoint is live.</li>
   <li><b>Break a signature on purpose</b>Rename a feature, promote, and call the endpoint with the old payload. Then write your team's rule for signature changes.</li>
-  <li><b>Read your own trace</b>Trace a RAG call with real input and look at exactly what got stored. Decide what needs redacting.</li>
+  <li><b>Read your own trace</b>Trace a RAG call with real input and look at what got stored. Decide what needs redacting.</li>
   <li><b>Diff two runs from the client</b>Params, git commit, artifact URI. Practise finding the one line that differs.</li>
   <li><b>Validate without a server</b><code>validate_serving_input</code> plus <code>mlflow models predict</code>, wired into CI as a check.</li>
 </ol>
@@ -87,7 +87,7 @@ curl -sf -X POST localhost:5001/invocations -H 'Content-Type: application/json' 
 docker rm -f scorer
 ```
 
-```text requirements-serving.txt — small, explicit, reviewable
+```text requirements-serving.txt: small, explicit, reviewable
 mlflow==2.16.0
 scikit-learn==1.5.1
 pandas==2.2.2
@@ -104,7 +104,7 @@ joblib==1.4.2
 
 <div class="callout tip">
   <span class="ct">Run all four in CI on every model change</span>
-  They take a couple of minutes and they collectively eliminate the "worked on my machine" class of failure. A promotion that has not passed them is a promotion nobody has actually tested — because your notebook environment is not the serving environment, and only step three proves the difference.
+  They take a couple of minutes and they collectively eliminate the "worked on my machine" class of failure. A promotion that has not passed them is a promotion nobody has tested, because your notebook environment is not the serving environment, and only step three proves the difference.
 </div>
 
 ## Sweep hygiene
@@ -152,7 +152,7 @@ for run_id in losers["run_id"]:
 
 <div class="callout warn">
   <span class="ct"><code>delete_run</code> is a soft delete until you garbage-collect</span>
-  Deleted runs move to a <code>deleted</code> lifecycle stage and remain in the backend store; <code>mlflow gc</code> is what actually removes them and their artifacts. That is good news for accidents and bad news for disk usage — if you delete a thousand sweep runs and never run <code>gc</code>, nothing is reclaimed.
+  Deleted runs move to a <code>deleted</code> lifecycle stage and remain in the backend store; <code>mlflow gc</code> is what removes them and their artifacts. That is good news for accidents and bad news for disk usage. If you delete a thousand sweep runs and never run <code>gc</code>, nothing is reclaimed.
 </div>
 
 ## Gates that mean something
@@ -202,7 +202,7 @@ result = mlflow.evaluate(
 
 <div class="callout warn">
   <span class="ct">An aggregate metric hides a broken segment</span>
-  A model can improve overall AUC while getting materially worse for one customer group. A worst-segment threshold costs ten lines and catches exactly the regression that damages trust — and it is the kind of check a reviewer will ask about long before they ask about your architecture.
+  A model can improve overall AUC while getting materially worse for one customer group. A worst-segment threshold costs ten lines and catches exactly the regression that damages trust, and it is the kind of check a reviewer will ask about long before they ask about your architecture.
 </div>
 
 ## Keeping the tracking server healthy
@@ -244,7 +244,7 @@ The most common mid-level complaint, with exactly five causes. Work through them
   <li><b>A module is missing from the artifact</b>Custom pyfunc without <code>code_paths</code>. The error names your module.</li>
   <li><b>A dependency was never inferred</b>Dynamic or conditional import. The error names a third-party package.</li>
   <li><b>A version differs</b>The model loads but warns, or behaves differently. Compare the logged <code>requirements.txt</code> against the serving environment.</li>
-  <li><b>A system dependency is missing</b>libgomp, libgl, a locale. Only Python is managed — this is a base-image problem.</li>
+  <li><b>A system dependency is missing</b>libgomp, libgl, a locale. Only Python is managed. This is a base-image problem.</li>
   <li><b>A path or credential only exists on your machine</b>The model reads a file or a secret at load time. Everything it needs must be an <code>artifact</code> or a declared environment variable.</li>
 </ol>
 
@@ -260,7 +260,7 @@ pip freeze | sort > /tmp/local.txt
 
 <div class="callout warn">
   <span class="ct">Never load secrets in `load_context`</span>
-  A custom pyfunc that reads a credential file or calls a secrets manager at load time works in your environment and fails, or silently behaves differently, everywhere else — and it couples the model artifact to one deployment's configuration. Pass what it needs as declared artifacts or environment variables, and keep the model a pure function of its inputs.
+  A custom pyfunc that reads a credential file or calls a secrets manager at load time works in your environment and fails, or silently behaves differently, everywhere else, and it couples the model artifact to one deployment's configuration. Pass what it needs as declared artifacts or environment variables, and keep the model a pure function of its inputs.
 </div>
 
 ## Habits worth adopting now
@@ -279,7 +279,7 @@ pip freeze | sort > /tmp/local.txt
 
 **Treat the signature as a published API.** Additive changes only. If you must break it, publish a new registered model name and migrate consumers deliberately.
 
-**Validate in a built environment before every promotion.** It is two minutes and it is the only test that exercises what production will actually do.
+**Validate in a built environment before every promotion.** It is two minutes and it is the only test that exercises what production will do.
 
 ```bash
 # A pre-promotion checklist worth aliasing
@@ -291,4 +291,4 @@ python ci/evaluate_gate.py --model "models:/$NAME/$VERSION" --baseline "models:/
 echo "ready to promote $NAME v$VERSION"
 ```
 
-**Senior tips go deeper on every one of these** — the hardening pass every self-hosted server needs, authentication and proxied artifact access, multi-tenant isolation and quota, backend database capacity and what breaks first, backup and restore drills, artifact retention that survives an audit, promotion approval and separation of duties, and incident playbooks for a lost server, an unreadable artifact store, or a model nobody can rebuild.
+**Senior tips go deeper on every one of these:** the hardening pass every self-hosted server needs, authentication and proxied artifact access, multi-tenant isolation and quota, backend database capacity and what breaks first, backup and restore drills, artifact retention that survives an audit, promotion approval and separation of duties, and incident playbooks for a lost server, an unreadable artifact store, or a model nobody can rebuild.

@@ -21,7 +21,7 @@ These cause incidents rather than red builds.
 | Docker builds are slow despite a cache | `mode=min`, so intermediate layers are not exported | `cache-to: type=gha,mode=max` |
 | A self-hosted runner was compromised | Fork PR scheduled onto a persistent machine | Ephemeral, repo-scoped, never fork-schedulable |
 | One bad shared-workflow release broke every team | Major tag moved without a canary | Canary one repository on the exact patch first |
-| Teams have forked the shared workflow | Upstream changes take too long | Fix turnaround time — policy will not win this |
+| Teams have forked the shared workflow | Upstream changes take too long | Fix turnaround time: policy will not win this |
 | "CI is slow" never gets prioritised | No numbers | Track p95 duration, flake rate, queue time, cost |
 | A six-hour GPU job hit the ceiling | Actions used as compute, not orchestration | Submit to a training platform and gate on the result |
 
@@ -38,7 +38,7 @@ These cause incidents rather than red builds.
 
 ## The hardening pass every workflow should get
 
-Apply this as a template — or better, as the shared workflow everyone calls.
+Apply this as a template, or better, as the shared workflow everyone calls.
 
 ```yaml .github/workflows/ci.yml
 permissions:
@@ -89,7 +89,7 @@ jobs:
     <h4>Do not</h4>
     <ul>
       <li>Reference <code>@main</code> or any branch on code you do not own</li>
-      <li>Pin and then never update — a frozen action is an unpatched one</li>
+      <li>Pin and then never update: a frozen action is an unpatched one</li>
       <li>Assume a major tag is immutable; tags can be moved</li>
       <li>Run an unvetted action in a job holding production secrets</li>
     </ul>
@@ -156,7 +156,7 @@ done
 ```
 
 <div class="callout warn">
-  <span class="ct">Test that the control actually blocks something</span>
+  <span class="ct">Test that the control blocks something</span>
   After tightening an OIDC trust policy, try the assume-role from a branch that should be refused. After setting <code>permissions: contents: read</code>, confirm a push step now fails. A security control you have never seen refuse anything is decoration.
 </div>
 
@@ -186,13 +186,13 @@ Most incidents are prevented at review time, not runtime. A checklist is the onl
 
 ### A secret leaked into a log
 
-**Rotate first.** The log is already scraped; assume the credential is compromised regardless of how quickly you deleted it. Then revoke the old credential, delete the log and the run, find the line that printed it, and close the class of problem — secrets through `env`, never interpolated, and OIDC wherever possible so there is nothing to leak.
+**Rotate first.** The log is already scraped; assume the credential is compromised regardless of how quickly you deleted it. Then revoke the old credential, delete the log and the run, find the line that printed it, and close the class of problem: secrets through `env`, never interpolated, and OIDC wherever possible so there is nothing to leak.
 
 Deleting the log first and rotating later optimises for the wrong thing.
 
 ### A third-party action was compromised
 
-Determine which repositories reference it and at what ref. Revoke every secret those workflows could reach — not just the ones you think were used. Replace the reference with a vetted SHA or an internal fork. Then close the class: SHA pinning, an allow-list policy, and Dependabot.
+Determine which repositories reference it and at what ref. Revoke every secret those workflows could reach, not just the ones you think were used. Replace the reference with a vetted SHA or an internal fork. Then close the class: SHA pinning, an allow-list policy, and Dependabot.
 
 ### Deploys have been shipping the wrong build
 
@@ -201,7 +201,7 @@ Look at the **cache and artifact names before the code**. A key that never inval
 ### Everything went red at once
 
 <div class="guide-timeline">
-  <div class="guide-timeline-item"><span>0m</span><strong>Establish the blast radius</strong><small>One repository or all of them? Simultaneous failure everywhere is a shared workflow release, an action release, or a runner image change — not your diff.</small></div>
+  <div class="guide-timeline-item"><span>0m</span><strong>Establish the blast radius</strong><small>One repository or all of them? Simultaneous failure everywhere is a shared workflow release, an action release, or a runner image change, not your diff.</small></div>
   <div class="guide-timeline-item"><span>2m</span><strong>Compare against the last green run</strong><small>Side by side. Look at the environment, not just the code: runner image version, action versions, cache hit or miss.</small></div>
   <div class="guide-timeline-item"><span>5m</span><strong>Re-run the failed job with debug logging</strong><small>Only the failed job, so you get an answer in two minutes rather than twenty.</small></div>
   <div class="guide-timeline-item"><span>8m</span><strong>Bypass the cache</strong><small>Delete the suspect entry or change the key. A poisoned cache explains failures that make no sense against the diff.</small></div>
@@ -211,7 +211,7 @@ Look at the **cache and artifact names before the code**. A key that never inval
 
 ## Auditing what earlier levels taught
 
-The habits from Beginner and Mid do not stop mattering — they become things you verify across a fleet rather than remember per workflow. These one-liners are worth running over any repository you inherit.
+The habits from Beginner and Mid do not stop mattering. They become things you verify across a fleet rather than remember per workflow. These one-liners are worth running over any repository you inherit.
 
 ```bash
 # Triggers and filters: which workflows can be started by fork-influenced events?
@@ -236,7 +236,7 @@ done
 |---|---|
 | `paths-ignore` on triggers | A fleet-wide policy, plus stub workflows so required checks still report |
 | `if: github.ref == …` on deploys | An **environment** with branch restrictions, so the gate is not one editable line |
-| Job outputs for strings | An audited boundary — outputs are plain text in run metadata, never credentials |
+| Job outputs for strings | An audited boundary: outputs are plain text in run metadata, never credentials |
 | A reusable workflow you wrote | A versioned product with a canary, CODEOWNERS, and a deprecation path |
 | `timeout-minutes` per job | A default in the shared workflow, so no team has to remember |
 | `cache:` on a setup action | Layer caching with `mode=max`, plus awareness that caches are a write surface |
@@ -256,7 +256,7 @@ The moment other teams depend on your workflow, you are running a platform.
 
 **Canary before moving the tag.** One low-risk repository pins the exact patch. Green for a day, then move the major tag. Skip this and one bad release breaks every team at once.
 
-**Inputs are a public API.** Types, defaults, descriptions. Removing an input is a breaking change even if one repository used it — and the failure lands on somebody else's pull request.
+**Inputs are a public API.** Types, defaults, descriptions. Removing an input is a breaking change even if one repository used it, and the failure lands on somebody else's pull request.
 
 **Pass secrets explicitly.** `secrets: inherit` hands the callee everything the caller can see. Listing the two it needs documents the contract and bounds the damage from a bad release.
 
@@ -264,7 +264,7 @@ The moment other teams depend on your workflow, you are running a platform.
 
 <div class="callout warn">
   <span class="ct">The failure mode of shared pipelines</span>
-  A team needs one small change, cannot get it upstream quickly, and forks. Six months later there are eleven forks and no standard. The fix is not policy — it is <b>turnaround time</b>. If a reasonable request takes two weeks, forking is the rational choice and you will lose.
+  A team needs one small change, cannot get it upstream quickly, and forks. Six months later there are eleven forks and no standard. The fix is <b>turnaround time</b>, not a policy. If a reasonable request takes two weeks, forking is the rational choice and you will lose.
 </div>
 
 ## Runners and cost
@@ -273,19 +273,19 @@ The moment other teams depend on your workflow, you are running a platform.
 |---|---|
 | Hosted by default | Free on public repos, fresh machine, no state to leak |
 | Larger hosted before self-hosted | Same isolation, more cores, no fleet to operate |
-| Self-hosted only for GPU, licences, or VPC reach | And then **ephemeral** — one job per runner |
+| Self-hosted only for GPU, licences, or VPC reach | And then **ephemeral**: one job per runner |
 | Never fork-schedulable | Untrusted code plus persistent state is a compromised machine |
 | Repository-scoped, network-segmented | A compromised runner should not reach production |
 
-Windows minutes bill at roughly twice Linux and macOS at roughly ten times. A matrix that includes macOS "for completeness" can quietly become most of your bill — and larger hosted runners are almost always cheaper than the engineering time to run your own fleet.
+Windows minutes bill at roughly twice Linux and macOS at roughly ten times. A matrix that includes macOS "for completeness" can become most of your bill, and larger hosted runners are almost always cheaper than the engineering time to run your own fleet.
 
-## Performance levers that actually pay
+## Performance levers that pay
 
 | Lever | Typical gain | Note |
 |---|---|---|
 | Cancel superseded runs | Large on busy repositories | `cancel-in-progress` on pull requests only |
 | Registry or GHA layer cache with `mode=max` | Minutes per build | `mode=min` barely helps a multi-stage build |
-| Shard slow suites across a matrix | Near-linear | Bounded by the slowest shard — shard by duration |
+| Shard slow suites across a matrix | Near-linear | Bounded by the slowest shard: shard by duration |
 | Move end-to-end tests to a schedule | Removes them from the critical path | Keep a smoke subset on the PR |
 | Prebuilt job image | Removes install time entirely | `container:` with an image you build nightly |
 | Larger runners | Sub-linear | Only after measuring |
@@ -311,7 +311,7 @@ Four numbers turn "CI is slow" from an opinion into a funded priority: **median 
       | tee -a "$GITHUB_STEP_SUMMARY"
 ```
 
-One caution: debugging actions that open an interactive shell on a runner are genuinely useful and are also a live session on a machine holding your secrets. Restrict them to jobs that have none.
+One caution: debugging actions that open an interactive shell on a runner are useful and are also a live session on a machine holding your secrets. Restrict them to jobs that have none.
 
 ## Machine-learning pipelines
 
@@ -332,4 +332,4 @@ One caution: debugging actions that open an interactive shell on a runner are ge
       --min-delta 0.0
 ```
 
-And the architectural habit underneath all of it: **Actions orchestrates, it does not compute.** The six-hour ceiling is not the real constraint — the real constraint is that a CI runner is the wrong place for a long, expensive, retryable workload. Submit it to a platform built for that, wait, and gate on the result.
+The architectural habit underneath all of it: **Actions orchestrates, it does not compute.** The six-hour ceiling is not the real constraint. A CI runner is the wrong place for a long, expensive, retryable workload. Submit it to a platform built for that, wait, and gate on the result.

@@ -2,7 +2,7 @@ Part three of three. The problems at this level are rarely about syntax. They ar
 
 ## Common errors at this level
 
-Cumulative — everything from Beginner and Mid still applies. These cause incidents rather than failed runs.
+Cumulative. Everything from Beginner and Mid still applies. These cause incidents rather than failed runs.
 
 | Symptom | Real cause | Fix |
 |---|---|---|
@@ -21,11 +21,11 @@ Cumulative — everything from Beginner and Mid still applies. These cause incid
 | Nobody could say who approved the production model | The tag was moved by hand in the UI | Promotion as a task, with a threshold and a log |
 | An audit could not name the training data | The run read a raw path instead of a Dataset | Consume by version with `alias`; flag runs without one |
 | Cannot honour an erasure request | Personal data lives in the immutable versioned store | Version derived or pseudonymised data; crypto-shred |
-| Deleted objects were unrecoverable | Bucket versioning never enabled | Enable it — highest-priority storage change |
+| Deleted objects were unrecoverable | Bucket versioning never enabled | Enable it: highest-priority storage change |
 | Storage tripled with no new datasets | Unpruned sweep artifacts and per-epoch checkpoints | `save_top_k_tasks_only`, best+last, lifecycle rules |
 | GPU utilisation under 40% while the queue was deep | Abandoned sessions and workers pinned to the wrong queues | Session timeouts; requeue; autoscale to zero |
 | Spot instances cost more than on-demand | No checkpointing, no retries | `retry_on_failure` plus `continue_last_task` |
-| A security review failed on access control | Open-source server has one workspace and no RBAC | State it; isolate with queues, credentials, and buckets — or pay |
+| A security review failed on access control | Open-source server has one workspace and no RBAC | State it; isolate with queues, credentials, and buckets, or pay |
 | Cost could not be attributed to a team | No prefixes, no mandatory tags | Design attribution in; it cannot be reconstructed later |
 | Two teams' experiments were indistinguishable | Flat project list, ad-hoc naming | A wrapper that sets the prefix and tags |
 
@@ -52,7 +52,7 @@ Cumulative — everything from Beginner and Mid still applies. These cause incid
   <li><b>Kill the services agent</b>Stop it and see how long before anyone notices. That gap is your detection time, and it is usually days.</li>
   <li><b>Rebuild your production model</b>Clone the task behind it, run it today, compare the metric. Then list every layer it does not pin.</li>
   <li><b>Generate a lineage report</b>From a model id, produce code, data, config, and approval in one command. Note which of the four is missing.</li>
-  <li><b>Scope an erasure request</b>Pick a dataset, count the referencing tasks and child versions, and list every other copy including backups. Write down what you would actually do.</li>
+  <li><b>Scope an erasure request</b>Pick a dataset, count the referencing tasks and child versions, and list every other copy including backups. Write down what you would do.</li>
   <li><b>Measure real utilisation</b>GPU-hours consumed versus hours that produced a completed run, for one week. Then list the running sessions and their owners.</li>
   <li><b>Run the review checklist on someone else's project</b>It will find something, and the exercise teaches you how much of this is convention rather than enforcement.</li>
 </ol>
@@ -126,10 +126,10 @@ Every claim in this section is checkable in a few minutes. Assumed properties ar
 | "We have backups" | Restore onto a scratch host and open a known task's Scalars tab |
 | "We are reproducible" | Clone last quarter's release task, run it, compare within a tolerance |
 | "Fork PRs are safe" | Open one from a fork and confirm it cannot enqueue |
-| "Credentials are scoped" | Revoke one and observe exactly what breaks |
+| "Credentials are scoped" | Revoke one and observe what breaks |
 | "Artifacts are in S3" | Read an artifact's URL from the UI |
 | "Retention is safe" | Run it in report-only mode and check the exemption logic against a published model |
-| "The registry is authoritative" | Query `tags=["production"]` and compare against what is actually serving |
+| "The registry is authoritative" | Query `tags=["production"]` and compare against what is serving |
 | "Promotion is recorded" | Find the promotion task's log, user, and threshold |
 | "Elastic has headroom" | `_cat/indices` sorted by size, plus current disk usage |
 | "The services queue is alive" | Stop it and measure how long detection takes |
@@ -175,7 +175,7 @@ Cost becomes your problem the moment ClearML is shared, and it is entirely a mea
 | What fraction is sweep waste? | Artifacts on non-top-K HPO trials |
 | Which team spent it? | Mandatory `team:` and `cost-centre:` tags |
 
-```python ops/cost_report.py — weekly, on services
+```python ops/cost_report.py: weekly, on services
 from datetime import datetime, timedelta
 from collections import defaultdict
 from clearml import Task
@@ -214,7 +214,7 @@ for team, hours in by_team.items():
 
 <div class="callout warn">
   <span class="ct">Do not tier storage without pricing retrieval</span>
-  Glacier looks cheap until someone needs forty checkpoints back for an audit, and archive retrieval charges plus egress can exceed a year of standard storage. Model the read pattern, not just the shelf price — and keep anything a rebuild check or an audit might need in a warm class.
+  Glacier looks cheap until someone needs forty checkpoints back for an audit, and archive retrieval charges plus egress can exceed a year of standard storage. Model the read pattern, not just the shelf price, and keep anything a rebuild check or an audit might need in a warm class.
 </div>
 
 ## Incident playbooks
@@ -231,9 +231,9 @@ Four incidents, each with a first action, a verification, and the prevention. Ke
   <li><b>Publish the actual RTO</b>Compare it against your rehearsed number and fix whichever step was slower than expected.</li>
 </ol>
 
-**Elasticsearch went read-only.** Symptom: metrics stop, training continues. Free disk (delete old indices or expand the volume), release the block with a `_settings` PUT, then fix the cause — reporting rate, retention, or capacity. Prevention: an 80% disk alert.
+**Elasticsearch went read-only.** Symptom: metrics stop, training continues. Free disk (delete old indices or expand the volume), release the block with a `_settings` PUT, then fix the cause: reporting rate, retention, or capacity. Prevention: an 80% disk alert.
 
-**A model cannot be rebuilt.** Run the lineage report and find the unpinned layer; it is nearly always the base image tag or an unpinned wheel. If artifacts are gone, check whether retention deleted the task, then check bucket versioning. Record exactly what could not be recovered — that list is your next sprint.
+**A model cannot be rebuilt.** Run the lineage report and find the unpinned layer; it is nearly always the base image tag or an unpinned wheel. If artifacts are gone, check whether retention deleted the task, then check bucket versioning. Record what could not be recovered. That list is your next sprint.
 
 **Unauthorised enqueue.** Treat it as a credential compromise, not a mistake: abort the task, revoke the credential that enqueued it, audit everything that queue's agents could reach with their ambient credentials, rotate anything exposed, then fix the queue isolation that permitted it.
 
@@ -249,17 +249,17 @@ Four incidents, each with a first action, a verification, and the prevention. Ke
 
 <div class="callout tip">
   <span class="ct">A playbook is only real once someone else has followed it</span>
-  Have a person who did not build the platform work through one, and write down where they got stuck. Those gaps — an unstated hostname, an assumed credential, a missing sudo — are exactly the ones that matter at 2am.
+  Have a person who did not build the platform work through one, and write down where they got stuck. Those gaps (an unstated hostname, an assumed credential, a missing sudo) are exactly the ones that matter at 2am.
 </div>
 
 ## Running ClearML as a platform
 
-Five obligations. This is what "platform ownership" actually means day to day.
+Five obligations. This is what "platform ownership" means day to day.
 
 | Obligation | Concretely |
 |---|---|
 | **Publish the numbers** | Weekly: GPU utilisation, queue depth, storage by team, rebuild-check result |
-| **Ship a wrapper** | Project prefix, `output_uri`, tags, image digest, package pinning — as defaults |
+| **Ship a wrapper** | Project prefix, `output_uri`, tags, image digest, package pinning: as defaults |
 | **Own the upgrade cadence** | A tested quarterly window with a rollback, announced in advance |
 | **Alert on the platform** | Elastic disk, services liveness, queue depth, Mongo disk, API 5xx |
 | **Keep four runbooks** | Written, in the repo, and validated by an outside reader |
@@ -278,7 +278,7 @@ The alert list, in priority order, and it is deliberately short:
 
 <div class="callout warn">
   <span class="ct">Task failures do not belong on the platform alert list</span>
-  A failed training run is its author's problem and they already have the link. Paging the platform team on task failures trains everyone to ignore the channel, and the alerts that matter — Elastic disk, a dead services agent — get lost in it.
+  A failed training run is its author's problem and they already have the link. Paging the platform team on task failures trains everyone to ignore the channel, and the alerts that matter (Elastic disk, a dead services agent) get lost in it.
 </div>
 
 ## Machine-learning specifics
@@ -293,13 +293,13 @@ A few things are ClearML-and-ML rather than general platform work, and they come
 
 **Debug samples are data.** Images and sample outputs land in Elasticsearch and object storage, and if the inputs are personal data those samples are copies nobody remembers during an erasure request. Report them sparsely and include them in your deletion scope.
 
-**Model weights are the un-erasable artefact.** For some model classes, training data is extractable. Which is why the erasure conversation is architectural — keep personal data out of the versioned store — rather than a runbook.
+**Model weights are the un-erasable artefact.** For some model classes, training data is extractable. Which is why the erasure conversation is architectural, keep personal data out of the versioned store, rather than a runbook.
 
 **A published model is the only thing that cannot be silently swapped.** An unpublished "production" model can have its weights replaced by anyone with workspace access, and serving would pick up the change with no record. Publishing is a cheap, real control.
 
 <div class="callout tip">
   <span class="ct">The one-sentence version of this whole page</span>
-  Make the safe path the shortest path — through a wrapper, queue design, and defaults — and verify the properties you claim, on a schedule, rather than assuming them. Everything else here is an instance of those two.
+  Make the safe path the shortest path (through a wrapper, queue design, and defaults) and verify the properties you claim, on a schedule, rather than assuming them. Everything else here is an instance of those two.
 </div>
 
 ## The checklist to run before shipping
@@ -325,4 +325,4 @@ A few things are ClearML-and-ML rather than general platform work, and they come
 | **Runbooks** | Four written, and followed by someone who did not write them? |
 | **Boundaries** | Documented where ClearML stops and what owns the rest? |
 
-Nobody passes this on the first attempt. Two failures matter disproportionately: **an untested restore** and **a fork pull request with credentials** — one is unrecoverable data loss, the other is remote code execution. Rank by blast radius rather than by effort, fix those two first, and publish the exceptions you are choosing to live with along with the reason. A checklist with argued exceptions is a better artefact than a green one, because it shows the trade-offs were made deliberately and it gives whoever inherits the platform a map instead of a mystery.
+Nobody passes this on the first attempt. Two failures matter disproportionately: **an untested restore** and **a fork pull request with credentials**. One is unrecoverable data loss, the other is remote code execution. Rank by blast radius rather than by effort, fix those two first, and publish the exceptions you are choosing to live with along with the reason. A checklist with argued exceptions is a better artefact than a green one, because it shows the trade-offs were made deliberately and it gives whoever inherits the platform a map instead of a mystery.

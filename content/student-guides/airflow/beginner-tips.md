@@ -7,7 +7,7 @@ Part one of three. Almost every beginner problem with Airflow comes from one of 
 | The DAG does not appear in the UI | Import error, or no DAG object at module level | `python dags/my_dag.py`, then `airflow dags list-import-errors` |
 | The DAG appears but never runs | It is paused, or `start_date` is in the future | Unpause it; check `start_date` |
 | Hundreds of runs appeared at once | `catchup=True` with an old `start_date` | Set `catchup=False`; backfill deliberately |
-| The `@daily` run for today has not happened | The interval must **end** before the run starts | Correct behaviour — wait until after midnight |
+| The `@daily` run for today has not happened | The interval must **end** before the run starts | Correct behaviour: wait until after midnight |
 | A rerun produced different data | The task used `datetime.now()` | Use `{{ ds }}` and the interval variables |
 | A retry duplicated rows | The task is not idempotent | `DELETE` the target partition, then `INSERT` |
 | `{{ ds }}` appears literally in the output | The field is not templated | Check the operator's `template_fields` |
@@ -59,12 +59,12 @@ Short, self-contained exercises. Each takes a few minutes and leaves you with a 
 
 ## Debugging order
 
-Follow this rather than guessing — the first three steps answer most problems.
+Follow this rather than guessing. The first three steps answer most problems.
 
 <ol class="guide-steps">
   <li><b>Does the file import?</b><code>python dags/my_dag.py</code>. Then <code>airflow dags list-import-errors</code>. A DAG that does not appear is almost always this.</li>
-  <li><b>Read the task log</b>Click the failed task, then <strong>Logs</strong>. Scroll to the <em>top</em> of the traceback, not the bottom — the last line is usually a wrapper, not the cause.</li>
-  <li><b>Check the rendered template</b>The <strong>Rendered Template</strong> tab shows what your field actually became. Half of "my SQL is wrong" is a template that resolved differently than expected.</li>
+  <li><b>Read the task log</b>Click the failed task, then <strong>Logs</strong>. Scroll to the <em>top</em> of the traceback rather than the bottom. The last line is usually a wrapper, not the cause.</li>
+  <li><b>Check the rendered template</b>The <strong>Rendered Template</strong> tab shows what your field became. Half of "my SQL is wrong" is a template that resolved differently than expected.</li>
   <li><b>Run the task by hand</b><code>airflow tasks test my_dag my_task 2024-05-01</code>. Foreground, instant, no state written. If it fails here too, you are debugging your code and not Airflow.</li>
   <li><b>Check the state, not just the colour</b><code>queued</code> means a capacity problem, <code>upstream_failed</code> means look upstream, <code>skipped</code> means a branch or trigger rule. Each points somewhere different.</li>
   <li><b>Check the DAG's own health</b><strong>Admin → DAG Processing</strong> for parse time, and the <strong>Code</strong> view to confirm the scheduler is running the file you think it is.</li>
@@ -86,13 +86,13 @@ airflow dags report                            # parse duration per file
 
 ## The interval model, in practice
 
-This is where most beginner time is lost, so here are the three questions and their answers.
+This is where most beginner time is lost, so start with these three questions.
 
 **"Why has today's run not happened?"** Because the interval has not ended. A `@daily` DAG produces the run for 1 May just after midnight on 2 May.
 
-**"Which date should my task use?"** `{{ ds }}` — the logical date, which is the start of the interval. Never the wall clock.
+**"Which date should my task use?"** `{{ ds }}`, the logical date, which is the start of the interval. Never the wall clock.
 
-**"How do I run yesterday again?"** Clear that task instance. It will rerun with the original `{{ ds }}`, which is exactly why idempotence matters.
+**"How do I run yesterday again?"** Clear that task instance. It will rerun with the original `{{ ds }}`, which is why idempotence matters.
 
 | You want | Use |
 |---|---|
@@ -105,20 +105,20 @@ This is where most beginner time is lost, so here are the three questions and th
 
 <div class="callout warn">
   <span class="ct"><code>datetime.now()</code> in a task is a reproducibility bug</span>
-  It will produce correct-looking results today and wrong ones on every rerun and every backfill. The failure is silent — no error, just data for the wrong window quietly written into the right partition. Grep your DAGs for <code>now()</code> and <code>today()</code>; each occurrence is either a deliberate exception or a bug.
+  It will produce correct-looking results today and wrong ones on every rerun and every backfill. The failure is silent: no error, just data for the wrong window written into the right partition. Grep your DAGs for <code>now()</code> and <code>today()</code>; each occurrence is either a deliberate exception or a bug.
 </div>
 
 ## Idempotence, concretely
 
 "Safe to run twice" is easy to say and easy to get wrong. Three patterns cover almost everything.
 
-```sql delete-then-insert — the default choice
+```sql delete-then-insert (the default choice)
 DELETE FROM daily_stats WHERE day = '{{ ds }}';
 INSERT INTO daily_stats SELECT '{{ ds }}', count(*) FROM events
 WHERE event_date = '{{ ds }}';
 ```
 
-```sql merge / upsert — when you cannot delete
+```sql merge / upsert: when you cannot delete
 MERGE INTO daily_stats t
 USING (SELECT '{{ ds }}' AS day, count(*) AS n FROM events
        WHERE event_date = '{{ ds }}') s
@@ -127,7 +127,7 @@ WHEN MATCHED THEN UPDATE SET events = s.n
 WHEN NOT MATCHED THEN INSERT (day, events) VALUES (s.day, s.n);
 ```
 
-```python overwrite a partition — for files
+```python overwrite a partition (for files)
 @task
 def write_partition():
     path = "s3://analytics/events/dt={{ ds }}/"
@@ -149,8 +149,8 @@ def write_partition():
   <div class="guide-compare-col bad">
     <h4>Dangerous to retry</h4>
     <ul>
-      <li>Bare <code>INSERT</code> — duplicates on retry</li>
-      <li><code>UPDATE … SET n = n + 1</code> — accumulates</li>
+      <li>Bare <code>INSERT</code>: duplicates on retry</li>
+      <li><code>UPDATE … SET n = n + 1</code>: accumulates</li>
       <li>Appending to a file</li>
       <li>Sending an email or a webhook</li>
       <li>Writing to a path derived from <code>now()</code></li>
@@ -158,7 +158,7 @@ def write_partition():
   </div>
 </div>
 
-For genuinely non-idempotent side effects — sending a notification, charging a card — the pattern is to make the *decision* idempotent: record in a table that the notification for `{{ ds }}` was sent, and check that before sending.
+For non-idempotent side effects (sending a notification, charging a card) the pattern is to make the *decision* idempotent: record in a table that the notification for `{{ ds }}` was sent, and check that before sending.
 
 ## Structuring a DAG that ages well
 
@@ -205,7 +205,7 @@ pipeline()
 
 <div class="callout tip">
   <span class="ct">Keep the DAG file thin</span>
-  A DAG file should read as a description of the workflow, not as the implementation of it. Put the logic in a module the DAG imports — and import it inside the task, so it does not cost you parse time.
+  A DAG file should read as a description of the workflow, not as the implementation of it. Put the logic in a module the DAG imports, and import it inside the task, so it does not cost you parse time.
 </div>
 
 ## Local development
@@ -236,7 +236,7 @@ airflow dags list-import-errors
 
 <div class="callout warn">
   <span class="ct">Your local environment is not the worker's environment</span>
-  A task that imports a library you have locally will fail on a worker that does not. When a task raises <code>ModuleNotFoundError</code> in Airflow but not in your shell, that is the cause — the fix is adding the dependency to the image the workers run, not to your laptop.
+  A task that imports a library you have locally will fail on a worker that does not. When a task raises <code>ModuleNotFoundError</code> in Airflow but not in your shell, that is the cause. The fix is adding the dependency to the image the workers run, not to your laptop.
 </div>
 
 ## Small things worth doing from day one
@@ -249,7 +249,7 @@ airflow dags list-import-errors
 
 **Prefer `EmptyOperator` bookends.** A `start` and `end` task make the Graph view readable and give you a stable place to attach new work.
 
-**Never rename a `dag_id` casually.** It is the identity — renaming abandons all history and creates a new DAG with none.
+**Never rename a `dag_id` casually.** It is the identity: renaming abandons all history and creates a new DAG with none.
 
 **Grep for `now()` before every review.** Each occurrence is a reproducibility bug or a deliberate exception, and there is no third option.
 
@@ -352,5 +352,5 @@ SELECT '{{ ds }}', count(*) FROM staging.events WHERE event_date = '{{ ds }}';
 
 Nine details in there are the whole lesson of this page: `catchup=False`, `{{ ds }}` rather than `now()`, idempotent delete-then-insert SQL in a file, `retries` with backoff, `execution_timeout` per task and `dagrun_timeout` per run, `max_active_runs=1`, a sensor in `reschedule` mode with a timeout, `ALL_DONE` on cleanup, and a heavy import moved inside the task.
 
-**Mid-level tips go deeper on every one of these** — executors and the concurrency limit that actually binds, dynamic mapping pitfalls, deferrable operators replacing sensors, pools for shared systems, alerting people actually read, testing DAGs in CI, and diagnosing "it works locally but not on the cluster".
+**Mid-level tips go deeper on every one of these:** executors and the concurrency limit that binds, dynamic mapping pitfalls, deferrable operators replacing sensors, pools for shared systems, alerting people read, testing DAGs in CI, and diagnosing "it works locally but not on the cluster".
 

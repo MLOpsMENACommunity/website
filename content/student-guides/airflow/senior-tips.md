@@ -2,11 +2,11 @@ Part three of three. The problems at this level are rarely about a DAG. They are
 
 ## Common errors at this level
 
-Cumulative — everything from Beginner and Mid still applies. These cause incidents rather than failed tasks.
+Cumulative. Everything from Beginner and Mid still applies. These cause incidents rather than failed tasks.
 
 | Symptom | Real cause | Fix |
 |---|---|---|
-| Nothing has run for hours and nothing failed | The scheduler is dead — silence, not alerts | `airflow jobs check`; add heartbeat alerting today |
+| Nothing has run for hours and nothing failed | The scheduler is dead: silence, not alerts | `airflow jobs check`; add heartbeat alerting today |
 | A contributor's DAG read another team's credentials | A DAG file is arbitrary Python; RBAC does not isolate it | Secrets backend with per-team scoping; review-gated deploys |
 | A credential appeared in a task log | A value fetched manually and printed | Rotate; add the key to `sensitive_var_conn_names`; CI grep |
 | A DAG deployed straight to production and broke it | Git-sync from an ungated branch | Required integrity check on the followed branch |
@@ -20,9 +20,9 @@ Cumulative — everything from Beginner and Mid still applies. These cause incid
 | Tasks queued forever with no error | A `queue` no running worker consumes | Compare task queues against worker configuration |
 | The secrets backend went down and everything failed | It is on the hot path of every task | Monitor its latency; never less available than Airflow |
 | A team could trigger another team's production DAG | No per-DAG access control | `access_control` on the DAG, or per-DAG roles |
-| Two teams that must not see each other share one Airflow | A DAG file cannot be sandboxed | Separate deployments, honestly |
+| Two teams that must not see each other share one Airflow | A DAG file cannot be sandboxed | Separate deployments |
 | Scheduler restarts lost in-flight work | Single scheduler, no HA | Multiple active-active schedulers with row-level locking |
-| The DAG folder is writable by many people | It is effectively administrative access | Deploy through a pipeline, not a shared drive |
+| The DAG folder is writable by many people | It is administrative access | Deploy through a pipeline, not a shared drive |
 | A retention job deleted data someone needed | `db clean` cutoff too aggressive | Dry-run first; agree the retention window in writing |
 | Orphaned XCom objects in object storage | A custom backend; `db clean` only removes rows | A bucket lifecycle rule on the XCom prefix |
 | Nobody knows who owns a failing DAG | No owner, no tags, no `doc_md` | Assert all three in CI |
@@ -45,7 +45,7 @@ Cumulative — everything from Beginner and Mid still applies. These cause incid
 
 <ol class="guide-steps">
   <li><b>Kill the scheduler and time your detection</b>Stop it in a test environment and measure how long until monitoring tells you, rather than you noticing. Most deployments are silent.</li>
-  <li><b>Prove a DAG can read anything</b>Write a DAG under one team's ownership that reads a connection belonging to another. It works — and that result is the whole argument for a secrets backend.</li>
+  <li><b>Prove a DAG can read anything</b>Write a DAG under one team's ownership that reads a connection belonging to another. It works, and that result is the whole argument for a secrets backend.</li>
   <li><b>Check the masking gap</b>Print a connection password directly, then fetch the same secret into a variable with an innocuous name and print that. Compare what the log masks.</li>
   <li><b>Time a real migration</b>Restore a production snapshot into a scratch instance and run <code>airflow db migrate</code> against it. That number is your maintenance window.</li>
   <li><b>Measure what <code>db clean</code> would remove</b>Dry-run a ninety-day cutoff and read the row counts. It is usually enough to schedule the real thing immediately.</li>
@@ -112,7 +112,7 @@ expose_config = False                  # do not show config in the UI
 
 <div class="callout warn">
   <span class="ct">Three things to audit today</span>
-  Who can write to the DAG folder — that list is your administrative access list. Whether any credential is readable by every DAG. And whether anything alerts when the scheduler stops. Those three answers define your blast radius, and most deployments get at least one of them wrong.
+  Who can write to the DAG folder. That list is your administrative access list. Whether any credential is readable by every DAG. Whether anything alerts when the scheduler stops. Those three answers define your blast radius, and most deployments get at least one of them wrong.
 </div>
 
 ## Verifying, not assuming
@@ -194,17 +194,17 @@ triggers:
 
 ### The scheduler has stopped scheduling
 
-Nothing is failing — nothing is *running*, which is why no alert fired. Confirm with `airflow jobs check --job-type SchedulerJob`.
+Nothing is failing. Nothing is *running*, which is why no alert fired. Confirm with `airflow jobs check --job-type SchedulerJob`.
 
 Then the four causes in order of likelihood: is the process alive; can it reach the metadata database; is one DAG file exceeding `dag_file_processor_timeout` and blocking a processor slot; is the database connection pool exhausted. `airflow dags report` names a pathological file immediately, and `.airflowignore` gets it out of the way while you fix it. Afterwards: heartbeat alerting, if you did not already have it.
 
 ### Tasks are stuck in `queued`
 
-Always capacity or routing. Check cluster `parallelism`, then the DAG's `max_active_tasks`, then pool slots with `airflow pools list`, then whether the tasks name a `queue` no running worker consumes. That last case is indistinguishable from capacity exhaustion in the UI and is not fixed by adding workers — check `airflow celery inspect active_queues` against the task's queue.
+Always capacity or routing. Check cluster `parallelism`, then the DAG's `max_active_tasks`, then pool slots with `airflow pools list`, then whether the tasks name a `queue` no running worker consumes. That last case is indistinguishable from capacity exhaustion in the UI and is not fixed by adding workers. Check `airflow celery inspect active_queues` against the task's queue.
 
 ### The metadata database is degrading
 
-The UI times out, the scheduler loop lengthens, everything is slow. Check size and the row counts of `task_instance`, `log`, and `xcom`, then the connection count against the server limit. The immediate action is `db clean` with a conservative cutoff. The durable fixes are scheduled retention, PgBouncer in front of Postgres when you have hundreds of Airflow connections, and moving large XCom values out. Resist resizing first — it buys weeks and hides the cause.
+The UI times out, the scheduler loop lengthens, everything is slow. Check size and the row counts of `task_instance`, `log`, and `xcom`, then the connection count against the server limit. The immediate action is `db clean` with a conservative cutoff. The durable fixes are scheduled retention, PgBouncer in front of Postgres when you have hundreds of Airflow connections, and moving large XCom values out. Resist resizing first. It buys weeks and hides the cause.
 
 ### A backfill took production down
 
@@ -218,11 +218,11 @@ The UI times out, the scheduler loop lengthens, everything is slow. Check size a
 
 ### A secret leaked into a task log
 
-Rotate before anything else — the log is in object storage, in a log aggregator, possibly in a Slack alert, and in browser caches. Deleting the log line is not containment. Then find the code path that printed it and close the class rather than the instance: add the key name to `sensitive_var_conn_names`, and add a CI grep for printing connection or variable values. Rotating without closing the class means it recurs with a different credential.
+Rotate before anything else. The log is in object storage, in a log aggregator, possibly in a Slack alert, and in browser caches. Deleting the log line is not containment. Then find the code path that printed it and close the class rather than the instance: add the key name to `sensitive_var_conn_names`, and add a CI grep for printing connection or variable values. Rotating without closing the class means it recurs with a different credential.
 
 ### An upgrade migration is taking far longer than the window
 
-Do not cancel it mid-migration — a partially applied schema change is worse than a long one. If you have not started, stop and reconsider: `db clean` first, then rehearse on a restored snapshot to get a real duration. If you are mid-migration and it is unacceptable, the fall-back is restoring the backup you took beforehand, which is why that backup must have been tested.
+Do not cancel it mid-migration: a partially applied schema change is worse than a long one. If you have not started, stop and reconsider: `db clean` first, then rehearse on a restored snapshot to get a real duration. If you are mid-migration and it is unacceptable, the fall-back is restoring the backup you took beforehand, which is why that backup must have been tested.
 
 <div class="guide-try">
   <span class="ct">Try it</span>
@@ -239,7 +239,7 @@ Do not cancel it mid-migration — a partially applied schema change is worse th
 
 **Publish a template repository, not documentation.** A working DAG with retries, timeouts, tags, and `doc_md`; the integrity test suite; the CI workflow with the parse-time budget. Teams inherit every decision by cloning, and a wiki page is read once.
 
-**Publish a shared operator library as a versioned package.** The quality check, the alert callback, the standard extract. It is where standards actually get enforced — a gate that is one line gets adopted and forty lines does not.
+**Publish a shared operator library as a versioned package.** The quality check, the alert callback, the standard extract. It is where standards get enforced: a gate that is one line gets adopted and forty lines does not.
 
 **Own the contract, not the DAGs.** The platform owns scheduler health, punctuality, the shared library, and the deployment gate. DAG owners own correctness, their SLAs, and their own on-call. Writing that split down is what stops the platform team being paged for every data bug.
 
@@ -262,11 +262,11 @@ Do not cancel it mid-migration — a partially applied schema change is worse th
 
 ## Machine-learning pipelines specifically
 
-**Airflow orchestrates training; it does not train.** A task that fits a model in the worker holds a scheduling slot for hours, cannot scale past one machine, and puts memory pressure on shared infrastructure. Submit to a training service, a Kubernetes job, or a managed platform, and let Airflow wait — deferrably.
+**Airflow orchestrates training; it does not train.** A task that fits a model in the worker holds a scheduling slot for hours, cannot scale past one machine, and puts memory pressure on shared infrastructure. Submit to a training service, a Kubernetes job, or a managed platform, and let Airflow wait, deferrably.
 
 **Model artifacts do not belong in XCom.** Pass the URI. The metadata database is not an artifact store, and a serialised model in an XCom row will slow every UI page that touches that run.
 
-**Gate promotion on metrics, in the DAG.** A branch on evaluation results — promote if the new model beats the incumbent, otherwise skip and alert — turns a manual review into a recorded, auditable decision.
+**Gate promotion on metrics, in the DAG.** A branch on evaluation results (promote if the new model beats the incumbent, otherwise skip and alert) turns a manual review into a recorded, auditable decision.
 
 **Datasets are the right trigger for retraining.** "Retrain when the feature table is updated" expresses the real dependency; "retrain at 3am and hope features landed" does not.
 
@@ -284,7 +284,7 @@ def promote_or_skip(new_auc: float, incumbent_auc: float) -> str:
 |---|---|
 | `catchup=False` unless a backfill is intended | No accidental flood |
 | `{{ ds }}` rather than `now()` | Reproducible reruns and backfills |
-| Tasks idempotent — delete the partition, then write | Retries and backfills are safe |
+| Tasks idempotent: delete the partition, then write | Retries and backfills are safe |
 | `retries`, `execution_timeout`, `dagrun_timeout` all set | Failures self-heal; hangs are bounded |
 | `max_active_runs` on anything that writes | No concurrent writers |
 | XCom carries metadata only | The database stays healthy |
@@ -303,4 +303,4 @@ def promote_or_skip(new_auc: float, incumbent_auc: float) -> str:
 | Heavy work happens outside the worker | Airflow orchestrates, not computes |
 | A tested database backup before any upgrade | There is no downgrade |
 
-Most orchestration incidents are prevented at review time rather than at 3am. Reading a DAG for what it **guarantees** — rather than what it does — is the highest-leverage habit in this guide.
+Most orchestration incidents are prevented at review time rather than at 3am. Reading a DAG for what it **guarantees**, rather than what it does, is the highest-leverage habit you can build.
