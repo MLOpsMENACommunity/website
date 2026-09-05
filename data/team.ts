@@ -78,13 +78,16 @@ export const leads: (Member & { axis: number })[] = [
   },
   {
     axis: 3,
-    name: 'Adham AbdelAzeem',
+    name: 'Khadija Ahaidous',
     role: 'AI Research Lead',
-    initials: 'AA',
-    photo: '/team/adham-abdelazeem.jpg',
-    bio: 'Research Associate at the Institute of Sport and Sport Science, TU Dortmund, working on applied machine learning in Python. Previously a year at MARS GmbH on computer vision for product imagery and ML for manufacturing process improvement. Started in Biomedical Engineering in Egypt before a Master\'s in Germany.',
-    linkedin: 'https://www.linkedin.com/in/adham-abdelazeem/',
-    email: 'adham@mlopsmena.com',
+    initials: 'KA',
+    // TODO: no photo supplied yet — drop one at /public/team/khadija-ahaidous.jpg
+    // and set the path here.
+    photo: '',
+    // TODO: replace with Khadija's own bio — this describes the role.
+    bio: 'Leads the community\'s research direction — the papers we read, the work we publish, and the academic mentoring that goes with them.',
+    linkedin: 'https://www.linkedin.com/in/khadijaahaidous',
+    email: 'khadijaahaidous@mlopsmena.com',
   },
   {
     axis: 4,
