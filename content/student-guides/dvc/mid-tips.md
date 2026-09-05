@@ -2,7 +2,7 @@ Part two of three. At this level your pipelines run and your data is versioned, 
 
 ## Common errors at this level
 
-Cumulative — Beginner's errors still apply, and these are the ones that appear once things basically work.
+Cumulative: Beginner's errors still apply, and these are the ones that appear once things work.
 
 | Symptom | Real cause | Fix |
 |---|---|---|
@@ -13,16 +13,16 @@ Cumulative — Beginner's errors still apply, and these are the ones that appear
 | Cache grew by 60 GB overnight | A sweep; every experiment caches its outputs | `dvc exp remove --all` then `dvc gc --all-commits` |
 | Disk full mid-sweep | No disk budget for N × model size | Move the cache, or mark intermediates `push: false` |
 | A tracked output was silently corrupted | Hardlink cache type plus an in-place edit | `cache.protected true`, and regenerate not edit |
-| `dvc checkout` restores the wrong content | Same cause — cached history was rewritten | Same fix; verify with `dvc status` after a checkout |
+| `dvc checkout` restores the wrong content | Same cause: cached history was rewritten | Same fix; verify with `dvc status` after a checkout |
 | `foreach` stage cannot be targeted | Generated names use `@` | `dvc repro 'featurize@tfidf'`, quoted |
 | `${…}` in `dvc.yaml` is not substituted | The value is not in `vars` or `params.yaml` | Add it to `vars`, or reference the right file and key |
 | `ARG`-style value empty in a generated stage | Referencing `${item}` outside a `do:` block | Templating variables only exist inside `do:` |
 | An output disappears after a rerun | Declared path cleared before the stage runs | Declare every file the stage writes, or use `persist: true` |
-| A log file is truncated every run | Same — DVC clears outputs first | `persist: true` |
+| A log file is truncated every run | Same: DVC clears outputs first | `persist: true` |
 | `push` uploads 200 GB of intermediates | Everything is cached and pushed by default | `push: false` on regenerable outputs |
 | `dvc pull` is slow on a fast link | Default transfer parallelism is conservative | `dvc remote modify origin jobs 16`, or `-j` |
 | A stage reruns because of an external source | The upstream path is a moving `current/` | Import a dated, immutable path |
-| `dvc update` changes nothing | Upstream genuinely unchanged, or wrong `--rev` | Check the `rev_lock` in the `.dvc` file |
+| `dvc update` changes nothing | Upstream unchanged, or wrong `--rev` | Check the `rev_lock` in the `.dvc` file |
 | `dvc.lock` conflicts on every merge | Both branches reran the pipeline | Take one side, then `dvc repro`. Never hand-edit |
 | Reproduces locally, fails in CI | Unpinned library, undeclared seed, or different data | Pin and declare the environment; compare `dvc.lock` |
 | Two experiments overwrote each other's model | Ran without queueing, so no workspace isolation | `dvc exp run --queue` then `--run-all` |
@@ -38,7 +38,7 @@ Cumulative — Beginner's errors still apply, and these are the ones that appear
   <div class="card"><div class="icon">📦</div><h4>Shard small files</h4><p>Tars or Parquet instead of a million JPEGs. Faster hashing, cheaper requests, faster data loader.</p></div>
   <div class="card"><div class="icon">🚫</div><h4><code>push: false</code> on intermediates</h4><p>If it regenerates in four minutes, do not store 200 GB of it. Usually the biggest cost saving available.</p></div>
   <div class="card"><div class="icon">🔁</div><h4>Templating over copy-paste</h4><p><code>foreach</code> and <code>matrix</code>. Ten near-identical stages become six readable lines.</p></div>
-  <div class="card"><div class="icon">📈</div><h4>DVCLive for curves</h4><p>Five lines turns a final number into training dynamics you can actually explain.</p></div>
+  <div class="card"><div class="icon">📈</div><h4>DVCLive for curves</h4><p>Five lines turns a final number into training dynamics you can explain.</p></div>
   <div class="card"><div class="icon">🧹</div><h4>Clean up after every sweep</h4><p><code>dvc exp remove --all</code> then a dry-run <code>gc</code>. Nothing happens automatically.</p></div>
   <div class="card"><div class="icon">🔐</div><h4>OIDC, not a stored key</h4><p>Nothing stored means nothing to leak, and the trust policy pins the branch.</p></div>
 </div>
@@ -54,7 +54,7 @@ Cumulative — Beginner's errors still apply, and these are the ones that appear
   <li><b>Break CI on purpose</b>Change a script without running <code>dvc repro</code>, push, and confirm the <code>dvc status</code> gate fails. That failing check is the whole value of the workflow.</li>
   <li><b>Time the CI cache</b>Run the pipeline workflow with and without the <code>.dvc/cache</code> cache step and compare wall-clock time.</li>
   <li><b>Collapse ten stages into one</b>Convert a set of near-identical stages to <code>foreach</code> and confirm <code>dvc dag</code> shows an identical graph.</li>
-  <li><b>Resolve a lock conflict correctly</b>Create the conflict deliberately on two branches. Resolve it by taking one side and running <code>dvc repro</code> — not by editing the YAML.</li>
+  <li><b>Resolve a lock conflict correctly</b>Create the conflict deliberately on two branches. Resolve it by taking one side and running <code>dvc repro</code>, not by editing the YAML.</li>
 </ol>
 
 ## Making CI fast
@@ -142,7 +142,7 @@ dvc gc --dry-run --all-commits           # then read what becomes collectable
 dvc gc --all-commits                     # reclaim it
 ```
 
-The order matters. Experiment outputs are reachable while their refs exist, so `gc` will not touch them — dropping the refs first is what makes the space collectable.
+The order matters. Experiment outputs are reachable while their refs exist, so `gc` will not touch them. Dropping the refs first is what makes the space collectable.
 
 | Flag | Keeps data needed by | Risk |
 |---|---|---|
@@ -166,7 +166,7 @@ Five differences, roughly in the order they are the answer.
 | Different data | Compare `dvc.lock` hashes between your run and CI's |
 | Unpinned library versions | Print `pip freeze` in both; then pin and declare the lock file in `deps` |
 | Undeclared randomness | Seed everything: Python, NumPy, the framework, and any shuffling |
-| Undeclared input | Something the script reads that is not in `deps` — `dvc dag` versus the code |
+| Undeclared input | Something the script reads that is not in `deps`: `dvc dag` versus the code |
 | Different hardware | GPU non-determinism, or a different BLAS. Pin the container digest |
 
 ```bash
@@ -179,7 +179,7 @@ git rev-parse HEAD
 
 <div class="callout warn">
   <span class="ct"><code>dvc.lock</code> does not pin your environment</span>
-  It pins your data and your code. The Python version, the resolved wheels, the CUDA driver, and the container image are all outside it. Add a hash-pinned lock file and the Dockerfile to a stage's <code>deps</code> so an environment change invalidates the stage — otherwise "reproducible" stops at the language boundary.
+  It pins your data and your code. The Python version, the resolved wheels, the CUDA driver, and the container image are all outside it. Add a hash-pinned lock file and the Dockerfile to a stage's <code>deps</code> so an environment change invalidates the stage. Otherwise "reproducible" stops at the language boundary.
 </div>
 
 ## Experiment queue hygiene

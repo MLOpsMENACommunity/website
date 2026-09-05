@@ -1,4 +1,4 @@
-This is part two of three. It picks up exactly where Beginner ended and takes **every topic from there further**, then adds the machinery you have not met yet. Nothing is dropped and nothing is repeated for its own sake — where you already know the basics, we go straight to the depth.
+This is part two of three. It picks up exactly where Beginner ended and takes **every topic from there further**, then adds the machinery you have not met yet. Nothing is dropped and nothing is repeated for its own sake. Where you already know the basics, we go straight to the depth.
 
 ## Where this picks up
 
@@ -15,15 +15,15 @@ This is part two of three. It picks up exactly where Beginner ended and takes **
 | `dvc import` | `import-url`, `--no-download`, `dvc update --rev`, and registry consumption |
 | Experiments | Queues, `--temp`, custom runners, `dvc exp save`, and `exp show --sort-by` |
 | Debugging | `dvc repro` internals, `--dry`, `--downstream`, `--force-downstream`, verbose transfer logs |
-| — **new** — | CI/CD for pipelines · DVCLive · external outputs · monorepos · cloud-versioned data |
+| **new** | CI/CD for pipelines · DVCLive · external outputs · monorepos · cloud-versioned data |
 
 Each section starts with the problem it solves, and ends with a **Try it** you can do on a real project in a few minutes.
 
 ## Hashing, the cache layout, and why it matters
 
-Beginner told you the cache is content-addressed. Here is the mechanism, because at this level performance questions start arriving and they all trace back to it.
+Beginner told you the cache is content-addressed. Performance questions start arriving at this level, and they all trace back to the mechanism.
 
-DVC hashes file contents with **MD5** by default — chosen for speed, not for cryptographic strength, which is the honest answer when an interviewer asks. The hash becomes the object's address:
+DVC hashes file contents with **MD5** by default, chosen for speed rather than cryptographic strength, which is the honest answer when an interviewer asks. The hash becomes the object's address:
 
 ```text .dvc/cache layout
 .dvc/cache/files/md5/
@@ -45,11 +45,11 @@ The first two hex characters become the directory, which keeps any single direct
 
 Three consequences follow, and each one shows up as a real problem:
 
-**Hashing is the bottleneck, not transfer.** `dvc add` on a 50 GB dataset reads all 50 GB to compute hashes. On a slow disk that dominates everything. DVC caches file hashes by `(path, size, mtime, inode)` in `.dvc/tmp/`, so a *second* add of unchanged files is fast — which is why the first run after a `git clone` feels much slower than every run afterwards.
+**Hashing is the bottleneck, not transfer.** `dvc add` on a 50 GB dataset reads all 50 GB to compute hashes. On a slow disk that dominates everything. DVC caches file hashes by `(path, size, mtime, inode)` in `.dvc/tmp/`, so a *second* add of unchanged files is fast, which is why the first run after a `git clone` feels much slower than every run afterwards.
 
-**Small files are disproportionately expensive.** A million 4 KB files means a million hash operations, a million cache entries, and a `.dir` listing of a million rows. The same bytes as 200 shard files is dramatically faster.
+**Small files are disproportionately expensive.** A million 4 KB files means a million hash operations, a million cache entries, and a `.dir` listing of a million rows. The same bytes as 200 shard files is faster.
 
-**Deduplication is global to the cache.** Identical content anywhere — two branches, two projects on a shared cache, two paths in one directory — occupies one object. That is why a shared cache across projects can cut disk usage sharply.
+**Deduplication is global to the cache.** Identical content anywhere (two branches, two projects on a shared cache, two paths in one directory) occupies one object. That is why a shared cache across projects can cut disk usage sharply.
 
 ```bash
 dvc config core.hash_algorithm md5           # the default
@@ -60,7 +60,7 @@ du -sh .dvc/cache && find .dvc/cache -type f | wc -l
 
 <div class="callout warn">
   <span class="ct">Changing the hash algorithm rewrites every address</span>
-  Switching from md5 to sha256 changes every object's location, so your existing cache and remote become unusable for the new pointers. It is a migration, not a setting — decide early, and if you need it for compliance reasons, do it before the dataset is large.
+  Switching from md5 to sha256 changes every object's location, so your existing cache and remote become unusable for the new pointers. It is a migration, not a setting, so decide early, and if you need it for compliance reasons, do it before the dataset is large.
 </div>
 
 <div class="guide-try">
@@ -68,7 +68,7 @@ du -sh .dvc/cache && find .dvc/cache -type f | wc -l
   <ol>
     <li>Generate two directories with the same total size: one with 20 files of 50 MB, one with 200,000 files of 5 KB.</li>
     <li>Time <code>dvc add</code> on each. Compare.</li>
-    <li>Run <code>dvc add</code> a second time on the large-file one and time it again — the hash cache makes it near-instant.</li>
+    <li>Run <code>dvc add</code> a second time on the large-file one and time it again. The hash cache makes it near-instant.</li>
     <li>Inspect the <code>.dir</code> object for the many-files case: <code>cat .dvc/cache/files/md5/&lt;hash&gt;.dir | head</code>.</li>
   </ol>
   <em>an order-of-magnitude difference for the same number of bytes, and a near-instant second run. Those two measurements are the entire argument for sharding small files, and they are far more convincing than being told.</em>
@@ -76,13 +76,13 @@ du -sh .dvc/cache && find .dvc/cache -type f | wc -l
 
 ## Link types, measured
 
-Beginner said `reflink,copy` is the safe default. Here is what each option actually costs, because on a large dataset the difference is minutes and gigabytes.
+Beginner said `reflink,copy` is the safe default. On a large dataset the difference between the options is minutes and gigabytes.
 
 | Type | Extra disk | Speed | Safe to edit in place | Needs |
 |---|---|---|---|---|
 | `reflink` | None (copy-on-write) | Instant | **Yes** | APFS, Btrfs, XFS with reflink |
-| `hardlink` | None | Instant | **No — corrupts the cache** | Same filesystem |
-| `symlink` | None | Instant | **No — corrupts the cache** | Same filesystem |
+| `hardlink` | None | Instant | **No: corrupts the cache** | Same filesystem |
+| `symlink` | None | Instant | **No: corrupts the cache** | Same filesystem |
 | `copy` | Double | Proportional to size | Yes | Nothing |
 
 ```bash
@@ -96,7 +96,7 @@ The `reflink,copy` ordering means "use copy-on-write if the filesystem can, othe
 
 <div class="callout warn">
   <span class="ct">The hardlink corruption failure, precisely</span>
-  Under <code>hardlink</code>, your working file and the cache object are the same inode. Editing the file in place rewrites the cache object — so every commit that referenced that hash now silently points at different bytes, and <code>dvc checkout</code> on an old revision restores the <em>new</em> content while reporting success. It is a silent history corruption, which is why <code>cache.protected true</code> exists: it marks working files read-only so an in-place edit fails loudly instead.
+  Under <code>hardlink</code>, your working file and the cache object are the same inode. Editing the file in place rewrites the cache object, so every commit that referenced that hash now silently points at different bytes, and <code>dvc checkout</code> on an old revision restores the <em>new</em> content while reporting success. It is a silent history corruption, which is why <code>cache.protected true</code> exists: it marks working files read-only so an in-place edit fails loudly instead.
 </div>
 
 The pattern for a machine where space is tight and speed matters:
@@ -111,11 +111,11 @@ dvc config --local cache.protected true
   <span class="ct">Try it</span>
   <ol>
     <li>Run <code>dvc doctor</code> and note which link types your filesystem supports.</li>
-    <li>Set <code>cache.type</code> to <code>copy</code>, add a large file, and measure <code>du -sh . .dvc/cache</code>.</li>
+    <li>Set <code>cache.type</code> to <code>copy</code>, add a large file, and measure <code>du -sh. .dvc/cache</code>.</li>
     <li>Switch to <code>reflink,hardlink</code>, run <code>dvc checkout --relink</code>, and measure again.</li>
     <li>Set <code>cache.protected true</code>, then try to edit a tracked output in place and read the error.</li>
   </ol>
-  <em>double the disk under <code>copy</code> and effectively none under the link types, plus a hard permission error when you try to edit a protected file. That error is the safety net that makes hardlinks usable at all.</em>
+  <em>double the disk under <code>copy</code> and none under the link types, plus a hard permission error when you try to edit a protected file. That error is the safety net that makes hardlinks usable at all.</em>
 </div>
 
 ## Pipeline templating: `foreach`, `matrix`, and `vars`
@@ -170,7 +170,7 @@ stages:
         - out/${item.model}-${item.split}.json
 ```
 
-Six stages from six lines. And `vars` lets you pull shared values in from a file or define them inline:
+Six stages from six lines. `vars` lets you pull shared values in from a file or define them inline:
 
 ```yaml dvc.yaml
 vars:
@@ -194,7 +194,7 @@ dvc repro 'featurize@*'            # or a glob
 
 <div class="callout tip">
   <span class="ct">Generated stage names use <code>@</code>, and that matters for targeting</span>
-  <code>featurize@tfidf</code> is the addressable name. Quote globs in the shell, and remember that <code>dvc repro featurize</code> with no suffix targets nothing — the plain name does not exist once <code>foreach</code> is in play.
+  <code>featurize@tfidf</code> is the addressable name. Quote globs in the shell, and remember that <code>dvc repro featurize</code> with no suffix targets nothing, because the plain name does not exist once <code>foreach</code> is in play.
 </div>
 
 <div class="guide-try">
@@ -240,7 +240,7 @@ stages:
 
 Two of those deserve real attention.
 
-**`persist: true` changes the execution contract.** Normally DVC removes a stage's outputs before running it, so the stage always starts clean. With `persist`, the previous output is left in place — which is what you need for checkpoint-resume training or an append-only log, and which also means the stage is no longer purely a function of its inputs. Use it deliberately.
+**`persist: true` changes the execution contract.** Normally DVC removes a stage's outputs before running it, so the stage always starts clean. With `persist`, the previous output is left in place, which is what you need for checkpoint-resume training or an append-only log, and which also means the stage is no longer a function of its inputs. Use it deliberately.
 
 **`push: false` is the cost lever.** A 200 GB intermediate that every machine regenerates in four minutes does not belong in object storage. Keeping it cached locally but out of the remote is often the single largest storage saving available.
 
@@ -252,7 +252,7 @@ dvc push --remote bigstore       # push only to a specific remote
 
 <div class="callout warn">
   <span class="ct"><code>cache: false</code> means Git is now responsible</span>
-  A <code>cache: false</code> output is committed to Git, so it must be small and text — DVC will happily let you mark a 4 GB binary <code>cache: false</code> and you will discover the consequence at <code>git push</code>. The rule of thumb: kilobytes and diffable, or it belongs in the cache.
+  A <code>cache: false</code> output is committed to Git, so it must be small and text. DVC will let you mark a 4 GB binary <code>cache: false</code> and you will discover the consequence at <code>git push</code>. The rule of thumb: kilobytes and diffable, or it belongs in the cache.
 </div>
 
 <div class="guide-try">
@@ -260,7 +260,7 @@ dvc push --remote bigstore       # push only to a specific remote
   <ol>
     <li>Mark a small summary output <code>cache: false</code>, repro, and confirm it appears in <code>git status</code> rather than <code>.gitignore</code>.</li>
     <li>Add a log output with <code>persist: true</code>, repro twice, and confirm the file was appended to rather than replaced.</li>
-    <li>Remove <code>persist</code> and repro again — note that the file is now recreated from scratch.</li>
+    <li>Remove <code>persist</code> and repro again, and note that the file is now recreated from scratch.</li>
     <li>Mark a large intermediate <code>push: false</code>, run <code>dvc push -v</code>, and confirm it was skipped.</li>
   </ol>
   <em>a small output living in Git, a log that survives across runs, and a push that skips the file you excluded. The <code>persist</code> before/after in steps two and three is the clearest demonstration of how it changes the stage contract.</em>
@@ -268,7 +268,7 @@ dvc push --remote bigstore       # push only to a specific remote
 
 ## External data and `import-url`
 
-So far every input was a file in your repository. Real pipelines start from somewhere else — an S3 landing zone, an HTTP endpoint, a database export dropped on a share.
+So far every input was a file in your repository. Real pipelines start from somewhere else: an S3 landing zone, an HTTP endpoint, a database export dropped on a share.
 
 ```bash
 # Track a remote file as a dependency, with version tracking
@@ -285,7 +285,7 @@ dvc update data/events.parquet.dvc
 dvc update --no-download data/huge.parquet.dvc
 ```
 
-The `.dvc` file records both the source URL and the upstream object's own hash or etag, so `dvc update` can tell you whether the source actually changed:
+The `.dvc` file records both the source URL and the upstream object's own hash or etag, so `dvc update` can tell you whether the source changed:
 
 ```yaml data/events.parquet.dvc
 deps:
@@ -320,7 +320,7 @@ stages:
 
 <div class="callout warn">
   <span class="ct">An external dependency you do not control can change under you</span>
-  Pointing a stage at <code>s3://landing/current/events.parquet</code> means someone else's overwrite silently invalidates your pipeline — which is sometimes exactly right and sometimes a reproducibility hole. If the result must be reproducible six months from now, import a <b>dated, immutable</b> path rather than a moving one.
+  Pointing a stage at <code>s3://landing/current/events.parquet</code> means someone else's overwrite silently invalidates your pipeline, which is sometimes exactly right and sometimes a reproducibility hole. If the result must be reproducible six months from now, import a <b>dated, immutable</b> path rather than a moving one.
 </div>
 
 <div class="guide-try">
@@ -328,10 +328,10 @@ stages:
   <ol>
     <li><code>dvc import-url</code> a small public HTTP file and read the resulting <code>.dvc</code> file's <code>deps</code> section.</li>
     <li>Run <code>dvc update</code> on it and observe that nothing changes because upstream did not.</li>
-    <li>Add an external dependency to a stage and run <code>dvc status</code> — note that DVC hashes the remote object to decide.</li>
+    <li>Add an external dependency to a stage and run <code>dvc status</code>, and note that DVC hashes the remote object to decide.</li>
     <li>Try <code>--no-download</code> and confirm the pointer exists with no local file.</li>
   </ol>
-  <em>a dependency that names an external source and knows its upstream version. Step three is the interesting one: DVC reaching out to hash a remote object is what makes external deps reproducible rather than merely convenient.</em>
+  <em>a dependency that names an external source and knows its upstream version. Step three is the interesting one: DVC reaching out to hash a remote object is what makes external deps reproducible rather than convenient.</em>
 </div>
 
 ## Multiple remotes
@@ -361,7 +361,7 @@ dvc remote modify --local origin credentialpath ~/.aws/dvc-creds
 dvc remote modify origin version_aware true               # use bucket versioning
 ```
 
-And an output can name its own remote, which is how you tier storage without moving anything by hand:
+An output can name its own remote, which is how you tier storage without moving anything by hand:
 
 ```yaml dvc.yaml
 outs:
@@ -391,7 +391,7 @@ outs:
     <li>Time <code>dvc pull -j 1</code> against <code>dvc pull -j 16</code> on a directory with many small files.</li>
     <li>Run <code>dvc remote list -v</code> and read the resolved configuration.</li>
   </ol>
-  <em>objects split across two remotes according to a per-output rule, and a measurable difference from transfer parallelism. That <code>jobs</code> measurement is worth doing once so you know your own numbers.</em>
+  <em>objects split across two remotes according to a per-output rule, and a measurable difference from transfer parallelism. Measure <code>jobs</code> yourself once and you will know your own numbers instead of guessing.</em>
 </div>
 
 ## Experiments at scale
@@ -431,7 +431,7 @@ dvc exp show --csv > results.csv         # or --json, --md
 dvc exp diff exp-a1b2c exp-d4e5f         # two experiments, side by side
 ```
 
-And promotion has three shapes, each appropriate to a different situation:
+Promotion has three shapes, each appropriate to a different situation:
 
 | Command | Result | Use when |
 |---|---|---|
@@ -448,7 +448,7 @@ dvc exp pull origin exp-a1b2c            # fetch theirs
 
 <div class="callout warn">
   <span class="ct">Experiments are Git refs, and they accumulate</span>
-  Each experiment is a hidden commit under <code>refs/exps/</code> plus cached outputs. Thirty sweeps of a 2 GB model is 60 GB of cache. <code>dvc exp remove</code> drops the refs and <code>dvc gc --workspace</code> (or better, <code>--all-commits</code>) reclaims the space — but neither happens automatically, and "my disk filled up during a sweep" is the most common mid-level surprise.
+  Each experiment is a hidden commit under <code>refs/exps/</code> plus cached outputs. Thirty sweeps of a 2 GB model is 60 GB of cache. <code>dvc exp remove</code> drops the refs and <code>dvc gc --workspace</code> (or better, <code>--all-commits</code>) reclaims the space, but neither happens automatically, and "my disk filled up during a sweep" is the most common mid-level surprise.
 </div>
 
 <div class="guide-try">
@@ -513,7 +513,7 @@ dvc plots diff HEAD~1              # this run's curves against the last
 dvc exp show                       # final values appear as columns automatically
 ```
 
-There are framework integrations that remove the manual loop entirely — callbacks for PyTorch Lightning, Keras, Hugging Face, XGBoost, LightGBM, and more:
+There are framework integrations that remove the manual loop entirely: callbacks for PyTorch Lightning, Keras, Hugging Face, XGBoost, LightGBM, and more:
 
 ```python
 from dvclive.lightning import DVCLiveLogger
@@ -522,7 +522,7 @@ trainer = Trainer(logger=DVCLiveLogger(log_model=True))
 
 <div class="callout tip">
   <span class="ct">DVCLive is the seam between "a number" and "a curve"</span>
-  A final accuracy tells you which run won. A loss curve tells you <em>why</em> — overfitting after epoch 12, a learning rate that was too high, a validation set that is too small to be stable. The cost is about five lines, and it changes what your experiment table is useful for.
+  A final accuracy tells you which run won. A loss curve tells you <em>why</em>: overfitting after epoch 12, a learning rate that was too high, a validation set that is too small to be stable. The cost is about five lines, and it changes what your experiment table is useful for.
 </div>
 
 <div class="guide-try">
@@ -533,7 +533,7 @@ trainer = Trainer(logger=DVCLiveLogger(log_model=True))
     <li>Run <code>dvc repro</code>, then <code>dvc plots show</code> and open the HTML.</li>
     <li>Change the learning rate, repro, then <code>dvc plots diff HEAD~1</code> and compare the two curves on one chart.</li>
   </ol>
-  <em>two training runs overlaid on a single loss chart. That comparison is what makes a hyperparameter change explainable rather than merely measurable, and it is the artifact to put in a pull request.</em>
+  <em>two training runs overlaid on a single loss chart. That comparison is what makes a hyperparameter change explainable rather than measurable, and it is the artifact to put in a pull request.</em>
 </div>
 
 ## Plot templates and comparison
@@ -604,7 +604,7 @@ dvc plots templates confusion --out .dvc/plots   # customise one
     <li>Add a top-level plot definition combining two files onto one chart.</li>
     <li>Run <code>dvc plots templates</code> and try a second template on the same data.</li>
   </ol>
-  <em>a rendered confusion matrix and a combined chart from two sources, with no plotting code written. The templates are the reason to use DVC plots rather than saving PNGs — the data stays diffable and the rendering is declarative.</em>
+  <em>a rendered confusion matrix and a combined chart from two sources, with no plotting code written. The templates are the reason to use DVC plots rather than saving PNGs: the data stays diffable and the rendering is declarative.</em>
 </div>
 
 ## DVC in CI
@@ -683,12 +683,12 @@ Five details in there carry the weight:
 
 | CI concern | Answer |
 |---|---|
-| Credentials | OIDC or a workload identity — never a stored key |
+| Credentials | OIDC or a workload identity: never a stored key |
 | Cold-start cost | Cache `.dvc/cache`, keyed on `dvc.lock` |
 | "The lock is stale" | `dvc status` as a required check |
 | Reviewer visibility | `dvc metrics diff --md` into the job summary |
 | Who may push data | Only the protected branch |
-| Long-running training | A self-hosted or GPU runner — Senior covers this |
+| Long-running training | A self-hosted or GPU runner: Senior covers this |
 
 <div class="callout warn">
   <span class="ct">A fork pull request must not receive push credentials</span>
@@ -703,7 +703,7 @@ Five details in there carry the weight:
     <li>Now change a script <em>without</em> running <code>dvc repro</code>, push, and confirm the <code>dvc status</code> gate fails.</li>
     <li>Compare run times with and without the <code>actions/cache</code> step.</li>
   </ol>
-  <em>a pull request that shows how the numbers moved, and a red check when the lock file is stale. That failing gate in step three is the single most valuable thing this workflow does — it makes "reproducible" enforceable rather than aspirational.</em>
+  <em>a pull request that shows how the numbers moved, and a red check when the lock file is stale. That failing gate in step three is the single most valuable thing this workflow does. It makes "reproducible" enforceable rather than aspirational.</em>
 </div>
 
 ## Monorepos and multiple projects
@@ -747,7 +747,7 @@ dvc update --rev v2.2.0 datasets/customers.parquet.dvc
   <div class="guide-compare-col good">
     <h4>Monorepo</h4>
     <ul>
-      <li>One cache and remote — maximum deduplication</li>
+      <li>One cache and remote: maximum deduplication</li>
       <li>Cross-project dependencies are just paths</li>
       <li>One CI configuration to maintain</li>
       <li>Atomic changes across projects</li>
@@ -798,26 +798,26 @@ dvc diff HEAD~3                          # which tracked files changed between r
 dvc diff --targets data/ HEAD~1
 ```
 
-`dvc data status --granular` is the underused one. Where `dvc status` says "modified: data/images", the granular form lists the individual files added, modified, and deleted — which is how you discover that a "changed dataset" is actually one corrupted image.
+`dvc data status --granular` is the underused one. Where `dvc status` says "modified: data/images", the granular form lists the individual files added, modified, and deleted, which is how you discover that a "changed dataset" is one corrupted image.
 
 Four subtle failures and how to find them:
 
 | Symptom | Real cause | How to confirm |
 |---|---|---|
-| A stage reruns every time | A dependency whose hash changes on every run — a timestamped log, a generated file | `dvc repro -v` and read which dep differed |
+| A stage reruns every time | A dependency whose hash changes on every run: a timestamped log, a generated file | `dvc repro -v` and read which dep differed |
 | A stage never reruns after a real change | The changed input is not in `deps` | `dvc dag` and compare against what the script reads |
 | Results differ between machines | Undeclared randomness or an unpinned library | Seed everything and add `requirements.txt` to `deps` |
 | `dvc.lock` conflicts on every merge | Two branches both reran the pipeline | Expected; regenerate with `dvc repro` after merging rather than hand-resolving |
 
 <div class="callout warn">
   <span class="ct">Never hand-resolve a <code>dvc.lock</code> merge conflict</span>
-  The hashes in it describe a run that actually happened. Stitching two halves together produces a lock file describing a run that never occurred, and the next <code>dvc checkout</code> will restore inconsistent data. Take one side — usually theirs — then run <code>dvc repro</code> and commit the regenerated lock.
+  The hashes in it describe a run that happened. Stitching two halves together produces a lock file describing a run that never occurred, and the next <code>dvc checkout</code> will restore inconsistent data. Take one side, usually theirs, then run <code>dvc repro</code> and commit the regenerated lock.
 </div>
 
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
-    <li>Add a dependency that changes every run — a file containing the current timestamp — and confirm the stage never caches.</li>
+    <li>Add a dependency that changes every run, a file containing the current timestamp, and confirm the stage never caches.</li>
     <li>Find it with <code>dvc repro -v</code> and read the hash comparison.</li>
     <li>Run <code>dvc data status --granular</code> on a directory where you changed one file out of many.</li>
     <li>Create a <code>dvc.lock</code> conflict deliberately on two branches, then resolve it the correct way: take one side and repro.</li>
@@ -827,7 +827,7 @@ Four subtle failures and how to find them:
 
 ## Putting it all together
 
-Everything from this level in one project. Nothing here is new — read it as a whole and you should be able to justify every line.
+Everything from this level in one project. Nothing here is new. Read it as a whole and you should be able to justify every line.
 
 ```yaml params.yaml
 prepare:
@@ -958,7 +958,7 @@ Ten decisions in there are the whole lesson of this level:
 | A queued, parallel, isolated sweep | Experiments at scale |
 
 <div class="guide-try">
-  <span class="ct">Try it — the one that matters</span>
+  <span class="ct">Try it: the one that matters</span>
   <ol>
     <li>Rebuild a real project against this template and get <code>dvc repro</code> to report up to date on a second run.</li>
     <li>Verify each decision actively: confirm <code>push: false</code> objects are absent from the remote, confirm the persisted log survived, confirm a parameter change invalidates exactly one stage.</li>
@@ -987,4 +987,4 @@ You can explain the cache layout and why hashing dominates, choose link types de
 | Resolve a `dvc.lock` conflict correctly? | Take one side, then `dvc repro` |
 | Find which single file in a directory changed? | `dvc data status --granular` |
 
-**Senior takes every one of these further, with a security, scale, or ownership dimension.** Who can read and who can write each remote, and how credentials stop being stored at all. Immutability, retention, and object-lock on the storage side — and what that means for `dvc gc`. Cost modelling: storage class, egress, and the real price of a 200 GB intermediate. Hashing and transfer at terabyte scale, and when to stop using DVC for a given dataset. Data registries as a product with a release cadence. Lineage and audit trails for regulated work. GDPR deletion against a content-addressed, immutable cache. CI/CD with GPU and self-hosted runners. And where DVC stops and a feature store, lakehouse, or table format begins.
+**Senior takes every one of these further, with a security, scale, or ownership dimension.** Who can read and who can write each remote, and how credentials stop being stored at all. Immutability, retention, and object-lock on the storage side, and what that means for `dvc gc`. Cost modelling: storage class, egress, and the real price of a 200 GB intermediate. Hashing and transfer at terabyte scale, and when to stop using DVC for a given dataset. Data registries as a product with a release cadence. Lineage and audit trails for regulated work. GDPR deletion against a content-addressed, immutable cache. CI/CD with GPU and self-hosted runners. Where DVC stops and a feature store, lakehouse, or table format begins.

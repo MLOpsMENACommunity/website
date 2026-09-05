@@ -1,6 +1,6 @@
 # website
 
-Website for the [MLOps MENA Community](https://www.linkedin.com/company/mlops-mena) —
+Website for the [MLOps MENA Community](https://www.linkedin.com/company/mlops-mena):
 free MLOps and AI learning for engineers across the Middle East and North Africa.
 
 Next.js 14 (App Router) + Tailwind, exported to static HTML and served from GitHub Pages.
@@ -23,7 +23,7 @@ failure-tolerant, so a clone with no connection still builds.
 
 ## Pages
 
-Every page exists twice — English at the root and Arabic under `/ar`.
+Every page exists twice: English at the root and Arabic under `/ar`.
 
 | Page | Route |
 |---|---|
@@ -41,13 +41,13 @@ Every page exists twice — English at the root and Arabic under `/ar`.
 
 ```
 src/
-  views/          one component per page, takes `lang` — rendered by both editions
+  views/          one component per page, takes `lang`, rendered by both editions
   app/(en)/…      English routes  ->  /roadmaps
   app/(ar)/ar/…   Arabic routes   ->  /ar/roadmaps
   app/not-found   /404.html
   lib/i18n.ts         UI strings (`ar` is typed as `typeof en`, so a missing
                       translation is a build error)
-  lib/content-i18n.ts Arabic overlays for data/*.ts — sessions, team bios, FAQ,
+  lib/content-i18n.ts Arabic overlays for data/*.ts: sessions, team bios, FAQ,
                       pillars, roadmap metadata, the course
 ```
 
@@ -59,9 +59,9 @@ because that is the only way to put `lang` and `dir` on `<html>` in a static exp
 both dictionaries in `src/lib/i18n.ts`, then add a three-line `page.tsx` under
 `app/(en)/…` and `app/(ar)/ar/…`. Add the path to `src/app/sitemap.ts`.
 
-The three roadmap markdown documents stay in English in both editions — their
-metadata, phases, and the UI around them are translated; the body is not. The
-Arabic pages say so in a notice above the article.
+The three roadmap markdown documents stay in English in both editions. The two i18n
+files translate their metadata, phases, and the UI around them; the body stays as
+written. The Arabic pages say so in a notice above the article.
 
 ## Theme
 
@@ -79,17 +79,17 @@ to Tailwind as a semantic name.
 | Brand accents (auto-darkened in light mode) | `text-cyan-400` · `text-teal` · `text-amber-400` · `text-violet` |
 
 Never write `text-white`, `text-slate-*`, `border-white/10` or `bg-ink-*` in a
-component — they only work in one theme.
+component; they only work in one theme.
 
 ## Where the content lives
 
-Everything editable is plain data — no CMS, no database.
+Everything editable is plain data: no CMS, no database.
 
 | What | File |
 |---|---|
 | Links, stats, contacts, partners, nav, Brainsmingle | `site.config.ts` |
 | The MLOps Practitioner (outline, recordings, resources) | `data/mlops-practitioner.ts` |
-| Live sessions — upcoming and past | `data/sessions.ts` |
+| Live sessions (upcoming and past) | `data/sessions.ts` |
 | Team hierarchy | `data/team.ts` |
 | WhatsApp study groups | `data/study-groups.ts` |
 | FAQ + session 1 material | `data/faq.ts` |
@@ -104,8 +104,8 @@ Everything editable is plain data — no CMS, no database.
 
 ### Adding a roadmap
 
-Drop a `.md` file into `content/roadmaps/`. Use `## Phase N — Title (Month X)` headings —
-the phase timeline, sticky sidebar, and phase count are all derived from them.
+Drop a `.md` file into `content/roadmaps/`. Use `## Phase N — Title (Month X)` headings.
+The phase timeline, the sticky sidebar, and the phase count derive from those headings.
 
 ```yaml
 ---
@@ -125,7 +125,7 @@ Ordering comes from the `ORDER` array in `src/lib/roadmaps.ts`.
 
 ### Adding a student guide
 
-Guides are plain markdown — **no frontmatter**, because the metadata lives in
+Guides are plain markdown with **no frontmatter**: the metadata lives in
 `data/student-guides.ts` and in the route's `pageMetadata()`.
 
 Every guide is a 3 × 3 grid: three levels (`beginner`, `mid`, `senior`) × three tracks
@@ -134,7 +134,7 @@ Every guide is a 3 × 3 grid: three levels (`beginner`, `mid`, `senior`) × thre
 registered.
 
 Use `## Title` headings. Section numbers, the contents list, and the per-pane counts on the
-catalogue card are all derived from them, so a heading is structure rather than decoration.
+catalogue card all derive from them, so headings define the guide's structure.
 
 A fenced code block can carry a file label after the language, which becomes the code
 window's title bar:
@@ -145,23 +145,23 @@ on: push
 ```
 ````
 
-Beyond markdown, a guide may embed these presentational blocks as raw HTML. They are styled
+Beyond markdown, a guide may embed these presentational blocks as raw HTML. Styling lives
 under `.student-guide-prose` in `src/app/globals.css`:
 
 | Block | Shape |
 |---|---|
-| `.guide-stat-strip` | `.guide-stat` > `<b>` + `<span>` — key facts at the top of a guide |
+| `.guide-stat-strip` | `.guide-stat` > `<b>` + `<span>`. Key facts at the top of a guide |
 | `.callout` (`.note`, `.tip`, `.warn`) | `<span class="ct">Title</span>` then prose |
 | `.cards` | `.card` > `.icon` + `<h4>` + `<p>` |
-| `.flow` | `.node` (+ `<small>`) separated by `.arrow` — one row, no branching |
+| `.flow` | `.node` (+ `<small>`) separated by `.arrow`. One row, no branching |
 | `.guide-arch` | A grid for architecture that branches or layers. See below |
-| `ol.guide-steps` | `<li><b>Step title</b>body</li>` — auto-numbered with a connector |
+| `ol.guide-steps` | `<li><b>Step title</b>body</li>`. Auto-numbered with a connector |
 | `.guide-compare` | `.guide-compare-col.good` / `.bad` > `<h4>` + `<ul>` |
 | `.guide-timeline` | `.guide-timeline-item` > `<span>` + `<strong>` + `<small>` |
-| `.guide-try` | `<span class="ct">Try it</span>` + `<ol>` + `<em>` — deliberately the same violet in every guide |
+| `.guide-try` | `<span class="ct">Try it</span>` + `<ol>` + `<em>`. The same violet in every guide, by design |
 | `.pill` (`.req`, `.opt`) | Inline badge, usable inside table cells |
 
-`.guide-arch` is for the diagram `.flow` cannot express — a fan-out, a control plane over an
+`.guide-arch` is for the diagram `.flow` cannot express: a fan-out, a control plane over an
 execution plane, a trust boundary. Columns come from `--arch-cols`, and `.arch-lane` groups
 nodes into a labelled band with its own `--lane-cols`:
 
@@ -178,17 +178,17 @@ nodes into a labelled band with its own `--lane-cols`:
 </div>
 ```
 
-`data-kind` is `entry`, `store`, `worker`, `external`, or `danger`, and each renders
-differently so a reader can tell a bucket from a worker. `arch-edge` takes
+`data-kind` is `entry`, `store`, `worker`, `external`, or `danger`, and each kind gets its
+own look, so a reader can tell a bucket from a worker. `arch-edge` takes
 `data-dir="right|left|up|down"` plus an optional `data-flow="optional"` for a dashed edge.
-Everything inherits `--guide-accent`, so the graph is in the tool's colour automatically.
+Everything inherits `--guide-accent`, so the graph picks up the tool's colour.
 
 Per-tool theming lives in two places. `--guide-accent` is set by the `<slug>-guide-page`
 class that `GuideLevelTracks` applies from its `slug` prop, and the whole
-`.student-guide-prose` block reads it — so callouts, cards, step numbers, headings, and the
-TOC follow the tool rather than a shared cyan. Tool marks come from
+`.student-guide-prose` block reads it, so callouts, cards, step numbers, headings, and the
+TOC follow the tool's accent instead of a shared cyan. Tool marks come from
 `src/components/ToolLogo.tsx` as inline SVG inheriting `currentColor`; they are geometric
-interpretations rather than reproductions of the trademarked wordmarks.
+interpretations of the tools, not reproductions of the trademarked wordmarks.
 
 **Adding a new block class means touching three places**: the CSS, the `REVEAL_SELECTOR`
 list in `src/components/GuideArticle.tsx`, and the `.guide-motion-ready` selectors in
@@ -205,12 +205,12 @@ the slug is registered, because the catalogue counts every pane at build time.
 ### Adding a session
 
 Add it to the single `sessions` array in `data/sessions.ts` and put a 1200px cover at
-`public/sessions/<slug>.jpg`. **There is nothing to move when it airs** — upcoming, live,
-ended and archived are derived from `startsAt` + `durationMinutes` (default 120).
+`public/sessions/<slug>.jpg`. **There is nothing to move when it airs**: upcoming, live,
+ended and archived all come from `startsAt` + `durationMinutes` (default 120).
 
 After it airs, paste its `youtubeId` to turn "Ended — recording coming soon" into a watch
 link. Add the Arabic subtitle/topics to `sessionsAr` in `src/lib/content-i18n.ts`; the
-date needs no translation, it is formatted from `startsAt` in both languages.
+date needs no translation, both editions format it from `startsAt`.
 
 Render any point in time without touching the system clock:
 
@@ -228,54 +228,53 @@ Fetches that one page's Open Graph tags and appends to `data/generated/articles.
 which `data/articles.ts` spreads in. Hand-written entries in `data/articles.ts` always win.
 
 LinkedIn's API cannot return long-form Articles (the `/pulse/` URLs) at any access tier and
-there is no RSS, so this is the automated path — one fetch of a URL you supply, not
-ingestion. If LinkedIn ever stops serving those tags the script writes a stub with `TODO`
-fields instead of failing.
+there is no RSS, so this script is the automated path: it fetches one URL you supply. If
+LinkedIn ever stops serving those tags the script writes a stub with `TODO` fields instead
+of failing.
 
 ### How the site stays current
 
 `.github/workflows/deploy.yml` rebuilds every six hours as well as on push. That is what
 moves an aired session into "Past" and refreshes the YouTube, GitHub and Discord figures. Between rebuilds the
-browser corrects each session's badge and hides its register button, so a stale page is
-never actively wrong.
+browser corrects each session's badge and hides its register button, so a stale page never
+shows the wrong state.
 
-`data/generated/` is written by `npm run refresh` and committed on purpose — a fresh clone
+`data/generated/` is written by `npm run refresh` and committed on purpose: a fresh clone
 with no network still builds, and the git history is an audit trail. Fetchers never fail
 the build and never write an empty payload over a good one.
 
-Three fetchers feed it, and every one of them degrades to the committed numbers rather
-than to a blank or a zero:
+Three fetchers feed it, and each falls back to the committed numbers when its fetch fails:
 
 | Script | Fills | Needs |
 |---|---|---|
 | `fetch-youtube.mjs` | Video list, subscriber and view tiles | Video list: nothing. Tiles: a `YOUTUBE_API_KEY` repo secret |
-| `fetch-github.mjs` | Every public repo under our org, with stars and forks | Nothing — anonymous REST API |
-| `fetch-discord.mjs` | Discord member tile | Nothing — the invite endpoint answers anonymously |
+| `fetch-github.mjs` | Every public repo under our org, with stars and forks | Nothing: anonymous REST API |
+| `fetch-discord.mjs` | Discord member tile | Nothing: the invite endpoint answers anonymously |
 
 For the YouTube tiles, add a `YOUTUBE_API_KEY` repo secret (Google Cloud → YouTube Data
 API v3, restricted to that API). Without it the video list still refreshes and the two
-YouTube tiles keep their hand-set floors. The key is read only inside
-`scripts/fetch-youtube.mjs` — never at render time, where a static export would publish it.
+YouTube tiles keep their hand-set floors. Only `scripts/fetch-youtube.mjs` reads the key,
+never the render pass, where a static export would publish it.
 
 The GitHub fetcher lists every public repo under the org in `channels.github`, so
-publishing a repo is the whole act of putting it on the homepage — description, language,
+publishing a repo is the whole act of putting it on the homepage: description, language,
 stars and forks all come from GitHub, and forks and archived repos are skipped. A repo with
 no description on GitHub falls back to `repoNotes` in `data/community.ts`; writing the
 description on GitHub is the better fix. Private repos never appear, by design. The Discord
 fetcher takes the invite code from `site.config.ts`. **That
-invite must never expire** — an expiring one takes the join link and the counter down with
+invite must never expire**: an expiring one takes the join link and the counter down with
 it on the same day.
 
 ### Adding team photos and bios
 
 In `data/team.ts`, set `photo` to a file you added under `public/team/` (e.g.
 `/team/omar-salah.jpg`), replace the placeholder `bio`, and paste the `linkedin` URL.
-Anything left empty degrades gracefully — an initials avatar, and no LinkedIn link.
+Anything left empty falls back: an initials avatar, and no LinkedIn link.
 
 ## Session times
 
 `startsAt` must include the timezone offset. **Cairo is `+03:00` in summer (EEST) and
-`+02:00` in winter (EET)** — get it wrong and every countdown is off by an hour.
+`+02:00` in winter (EET)**. Get it wrong and every countdown is off by an hour.
 
 ## Deploying
 
@@ -294,7 +293,7 @@ One-time setup:
 Changing domain? Update `public/CNAME` **and** `site.url` in `site.config.ts`.
 
 Hosting at `MLOpsMENACommunity.github.io/website` instead of a custom domain? Build with
-`NEXT_PUBLIC_BASE_PATH=/website` — otherwise CSS and images 404.
+`NEXT_PUBLIC_BASE_PATH=/website`; otherwise CSS and images 404.
 
 ## Still to fill in
 
@@ -302,17 +301,17 @@ Search the repo for `TODO:`.
 
 - Google Drive link for the mini/final projects PDF (`data/mlops-practitioner.ts`)
 - Team photos, bios, and LinkedIn URLs (`data/team.ts`)
-- Docker Deep Dive start time — the date is confirmed, the time is assumed (`data/sessions.ts`)
+- Docker Deep Dive start time: the date is confirmed, the time is assumed (`data/sessions.ts`)
 - Paste the Docker Deep Dive `youtubeId` (`AFcoKDtyhec` looks like it) into
   `data/sessions.ts` so the card links its recording
 - Send a test message to `hello@mlopsmena.com` and to one team address. The domain's
   MX records point at Cloudflare Email Routing, but routing only delivers for addresses
-  that have a rule *and* a verified destination inbox — an address in `site.config.ts`
-  or `data/team.ts` without one silently bounces.
+  that have a rule *and* a verified destination inbox; an address in `site.config.ts`
+  or `data/team.ts` without one bounces with no error.
 
 ## Design
 
-Colours are sampled directly from the community logo. The brand hues below are the
+Colours are sampled from the community logo. The brand hues below are the
 gradient stops and stay fixed in both themes; the light theme darkens the *text* shades
 of teal/cyan/amber so they pass contrast on white (see the theme table above).
 
@@ -323,5 +322,5 @@ of teal/cyan/amber so they pass contrast on white (see the theme table above).
 | Cyan | `#2CACD1` |
 | Amber | `#EC9723` |
 
-Source material used to build the site is kept in `roadmaps_folder/` and
+The source material used to build the site sits in `roadmaps_folder/` and
 `basic_community_info/`.

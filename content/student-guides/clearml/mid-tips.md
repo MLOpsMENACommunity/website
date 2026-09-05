@@ -2,7 +2,7 @@ Part two of three. The problems at this level are no longer "why is nothing logg
 
 ## Common errors at this level
 
-Cumulative — everything from Beginner still applies. These are the failures that cost hours rather than minutes.
+Cumulative. Everything from Beginner still applies. These are the failures that cost hours rather than minutes.
 
 | Symptom | Real cause | Fix |
 |---|---|---|
@@ -101,7 +101,7 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 ## Structuring HPO so it does not waste money
 
-The optimiser will happily spend your entire GPU budget learning nothing. Four rules prevent that.
+The optimiser will spend your entire GPU budget learning nothing. Four rules prevent that.
 
 <ol class="guide-steps">
   <li><b>Validate the base task on an agent first</b>HPO clones it. A base task that fails on the agent produces N identical failures and a bill.</li>
@@ -137,7 +137,7 @@ optimizer = HyperParameterOptimizer(
 
 <div class="callout warn">
   <span class="ct">Forty trials of a 2 GB checkpoint is 80 GB</span>
-  Every trial is a task with its own artifacts and models. <code>save_top_k_tasks_only</code> keeps the best K and deletes the rest, which is the difference between a sweep and a storage incident. Without it, a weekly sweep quietly becomes the largest thing in your bucket.
+  Every trial is a task with its own artifacts and models. <code>save_top_k_tasks_only</code> keeps the best K and deletes the rest, which is the difference between a sweep and a storage incident. Without it, a weekly sweep becomes the largest thing in your bucket.
 </div>
 
 Those two assertions at the top are worth more than any tuning advice on this page. They cost three lines and catch the two failures that account for nearly every wasted HPO budget.
@@ -165,7 +165,7 @@ def post_execute(pipeline, node):
 
 <div class="callout warn">
   <span class="ct">Caching plus a mutable input path is a silent stale result</span>
-  Pipeline caching compares the base task, the parameters, and the code. A step reading <code>/data/latest/</code> has identical parameters when the data changes, so it is skipped and the downstream steps consume last week's output — with a green pipeline. Versioned datasets fix this because the version is a parameter.
+  Pipeline caching compares the base task, the parameters, and the code. A step reading <code>/data/latest/</code> has identical parameters when the data changes, so it is skipped and the downstream steps consume last week's output, with a green pipeline. Versioned datasets fix this because the version is a parameter.
 </div>
 
 ```python the fix, in one line
@@ -185,7 +185,7 @@ Queue layout is the cheapest scheduling tool you have, and three or four queues 
 | `services` | 1 CPU box, `--services-mode` | Controllers, optimisers, schedulers, triggers, serving control |
 | `cpu` | 1–2 CPU workers | Data prep, evaluation, reporting |
 | `gpu` | One worker per GPU | Training and HPO trials |
-| `gpu-big` | One worker pinned to 2+ GPUs | Jobs that genuinely need multi-GPU |
+| `gpu-big` | One worker pinned to 2+ GPUs | Jobs that need multi-GPU |
 | `ci` | Ephemeral workers, no other credentials | Pull-request smoke runs |
 
 ```bash
@@ -198,13 +198,13 @@ clearml-agent daemon --queue gpu-big --gpus 2,3 --detached
 
 Two design rules that keep this from degrading:
 
-**A worker listing several queues drains them in order.** `--queue urgent gpu` means "always take urgent work first, otherwise take normal work" — which is a priority system with no extra machinery.
+**A worker listing several queues drains them in order.** `--queue urgent gpu` means "always take urgent work first, otherwise take normal work", which is a priority system with no extra machinery.
 
 **Never let two things compete for one GPU.** One worker per GPU, or one worker pinned to a group. Two workers claiming the same device produces out-of-memory failures that look like a model problem.
 
 <div class="callout tip">
   <span class="ct">Alert on queue depth, not on task failures</span>
-  A queue that is deep for an hour means a dead worker, a stuck session, or a runaway sweep — all things you want to know about before someone complains. Task failures are usually the author's problem; queue depth is yours.
+  A queue that is deep for an hour means a dead worker, a stuck session, or a runaway sweep, all things you want to know about before someone complains. Task failures are usually the author's problem; queue depth is yours.
 </div>
 
 ## "Runs locally, fails on the agent"
@@ -215,7 +215,7 @@ The most common mid-level complaint, and it has exactly five causes. Work throug
   <li><b>The commit is not pushed</b>The diff travels through the server; the base commit must be fetchable. Check Execution ▸ commit against your remote.</li>
   <li><b>A package was missed</b>Compare Execution ▸ Installed Packages against your local <code>pip freeze</code>. A lazy import is the usual culprit.</li>
   <li><b>The wrong wheel was installed</b>CPU torch on a GPU box. The console shows <code>CUDA not available</code>. Docker mode with a CUDA image.</li>
-  <li><b>A system dependency is missing</b>ffmpeg, libgl, a locale, a font. Only Python is managed in virtualenv mode — this is a docker-image problem.</li>
+  <li><b>A system dependency is missing</b>ffmpeg, libgl, a locale, a font. Only Python is managed in virtualenv mode. This is a docker-image problem.</li>
   <li><b>A path or environment variable only exists on your machine</b><code>~/data</code>, a mounted share, an exported token. Environment variables are deliberately not captured. Pass real config as parameters; mount real data as a dataset.</li>
 </ol>
 
@@ -230,7 +230,7 @@ ls -la ~/data 2>&1 | head                # does the path even exist here?
 
 <div class="callout tip">
   <span class="ct">A one-off diagnostic task is cheaper than guessing</span>
-  <code>clearml-task --script scripts/env_report.py --queue gpu</code> with a script that prints Python version, CUDA availability, package list, and the presence of the paths you expect. Run it once per new worker pool and keep the task — it becomes the reference for "what does this queue actually look like".
+  <code>clearml-task --script scripts/env_report.py --queue gpu</code> with a script that prints Python version, CUDA availability, package list, and the presence of the paths you expect. Run it once per new worker pool and keep the task. It becomes the reference for "what does this queue look like".
 </div>
 
 ## Cost hygiene at this level
@@ -242,7 +242,7 @@ Storage and GPU-hours both grow silently, and both are noticed by someone else f
 | Sweep artifacts | Bucket grows weekly with no new datasets | `save_top_k_tasks_only`; delete non-top trials |
 | Checkpoints every epoch | Hundreds of GB per experiment | Keep best + last; `output_uri` to a lifecycle-managed prefix |
 | Abandoned sessions | GPU utilisation low, queue deep | `--shutdown`; session timeout on shared queues |
-| Datasets copied instead of linked | Storage doubles per version | `add_external_files` for very large data |
+| Datasets copied instead of linked | Storage doubles per version | `add_external_files` for large data |
 | Debug samples and images | Elasticsearch and file server growth | Report images sparsely, not every step |
 | Failed trials retained | Thousands of dead tasks | Archive and delete CI and sweep tasks on a schedule |
 
@@ -258,7 +258,7 @@ for t in Task.get_tasks(project_name="vision/ci"):
 
 <div class="callout warn">
   <span class="ct"><code>delete(delete_artifacts_and_models=True)</code> is not reversible</span>
-  It removes the objects from storage as well as the metadata. Run any cleanup script in report-only mode first, printing what it would delete and the total size, and scope it to a project you own — never workspace-wide. Archive is the reversible option; delete is not.
+  It removes the objects from storage as well as the metadata. Run any cleanup script in report-only mode first, printing what it would delete and the total size, and scope it to a project you own, never workspace-wide. Archive is the reversible option; delete is not.
 </div>
 
 ## Habits worth adopting now
@@ -273,7 +273,7 @@ for t in Task.get_tasks(project_name="vision/ci"):
 
 **Write the objective metric into the task name.** `resnet18 lr=1e-3 acc=0.940`. The experiments table becomes self-documenting, and an HPO result list becomes readable without opening anything.
 
-**Keep a `scripts/env_report.py` in the repo.** One task per worker pool tells you what that hardware actually has, and it is the first thing you run when a queue starts behaving oddly.
+**Keep a `scripts/env_report.py` in the repo.** One task per worker pool tells you what that hardware has, and it is the first thing you run when a queue starts behaving oddly.
 
 **Treat `services` as production.** The controllers, schedulers, and triggers living there are what make everything else automatic. A dead services agent is an outage that presents as "the nightly did not run".
 
@@ -288,4 +288,4 @@ print(t.data.script.version_num, t.data.script.repository)
 "
 ```
 
-**Senior tips go deeper on every one of these** — the hardening pass every self-hosted server needs, credential scoping and service accounts, multi-tenant quota and isolation, Elasticsearch and MongoDB capacity and what breaks first, backup and restore drills, retention policy that survives an audit, GPU fleet economics and autoscaling, and incident playbooks for a lost server, a corrupted index, or a model nobody can rebuild.
+**Senior tips go deeper on every one of these:** the hardening pass every self-hosted server needs, credential scoping and service accounts, multi-tenant quota and isolation, Elasticsearch and MongoDB capacity and what breaks first, backup and restore drills, retention policy that survives an audit, GPU fleet economics and autoscaling, and incident playbooks for a lost server, a corrupted index, or a model nobody can rebuild.

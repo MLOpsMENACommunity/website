@@ -1,4 +1,4 @@
-This is part three of three. It closes the series by taking **every topic from Beginner and Mid one level further** — each one now has a security, scale, or ownership dimension — and adds the work you own when ClearML is your team's platform rather than your tool.
+This is part three of three. It closes the series by taking **every topic from Beginner and Mid one level further** (each one now has a security, scale, or ownership dimension) and adds the work you own when ClearML is your team's platform rather than your tool.
 
 Up to this point the questions have been about making a run reproduce. From here they are different: who can enqueue code onto your GPU fleet, whether a model from eighteen months ago can still be rebuilt and proven, what the platform costs and who pays for it, which component breaks first when the team triples, what happens when Elasticsearch fills up on a Friday night, and where ClearML stops being the right tool.
 
@@ -17,7 +17,7 @@ Up to this point the questions have been about making a run reproduce. From here
 | Datasets | Erasure requests against an immutable, content-addressed store |
 | CI | Fork trust, ephemeral runners, and enqueue as a privileged operation |
 | Debugging | Incident playbooks: lost server, corrupted index, unreproducible model |
-| — **new** — | Backup and restore · upgrade procedure · platform ownership · where ClearML ends |
+| **new** | Backup and restore · upgrade procedure · platform ownership · where ClearML ends |
 
 I am starting with the trust model, because every other decision in this track depends on it.
 
@@ -25,11 +25,11 @@ I am starting with the trust model, because every other decision in this track d
 
 The single most important sentence about ClearML security: **enqueueing a task is arbitrary code execution on your agents.** A task carries a repository, a commit, a diff, a package list, and an entry point. An agent claims it and runs it. Anyone who can enqueue can run code on your GPU fleet, with whatever credentials that fleet holds.
 
-That reframes the whole access question. It is not "who can see the experiments" — it is "who can execute".
+That reframes the whole access question around "who can execute" instead of "who can see the experiments".
 
 <div class="guide-arch" style="--arch-cols:3">
   <div class="arch-lane" style="--lane-cols:3">
-    <span class="arch-label">who can enqueue — this is the execution surface</span>
+    <span class="arch-label">who can enqueue. This is the execution surface</span>
     <div class="arch-node"><b>Researcher</b><small>Enqueue to <code>cpu</code>/<code>gpu</code>. Never to serving or production queues</small></div>
     <div class="arch-node" data-kind="worker"><b>CI on a protected branch</b><small>Enqueue to <code>ci</code> only. No production cloud credentials</small></div>
     <div class="arch-node" data-kind="danger"><b>CI on a fork PR</b><small><b>Nothing</b>, or an isolated ephemeral queue holding no other access</small></div>
@@ -38,7 +38,7 @@ That reframes the whole access question. It is not "who can see the experiments"
   <i class="arch-edge" data-dir="down"></i>
   <i class="arch-edge" data-dir="down" data-flow="optional"></i>
   <div class="arch-lane" style="--lane-cols:3">
-    <span class="arch-label">queues as the security boundary — one agent pool per trust level</span>
+    <span class="arch-label">queues as the security boundary: one agent pool per trust level</span>
     <div class="arch-node" data-kind="store"><b><code>services</code></b><small>Platform team + schedulers · registry read/write</small></div>
     <div class="arch-node" data-kind="store"><b><code>cpu</code> · <code>gpu</code></b><small>Researchers · data read, artifact write</small></div>
     <div class="arch-node" data-kind="store"><b><code>ci-untrusted</code></b><small>Ephemeral hosts · <b>no credentials at all</b></small></div>
@@ -46,10 +46,10 @@ That reframes the whole access question. It is not "who can see the experiments"
   <i class="arch-edge" data-dir="down"></i>
   <i class="arch-edge" data-dir="down"></i>
   <i class="arch-edge" data-dir="down"></i>
-  <div class="arch-node" data-kind="danger"><b>Keys are workspace-wide</b><small>One leaked researcher pair reads every experiment, dataset pointer, and model — and can enqueue</small></div>
+  <div class="arch-node" data-kind="danger"><b>Keys are workspace-wide</b><small>One leaked researcher pair reads every experiment, dataset pointer, and model, and can enqueue</small></div>
   <div class="arch-node" data-kind="danger"><b>The diff is on the server</b><small>An untracked <code>.env</code> in your tree lands in the task record, and in your backups</small></div>
   <div class="arch-node" data-kind="danger"><b>Agents hold ambient creds</b><small>Any task landing on a worker inherits that worker's cloud access</small></div>
-  <p class="arch-note"><b>The three rows at the bottom compose into one risk:</b> a workspace-wide key plus an agent with production credentials means whoever holds that key can run code with that access. Queue-level isolation is therefore a security control rather than tidiness — and fork pull requests are the case where it matters most.</p>
+  <p class="arch-note"><b>The three rows at the bottom compose into one risk:</b> a workspace-wide key plus an agent with production credentials means whoever holds that key can run code with that access. Queue-level isolation is therefore a security control rather than tidiness, and fork pull requests are the case where it matters most.</p>
 </div>
 
 | Actor | Needs | Must not have |
@@ -64,18 +64,18 @@ That reframes the whole access question. It is not "who can see the experiments"
 
 Three properties of ClearML's model make this sharper than it first looks:
 
-**An access/secret pair is workspace-wide by default.** It is not scoped to a project. A leaked researcher key reads every experiment, every dataset pointer, and every model in the workspace — and can enqueue.
+**An access/secret pair is workspace-wide by default.** It is not scoped to a project. A leaked researcher key reads every experiment, every dataset pointer, and every model in the workspace, and can enqueue.
 
-**The uncommitted diff is stored on the server.** That is the feature that makes a dirty working tree reproducible. It also means anything sitting in your working tree at run time — a `.env` you forgot to gitignore, a notebook with a pasted token — is now in the task record, readable by everyone with workspace access, and captured in your backups.
+**The uncommitted diff is stored on the server.** That is the feature that makes a dirty working tree reproducible. It also means anything sitting in your working tree at run time (a `.env` you forgot to gitignore, a notebook with a pasted token) is now in the task record, readable by everyone with workspace access, and captured in your backups.
 
-**Agents hold ambient credentials.** A GPU worker typically has cloud credentials so it can read datasets and write artifacts. Any task that lands on it inherits them. That is precisely why fork pull requests are dangerous and why queue-level isolation is a security control, not tidiness.
+**Agents hold ambient credentials.** A GPU worker typically has cloud credentials so it can read datasets and write artifacts. Any task that lands on it inherits them. That is why fork pull requests are dangerous and why queue-level isolation is a security control, not tidiness.
 
 <div class="callout warn">
   <span class="ct">The most dangerous configuration in ClearML</span>
   A public repository with a <code>pull_request</code> workflow that holds workspace credentials and enqueues to a queue whose agents have production cloud credentials. Any stranger who opens a pull request gets code execution with those credentials. Fork builds must run on ephemeral agents in an isolated queue with no other access, or be gated behind explicit human approval before they can execute.
 </div>
 
-The access shape that actually works:
+The access shape that works:
 
 ```text queues as a security boundary
 services     ← enqueue: platform team + schedulers only.  Creds: registry read/write
@@ -94,7 +94,7 @@ serving      ← enqueue: platform team only.               Creds: registry read
     <li>Open three recent tasks and read Execution &rarr; Uncommitted Changes. Look for anything that should not be there.</li>
     <li>Check whether a fork pull request in any public repository can reach a queue whose agents hold cloud credentials.</li>
   </ol>
-  <em>more credentials than expected, all broader than needed, and — in step three — at least one diff containing something you would rather not have stored. Step four is the one to fix today if the answer is yes.</em>
+  <em>more credentials than expected, all broader than needed, and, in step three, at least one diff containing something you would rather not have stored. Step four is the one to fix today if the answer is yes.</em>
 </div>
 
 ## Credentials, service accounts, and rotation
@@ -149,26 +149,26 @@ For the cloud credentials the agent needs, the goal is that there is nothing to 
 | `CLEARML_WORKER_ID` set explicitly | A misbehaving worker is identifiable rather than "worker-3" |
 | Workload identity for cloud access | The agent's bucket access is a cluster policy, not a file |
 | Rotation on a schedule, with a drill | An unexercised rotation procedure does not work when you need it |
-| Secrets in a real store | Vault, Secrets Manager, or sealed secrets — never a repo or a wiki |
+| Secrets in a real store | Vault, Secrets Manager, or sealed secrets: never a repo or a wiki |
 | `.env` files gitignored, and verified | Otherwise they land in the stored diff of every run |
 
 <div class="callout warn">
   <span class="ct">The stored diff is a secret-exfiltration path nobody checks</span>
-  ClearML captures your uncommitted working tree so a dirty run is reproducible. A <code>.env</code>, a service-account JSON, or a notebook with a pasted token that is present but untracked ends up in the task record — visible to the whole workspace and persisted in backups. Add a pre-run check, gitignore aggressively, and if it happens, remember that deleting the task is the only remediation and the credential must still be rotated.
+  ClearML captures your uncommitted working tree so a dirty run is reproducible. A <code>.env</code>, a service-account JSON, or a notebook with a pasted token that is present but untracked ends up in the task record, visible to the whole workspace and persisted in backups. Add a pre-run check, gitignore aggressively, and if it happens, remember that deleting the task is the only remediation and the credential must still be rotated.
 </div>
 
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
     <li>Create a purpose-scoped credential for one CI pipeline and switch that pipeline to it. Confirm the old shared key is now unused.</li>
-    <li>Revoke a credential and watch exactly what fails. That is your blast radius.</li>
+    <li>Revoke a credential and watch what fails. That is your blast radius.</li>
     <li>Move one agent pool to workload identity and confirm it can still read data and write artifacts with no keys on disk.</li>
     <li>Deliberately leave an untracked <code>secrets.txt</code> in a working tree, run a task, and find it in the stored diff.</li>
   </ol>
   <em>step four is the demonstration that changes behaviour. Seeing your own file contents in a task's Uncommitted Changes tab is more persuasive than any policy document, and it takes thirty seconds.</em>
 </div>
 
-## Self-hosting: what you actually own
+## Self-hosting: what you own
 
 The hosted server hides five components. Self-hosting means owning all of them, plus their failure modes.
 
@@ -189,11 +189,11 @@ The hosted server hides five components. Self-hosting means owning all of them, 
 | **MongoDB** | Tasks, projects, models, users, queues | Everything stops; this is the system of record | Task count |
 | **Elasticsearch** | Scalars, plots, console logs | Metrics and logs unavailable; tasks still run | Reporting rate × runs |
 | **Redis** | Locks, ephemeral worker state | Workers misbehave; usually self-healing | Fixed, small |
-| **API server** | Stateless | Stateless — restart or scale out | — |
-| **Web server** | Stateless | UI down; agents keep running | — |
+| **API server** | Stateless | Stateless: restart or scale out | - |
+| **Web server** | Stateless | UI down; agents keep running | - |
 | **File server** | Artifacts, models, debug images | Artifacts unreadable; **replace it with S3** | Artifact volume |
 
-```yaml docker-compose.yml — the parts that matter
+```yaml docker-compose.yml: the parts that matter
 services:
   elasticsearch:
     image: elasticsearch:8.x
@@ -217,7 +217,7 @@ services:
 
 <div class="callout warn">
   <span class="ct">Elasticsearch is what breaks first, and disk is why</span>
-  Metrics and console logs grow with every run and never shrink on their own. When the high disk watermark is crossed, Elasticsearch marks indices read-only, and the symptom is that <em>experiments stop reporting metrics while training continues</em> — a silent, confusing failure. Monitor disk on the Elasticsearch volume as your primary platform alert, and know the read-only-block release command before you need it.
+  Metrics and console logs grow with every run and never shrink on their own. When the high disk watermark is crossed, Elasticsearch marks indices read-only, and the symptom is that <em>experiments stop reporting metrics while training continues</em>, a silent and confusing failure. Monitor disk on the Elasticsearch volume as your primary platform alert, and know the read-only-block release command before you need it.
 </div>
 
 ```bash
@@ -245,7 +245,7 @@ Non-negotiables for a server anyone else depends on:
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
-    <li>On a test instance, list the Elasticsearch indices by size and identify what is actually growing.</li>
+    <li>On a test instance, list the Elasticsearch indices by size and identify what is growing.</li>
     <li>Fill the Elasticsearch volume past the high watermark on purpose and observe what a running task does. Then release the block.</li>
     <li>Confirm your artifacts go to S3 rather than the file server, by reading an artifact's URL.</li>
     <li>Check whether your server image is pinned or on <code>latest</code>.</li>
@@ -255,7 +255,7 @@ Non-negotiables for a server anyone else depends on:
 
 ## Backup, restore, and upgrades
 
-The question is not whether you have backups. It is whether you have restored one.
+You have backups. Whether you have ever restored one is the open question.
 
 A ClearML backup has **three** parts, and taking only the first is the common mistake:
 
@@ -307,7 +307,7 @@ Upgrades follow the same discipline, because a server upgrade runs data migratio
 
 <div class="callout warn">
   <span class="ct">Elasticsearch snapshots are the part people skip, and metrics are unrecoverable without them</span>
-  A Mongo-only backup restores a complete-looking system: every task, every model, every parameter — and empty Scalars tabs, because scalars, plots, and console output live in Elasticsearch. You discover this during the restore, which is the worst possible time. If you take one thing from this section, take this.
+  A Mongo-only backup restores a complete-looking system: every task, every model, every parameter, and empty Scalars tabs, because scalars, plots, and console output live in Elasticsearch. You discover this during the restore, which is the worst possible time. If you take one thing from this section, take this.
 </div>
 
 <div class="guide-try">
@@ -316,16 +316,16 @@ Upgrades follow the same discipline, because a server upgrade runs data migratio
     <li>Take all three backups today. Note how long each takes and how large it is.</li>
     <li>Restore them onto a scratch host and run the four verification steps in order.</li>
     <li>Specifically confirm that a task's scalars came back. If they did not, your Elasticsearch snapshot is missing or broken.</li>
-    <li>Write down your measured RTO — from "the server is gone" to "an agent claimed a task" — and tell your team the number.</li>
+    <li>Write down your measured RTO, from "the server is gone" to "an agent claimed a task", and tell your team the number.</li>
   </ol>
   <em>a real recovery time instead of an assumed one, and often a missing Elasticsearch snapshot. Step four is what turns "we have backups" into a commitment somebody can plan around.</em>
 </div>
 
 ## Multi-tenancy, RBAC, and quota
 
-One workspace shared by four teams degrades predictably: a flat project list nobody can navigate, a GPU queue one team monopolises, and no way to tell who spent the storage.
+One workspace shared by four teams degrades predictably: a flat project list nobody can search, a GPU queue one team monopolises, and no way to tell who spent the storage.
 
-The open-source server has a **single workspace and no role-based access control** — every user with credentials can see and do everything. That is a real limitation and you should state it plainly rather than discover it during a security review. RBAC, multiple workspaces, and per-user permissions are paid-tier features.
+The open-source server has a **single workspace and no role-based access control**: every user with credentials can see and do everything. That is a real limitation and you should state it plainly rather than discover it during a security review. RBAC, multiple workspaces, and per-user permissions are paid-tier features.
 
 What you can do with the open-source server:
 
@@ -364,7 +364,7 @@ def init_task(project: str, name: str, **kwargs):
 
 <div class="callout tip">
   <span class="ct">A thin internal wrapper is the highest-leverage governance tool you have</span>
-  Twenty lines that set the project prefix, the <code>output_uri</code>, the mandatory tags, and the docker image turn every convention in this section into a default. It is far more effective than documentation, because nobody has to remember anything — and it gives you one place to change when the storage layout or the tag vocabulary changes.
+  Twenty lines that set the project prefix, the <code>output_uri</code>, the mandatory tags, and the docker image turn every convention in this section into a default. It is far more effective than documentation, because nobody has to remember anything, and it gives you one place to change when the storage layout or the tag vocabulary changes.
 </div>
 
 <div class="guide-try">
@@ -378,7 +378,7 @@ def init_task(project: str, name: str, **kwargs):
   <em>step three is usually impossible without prefixes and tags, which is exactly the point: cost attribution has to be designed in before the bill arrives, because it cannot be reconstructed retroactively.</em>
 </div>
 
-## Cost: what the platform actually costs
+## Cost: what the platform costs
 
 Four cost centres, and only one of them is usually noticed.
 
@@ -419,7 +419,7 @@ print(f"GPU hours: {gpu_seconds/3600:.1f}  wasted on failed/aborted: {wasted/360
 | Checkpoints every epoch | Storage, not compute | Best + last only |
 | Workers idle between bursts | Real money on cloud GPUs | Autoscaler with a scale-to-zero floor |
 
-```python autoscaler sketch — a services task that watches queue depth
+```python autoscaler sketch: a services task that watches queue depth
 from clearml.automation.auto_scaler import AutoScaler, CloudDriver
 
 AutoScaler(
@@ -465,7 +465,7 @@ Growth arrives in four dimensions, and each one breaks something different. Know
 | Reporting rate | Scalars minutes behind | Report per epoch not per batch → more Elastic RAM/disk → separate the cluster |
 | Task count | Slow table and search | Archive and delete old CI/sweep tasks → Mongo resources → retention policy |
 | Artifact volume | Bill, or a full file-server disk | `output_uri` to S3 → lifecycle rules → keep best+last only |
-| Worker count | API latency, claim delays | Scale API replicas → tune polling interval → shard by server if truly huge |
+| Worker count | API latency, claim delays | Scale API replicas → tune polling interval → shard by server if huge |
 | Console log volume | Elastic disk | Do not print in a tight loop; log at a sane level |
 
 Reporting discipline is the cheapest and most effective lever, and it is a code change rather than an infrastructure one:
@@ -487,7 +487,7 @@ if step % 100 == 0:
 
 Retention is what keeps Mongo and Elastic bounded. It has to be a scheduled task, because nobody does it by hand:
 
-```python ops/retention.py — a services task on a schedule
+```python ops/retention.py: a services task on a schedule
 from datetime import datetime, timedelta
 from clearml import Task
 
@@ -510,14 +510,14 @@ for project, days, statuses in RULES:
 
 <div class="callout warn">
   <span class="ct">Never let a retention job delete anything a model still needs</span>
-  Deleting a training task can remove the artifacts and weights a registered — possibly production — model points at. Exempt any task that produced a published model, anything tagged <code>keep</code>, and anything referenced by a model still in the registry. Run in report-only mode for a full cycle, publish the list, and only then enable deletion.
+  Deleting a training task can remove the artifacts and weights a registered, possibly production, model points at. Exempt any task that produced a published model, anything tagged <code>keep</code>, and anything referenced by a model still in the registry. Run in report-only mode for a full cycle, publish the list, and only then enable deletion.
 </div>
 
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
     <li>Find your highest-reporting task and count its scalar points. Compare it against a per-epoch equivalent.</li>
-    <li>Count tasks by project and identify what is actually filling the system. It is usually CI and sweeps.</li>
+    <li>Count tasks by project and identify what is filling the system. It is usually CI and sweeps.</li>
     <li>Run the retention script in report-only mode and read the list, plus the total artifact size it would free.</li>
     <li>Check the exemption logic against a task that produced a published model.</li>
   </ol>
@@ -530,8 +530,8 @@ ClearML records the commit, the diff, and the Python packages. That is necessary
 
 | Layer | Recorded by default | How to pin it |
 |---|---|---|
-| Application code | Yes — commit + diff | Nothing more needed |
-| Python packages | Yes — but as detected names/versions | A hash-pinned lock file, committed |
+| Application code | Yes: commit + diff | Nothing more needed |
+| Python packages | Yes, but as detected names/versions | A hash-pinned lock file, committed |
 | Python version | Yes, recorded | The base image |
 | CUDA, cuDNN, drivers | No | The base image **digest** |
 | System libraries | No | The base image digest |
@@ -558,9 +558,9 @@ data = Dataset.get(dataset_project="datasets", dataset_name="iris",
                    alias="training data").get_local_copy()
 ```
 
-And then the part that makes it a claim rather than a hope — a scheduled rebuild of a past release:
+The part that makes it a claim rather than a hope is a scheduled rebuild of a past release:
 
-```python ops/rebuild_check.py — weekly, on the services queue
+```python ops/rebuild_check.py: weekly, on the services queue
 from clearml import Task
 
 RELEASE_TASK_ID = "…the task behind the current production model…"
@@ -582,7 +582,7 @@ assert delta <= TOLERANCE, f"rebuild drifted by {delta:.4f}"
 
 <div class="callout warn">
   <span class="ct">"We are reproducible" is a claim until something checks it weekly</span>
-  Every unpinned layer degrades silently: a base image tag gets rebuilt, a package yanked, a CUDA minor bump changes a kernel. A scheduled rebuild of a past release is the only mechanism that converts reproducibility from an assumption into a monitored property — and the first time it runs, it will fail. That failure is the point.
+  Every unpinned layer degrades silently: a base image tag gets rebuilt, a package yanked, a CUDA minor bump changes a kernel. A scheduled rebuild of a past release is the only mechanism that converts reproducibility from an assumption into a monitored property, and the first time it runs, it will fail. That failure is the point.
 </div>
 
 <div class="guide-try">
@@ -598,7 +598,7 @@ assert delta <= TOLERANCE, f"rebuild drifted by {delta:.4f}"
 
 ## Lineage, provenance, and audit
 
-For regulated work — or any post-incident review — you need to answer four questions about a deployed model without a conversation:
+For regulated work, or any post-incident review, you need to answer four questions about a deployed model without a conversation:
 
 <ol class="guide-steps">
   <li><b>What code produced it?</b>The model links to its task; the task records the repository, commit, and diff.</li>
@@ -619,7 +619,7 @@ For regulated work — or any post-incident review — you need to answer four q
 
 The chain only exists if you build it, and a script is what proves it does:
 
-```python ops/lineage.py — the audit answer, generated not narrated
+```python ops/lineage.py: the audit answer, generated not narrated
 from clearml import Model, Task
 
 def lineage(model_id: str) -> dict:
@@ -643,7 +643,7 @@ def lineage(model_id: str) -> dict:
 
 | Audit requirement | Where it lives | The gap to close |
 |---|---|---|
-| Code provenance | `task.data.script` | A dirty diff is recorded but not reviewed — flag `dirty: true` |
+| Code provenance | `task.data.script` | A dirty diff is recorded but not reviewed: flag `dirty: true` |
 | Data provenance | Parameters, via `alias` | A run reading a raw path records nothing |
 | Approval trail | The promotion task's log and user | Tags moved by hand leave no trail |
 | Immutability | `model.publish()` | An unpublished production model can be swapped silently |
@@ -651,7 +651,7 @@ def lineage(model_id: str) -> dict:
 
 <div class="callout tip">
   <span class="ct">Make the promotion a task, never a click</span>
-  A tag moved by hand in the UI has no reviewable record of what was compared or why. A promotion task has a user, a timestamp, a console log, the candidate and incumbent metrics, and the threshold it applied — which is exactly what an auditor, or you at 2am, needs to read.
+  A tag moved by hand in the UI has no reviewable record of what was compared or why. A promotion task has a user, a timestamp, a console log, the candidate and incumbent metrics, and the threshold it applied, which is what an auditor, or you at 2am, needs to read.
 </div>
 
 <div class="guide-try">
@@ -669,7 +669,7 @@ def lineage(model_id: str) -> dict:
 
 An erasure request under GDPR or a similar regime meets ClearML's design head-on. Datasets are immutable by intent, versions have children, and tasks reference them. This is the hardest problem in this track and it is primarily architectural, not operational.
 
-What deletion actually has to touch:
+What deletion has to touch:
 
 | Location | Contains | Deletable |
 |---|---|---|
@@ -683,14 +683,14 @@ What deletion actually has to touch:
 
 <div class="callout warn">
   <span class="ct">Weights are the part you cannot erase</span>
-  Removing a subject's records from a dataset does not remove their influence from a trained model, and for some model classes information is extractable. If your regime treats a model as personal data, the only reliable remedy is retraining without those records — which is why the real fix is upstream: keep personal data out of the versioned store in the first place.
+  Removing a subject's records from a dataset does not remove their influence from a trained model, and for some model classes information is extractable. If your regime treats a model as personal data, the only reliable remedy is retraining without those records, which is why the real fix is upstream: keep personal data out of the versioned store in the first place.
 </div>
 
 The architecture that makes erasure tractable:
 
 <ol class="guide-steps">
   <li><b>Version derived data, not raw personal data</b>Pseudonymise or aggregate before it enters a ClearML Dataset. The versioned artefact then holds no directly identifying records.</li>
-  <li><b>Keep the identity mapping outside ClearML</b>In a system built for deletion — a database with row-level deletes and an audit trail.</li>
+  <li><b>Keep the identity mapping outside ClearML</b>In a system built for deletion: a database with row-level deletes and an audit trail.</li>
   <li><b>Crypto-shredding where raw data must be versioned</b>Encrypt per subject and destroy the key. The bytes remain, the content is unrecoverable, and the deletion is provable.</li>
   <li><b>Never print records to the console</b>Console output goes to Elasticsearch and into your backups, and it is the most commonly forgotten copy.</li>
   <li><b>Bound your backup retention deliberately</b>An indefinite backup is an indefinite copy. Erasure obligations and retention policy have to be reconciled on paper before they collide.</li>
@@ -723,9 +723,9 @@ children = Dataset.list_datasets(dataset_project="datasets", partial_name="iris"
     <li>Pick one dataset and decide whether a subject could lawfully demand deletion of its contents.</li>
     <li>If yes, run the reference finder and count the tasks and child versions affected.</li>
     <li>List every other copy: task artifacts, debug samples, console logs, backups.</li>
-    <li>Write down what you would actually do, and how long it would take, if the request arrived tomorrow.</li>
+    <li>Write down what you would do, and how long it would take, if the request arrived tomorrow.</li>
   </ol>
-  <em>the honest answer is usually "we could not do this cleanly", and knowing that before the request arrives is the entire value of the exercise. The architectural fix — versioning derived data only — is cheap now and very expensive later.</em>
+  <em>the honest answer is usually "we could not do this cleanly", and knowing that before the request arrives is the entire value of the exercise. The architectural fix, versioning derived data only, is cheap now and expensive later.</em>
 </div>
 
 ## Incident playbooks
@@ -736,7 +736,7 @@ Four incidents you should be able to work through without improvising.
 
 <ol class="guide-steps">
   <li><b>Agents keep running</b>Tasks in progress continue and buffer their reports. You have some time.</li>
-  <li><b>Stand up the server from the pinned image</b>Same version, not <code>latest</code> — a different version means an unplanned migration on top of an incident.</li>
+  <li><b>Stand up the server from the pinned image</b>Same version, not <code>latest</code>, because a different version means an unplanned migration on top of an incident.</li>
   <li><b>Restore Mongo, then Elasticsearch</b>Mongo first: it is the system of record. Elastic second, for metrics and logs.</li>
   <li><b>Verify in order</b>Login → a known task's scalars → an artifact download → an agent claiming a queued task.</li>
   <li><b>Reconcile</b>Tasks that finished during the outage may show as running. Mark them appropriately and note the gap.</li>
@@ -746,7 +746,7 @@ Four incidents you should be able to work through without improvising.
 
 **A model cannot be rebuilt.** Run the lineage script; find the unpinned layer. It is nearly always the base image tag or an unpinned wheel. If the artifacts are gone, check whether a retention job deleted the task, then check bucket versioning. Record what you could not recover.
 
-**Someone enqueued something they should not have.** Abort the task, revoke the credential that enqueued it, audit what that queue's agents could reach with their ambient credentials, and rotate anything exposed. Then fix the queue-level isolation that allowed it — treat this as a credential compromise, not a mistake.
+**Someone enqueued something they should not have.** Abort the task, revoke the credential that enqueued it, audit what that queue's agents could reach with their ambient credentials, and rotate anything exposed. Then fix the queue-level isolation that allowed it. Treat this as a credential compromise, not a mistake.
 
 | Incident | First action | The prevention |
 |---|---|---|
@@ -779,7 +779,7 @@ Knowing the boundaries is a senior skill, and being able to name them is a stron
 
 | Need | ClearML | Better tool |
 |---|---|---|
-| Point-in-time feature serving, online/offline parity | Not its job | A feature store — Feast, Tecton |
+| Point-in-time feature serving, online/offline parity | Not its job | A feature store: Feast, Tecton |
 | SQL analytics over versioned tables | Datasets are file collections | Iceberg, Delta, or a warehouse |
 | General-purpose workflow orchestration across a company | Pipelines are ML-shaped | Airflow, Dagster, Temporal |
 | High-throughput, low-latency serving at scale | Serving exists, but is not a full mesh | KServe, Triton directly, a managed endpoint |
@@ -790,7 +790,7 @@ Knowing the boundaries is a senior skill, and being able to name them is a stron
 
 <div class="callout tip">
   <span class="ct">The honest summary</span>
-  ClearML is strongest as the <b>experiment-to-model spine</b>: tracking, data versioning, remote execution, and a registry that a promotion workflow can drive. It is weakest as a general orchestrator, as a feature store, and as a serving mesh. A mature stack usually keeps ClearML for the spine and hands the boundaries to tools built for them — and says so out loud rather than stretching one tool over everything.
+  ClearML is strongest as the <b>experiment-to-model spine</b>: tracking, data versioning, remote execution, and a registry that a promotion workflow can drive. It is weakest as a general orchestrator, as a feature store, and as a serving mesh. A mature stack usually keeps ClearML for the spine and hands the boundaries to tools built for them, and says so out loud rather than stretching one tool over everything.
 </div>
 
 <div class="guide-try">
@@ -800,12 +800,12 @@ Knowing the boundaries is a senior skill, and being able to name them is a stron
     <li>Find one place where ClearML is being stretched past its shape. Name the cost of that.</li>
     <li>Find one place where a second tool duplicates something ClearML already does well. Name the cost of that too.</li>
   </ol>
-  <em>most stacks have one of each. Being able to argue both directions — where to adopt more ClearML and where to stop — is what distinguishes a senior answer from a preference.</em>
+  <em>most stacks have one of each. Being able to argue both directions, where to adopt more ClearML and where to stop, is what distinguishes a senior answer from a preference.</em>
 </div>
 
 ## Running ClearML as a platform
 
-When ClearML is shared infrastructure, your job changes from using it to operating it. Five obligations, and they are what people actually mean by "platform ownership".
+When ClearML is shared infrastructure, your job changes from using it to operating it. Five obligations, and they are what people mean by "platform ownership".
 
 <div class="cards">
   <div class="card"><div class="icon">📊</div><h4>Publish the numbers</h4><p>GPU utilisation, queue depth, storage by team, and the rebuild-check result. Visible without asking.</p></div>
@@ -815,7 +815,7 @@ When ClearML is shared infrastructure, your job changes from using it to operati
   <div class="card"><div class="icon">📕</div><h4>Four runbooks, testable</h4><p>Server lost, Elastic read-only, model unrebuildable, unauthorised enqueue. Followed by someone else.</p></div>
 </div>
 
-The monitoring set that actually matters, in priority order:
+The monitoring set that matters, in priority order:
 
 | Alert | Threshold | Why first |
 |---|---|---|
@@ -827,7 +827,7 @@ The monitoring set that actually matters, in priority order:
 | Rebuild check | Failing | Reproducibility has silently regressed |
 | GPU utilisation | < 40% weekly | You are paying for idle hardware |
 
-```python ops/platform_report.py — a weekly services task
+```python ops/platform_report.py: a weekly services task
 from clearml import Task
 from clearml.backend_api.session.client import APIClient
 
@@ -848,7 +848,7 @@ report.report_single_value(
 
 <div class="callout warn">
   <span class="ct">The services agent is production, and it looks optional</span>
-  Everything automatic — pipeline controllers, schedulers, dataset triggers, HPO optimisers, the serving control plane — lives on the services queue. When that one agent dies, nothing fails loudly: pipelines simply never start. It is the least glamorous and most load-bearing worker in the fleet, and it needs a liveness alert.
+  Everything automatic (pipeline controllers, schedulers, dataset triggers, HPO optimisers, the serving control plane) lives on the services queue. When that one agent dies, nothing fails loudly: pipelines never start. It is the least glamorous and most load-bearing worker in the fleet, and it needs a liveness alert.
 </div>
 
 <div class="guide-try">
@@ -864,7 +864,7 @@ report.report_single_value(
 
 ## The review checklist
 
-Run this against any ClearML setup — yours or someone else's. It finds something every time.
+Run this against any ClearML setup, yours or someone else's. It finds something every time.
 
 | Area | Check |
 |---|---|
@@ -895,7 +895,7 @@ Run this against any ClearML setup — yours or someone else's. It finds somethi
     <li>Fix the top three this week and re-run.</li>
     <li>Then run it against a colleague's project, which is where you learn how much of this is convention rather than enforcement.</li>
   </ol>
-  <em>nobody passes on the first attempt. The two that matter disproportionately are an untested restore and a fork pull request with credentials — one is an unrecoverable data loss, the other is remote code execution.</em>
+  <em>nobody passes on the first attempt. The two that matter disproportionately are an untested restore and a fork pull request with credentials. One is an unrecoverable data loss, the other is remote code execution.</em>
 </div>
 
 ## The complete picture
@@ -925,7 +925,7 @@ Everything from all three levels in one platform. Read it as a whole; you should
     └── unauthorised-enqueue.md
 ```
 
-```python platform/clearml_wrapper.py — where every convention becomes a default
+```python platform/clearml_wrapper.py: where every convention becomes a default
 import os
 from clearml import Task
 
@@ -948,7 +948,7 @@ def init_task(project: str, name: str, queue: str | None = None, **kwargs) -> Ta
     return task
 ```
 
-```python src/train.py — the researcher-facing surface stays small
+```python src/train.py: the researcher-facing surface stays small
 from platform.clearml_wrapper import init_task
 
 task = init_task("experiments", "resnet18", queue="gpu")
@@ -1029,7 +1029,7 @@ Eighteen decisions in there span the whole series:
 | A wrapper that makes every convention a default | Senior |
 
 <div class="guide-try">
-  <span class="ct">Try it — the one that matters</span>
+  <span class="ct">Try it: the one that matters</span>
   <ol>
     <li>Write the wrapper for your own team and migrate one project onto it. Measure how much researcher-facing code disappeared.</li>
     <li>Split your queues by trust level and give each pool its own credentials. Verify a <code>ci-untrusted</code> task can reach nothing.</li>
@@ -1037,7 +1037,7 @@ Eighteen decisions in there span the whole series:
     <li>Schedule the rebuild check and let it fail. Fix the unpinned layer it finds, then let it run green for a month.</li>
     <li>Run the review checklist and publish the results, including what you are not going to fix and why.</li>
   </ol>
-  <em>step five is the senior deliverable. A checklist with honest, argued exceptions is worth more than a green one, because it shows the trade-offs were made deliberately rather than by omission — and it gives whoever inherits the platform a map instead of a mystery.</em>
+  <em>step five is the senior deliverable. A checklist with honest, argued exceptions is worth more than a green one, because it shows the trade-offs were made deliberately rather than by omission, and it gives whoever inherits the platform a map instead of a mystery.</em>
 </div>
 
 ## Where the series leaves you
@@ -1046,15 +1046,15 @@ Across three levels you have gone from two lines in a script to owning a platfor
 
 | The question a senior gets asked | The answer this series gives |
 |---|---|
-| "Can you reproduce the model we shipped in March?" | Clone its task; the digest, lock file, seed, and dataset version are all recorded — and the weekly rebuild check already proved it |
-| "Who can run code on our GPUs?" | Whoever can enqueue. Here are the queues, their credentials, and the fork policy |
-| "What does this platform cost?" | GPU-hours, artifact and dataset storage, server infrastructure, and egress — broken down by team, published weekly |
-| "What breaks first if the team triples?" | Elasticsearch on reporting rate, then MongoDB on task count. Here is the retention and capacity plan |
+| "Can you reproduce the model we shipped in March?" | Clone its task; the digest, lock file, seed, and dataset version are all recorded, and the weekly rebuild check already proved it |
+| "Who can run code on our GPUs?" | Whoever can enqueue: the queues, their credentials, and the fork policy |
+| "What does this platform cost?" | GPU-hours, artifact and dataset storage, server infrastructure, and egress: broken down by team, published weekly |
+| "What breaks first if the team triples?" | Elasticsearch on reporting rate, then MongoDB on task count, with a retention and capacity plan to match |
 | "If the server dies, how long until we are back?" | A measured RTO from a restore we ran last quarter |
 | "Prove this model is what we think it is" | One command producing code, data, config, and the timestamped approval |
-| "Should we use ClearML for X?" | Here is where it is strongest, here is where it stops, and here is what owns the rest |
+| "Should we use ClearML for X?" | Where it is strongest, where it stops, and what owns the rest |
 
-The through-line of all three levels is a single idea: **a recorded run that can be executed again is worth more than a log of one that cannot.** Everything else — the agents, the queues, the registry, the pinning, the backups — exists to keep that property true as the number of runs, people, and months grows.
+The through-line of all three levels is a single idea: **a recorded run that can be executed again is worth more than a log of one that cannot.** Everything else (the agents, the queues, the registry, the pinning, the backups) exists to keep that property true as the number of runs, people, and months grows.
 
 
 

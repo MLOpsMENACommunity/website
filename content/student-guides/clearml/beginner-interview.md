@@ -2,9 +2,9 @@ Part one of three. A fast review of **everything in the Beginner Detailed track*
 
 ## The thirty-second answer
 
-> ClearML is an open-source MLOps platform that tracks experiments, versions datasets, and re-executes runs on remote hardware. You add `Task.init` to a script and it records the code, git commit, uncommitted diff, installed packages, arguments, metrics, and models into a server. Because it records the *environment* and not just the results, any past run can be cloned, reconfigured in the UI, and re-launched on an agent — so a logged experiment is executable, not just readable.
+> ClearML is an open-source MLOps platform that tracks experiments, versions datasets, and re-executes runs on remote hardware. You add `Task.init` to a script and it records the code, git commit, uncommitted diff, installed packages, arguments, metrics, and models into a server. Because it records the *environment* and not just the results, any past run can be cloned, reconfigured in the UI, and re-launched on an agent, so a logged experiment is executable, not just readable.
 
-Then add the sentence that shows you have used it: *"the part people underestimate is that `task.connect` is bidirectional — locally it uploads your parameters, but when an agent runs a clone it reads them back and overrides your defaults. That is what makes clone-edit-enqueue work without touching the code."*
+Then add the sentence that shows you have used it: *"the part people underestimate is that `task.connect` is bidirectional: locally it uploads your parameters, but when an agent runs a clone it reads them back and overrides your defaults. That is what makes clone-edit-enqueue work without touching the code."*
 
 ## The architecture
 
@@ -26,7 +26,7 @@ Then add the sentence that shows you have used it: *"the part people underestima
 | **File server** | Default store for artifacts and models when there is no S3 bucket |
 | **Agent** | `pip install clearml-agent`. Rebuilds a task's environment and runs it |
 
-**MongoDB** holds task metadata, **Elasticsearch** holds metrics and console logs, **Redis** holds ephemeral state. Worth naming — it explains why a slow task list and slow scalars are two different problems.
+**MongoDB** holds task metadata, **Elasticsearch** holds metrics and console logs, **Redis** holds ephemeral state. Worth naming. It explains why a slow task list and slow scalars are two different problems.
 
 ## Vocabulary
 
@@ -40,7 +40,7 @@ Then add the sentence that shows you have used it: *"the part people underestima
 | **Model** | A first-class artifact with a registry entry, tags, and lineage |
 | **Dataset** | A task holding an immutable, content-addressed, versioned file set |
 | **Pipeline** | A task that creates and monitors other tasks as a DAG |
-| **`execute_remotely`** | Register locally, then enqueue and exit — training happens on an agent |
+| **`execute_remotely`** | Register locally, then enqueue and exit: training happens on an agent |
 
 ## Why ClearML rather than the alternatives
 
@@ -57,7 +57,7 @@ Then add the sentence that shows you have used it: *"the part people underestima
   <div class="guide-compare-col bad">
     <h4>What a tracker alone gives you</h4>
     <ul>
-      <li>Metrics and params — you still need a scheduler</li>
+      <li>Metrics and params. You still need a scheduler</li>
       <li>No environment capture, so no remote re-execution</li>
       <li>Data versioning is a separate tool</li>
       <li>Often SaaS-only or a heavier server</li>
@@ -65,7 +65,7 @@ Then add the sentence that shows you have used it: *"the part people underestima
   </div>
 </div>
 
-Know the follow-up: *"how is this different from MLflow?"* MLflow tracks and packages; ClearML tracks **and** executes. MLflow has no agent, no queue, and no built-in dataset versioning, so an MLflow setup usually means MLflow plus Airflow plus DVC. Whether that is better is a real architectural argument — do not pretend it is not — but the one-sentence difference is that ClearML records enough to rerun the experiment, not just enough to describe it.
+Know the follow-up: *"how is this different from MLflow?"* MLflow tracks and packages; ClearML tracks **and** executes. MLflow has no agent, no queue, and no built-in dataset versioning, so an MLflow setup usually means MLflow plus Airflow plus DVC. Whether that is better is a real architectural argument, do not pretend it is not, but the one-sentence difference is that ClearML records enough to rerun the experiment, not just enough to describe it.
 
 ## The everyday code
 
@@ -100,7 +100,7 @@ Being able to list this quickly is the core question at this level:
 
 <ol class="guide-steps">
   <li><b>Code</b>Git remote, branch, commit, the <b>uncommitted diff</b>, entry point, working directory.</li>
-  <li><b>Environment</b>Python version, and the packages your script actually imported with exact versions.</li>
+  <li><b>Environment</b>Python version, and the packages your script imported with exact versions.</li>
   <li><b>Arguments</b>Every <code>argparse</code> flag, plus <code>click</code>, <code>fire</code>, and <code>hydra</code>.</li>
   <li><b>Metrics</b>Anything written to TensorBoard, TensorBoardX, or matplotlib.</li>
   <li><b>Models</b>Every checkpoint saved by PyTorch, TF/Keras, joblib, XGBoost, LightGBM.</li>
@@ -265,26 +265,26 @@ Three ideas explain nearly every beginner failure: **`Task.init` must be first**
 ## Common interview questions
 
 <ol class="guide-steps">
-  <li><b>What is ClearML and what problem does it solve?</b>An open-source MLOps platform covering experiment tracking, data versioning, and orchestration. Two lines in a script record the code, commit, diff, packages, arguments, metrics, and models to a server. Because the environment is captured too, any run can be cloned, reconfigured, and re-executed on remote hardware — so the log is executable rather than merely descriptive.</li>
+  <li><b>What is ClearML and what problem does it solve?</b>An open-source MLOps platform covering experiment tracking, data versioning, and orchestration. Two lines in a script record the code, commit, diff, packages, arguments, metrics, and models to a server. Because the environment is captured too, any run can be cloned, reconfigured, and re-executed on remote hardware, so the log is executable rather than descriptive.</li>
   <li><b>What are the components of a ClearML deployment?</b>The SDK inside your process; an API server for metadata backed by MongoDB, Elasticsearch, and Redis; a web server for the UI; a file server for artifacts when there is no object storage; and agents that pull tasks off named queues and execute them.</li>
   <li><b>What exactly does <code>Task.init</code> do?</b>Creates or reuses a task, then hooks into the process: it records the git state including the uncommitted diff, the imported packages, the argument parser, stdout and stderr, machine metrics, and it patches supported frameworks so TensorBoard scalars and saved checkpoints are captured without extra code.</li>
   <li><b>Why must <code>Task.init</code> come before the framework imports?</b>Automatic capture is implemented by patching those libraries at import time. If they are already imported, the patch never gets applied and metrics or checkpoints silently go missing. It is a silent failure, not an error, which is what makes it worth knowing.</li>
-  <li><b>What is <em>not</em> captured automatically?</b>Values you only print, data read from an unversioned path, system and conda packages, environment variables — excluded on purpose since they hold secrets — and any randomness you never seeded. Each has a deliberate replacement: report it, version it, use docker mode, or connect it as a parameter.</li>
-  <li><b>Explain <code>title</code> versus <code>series</code> in <code>report_scalar</code>.</b>Title is the chart, series is a line within it. One title with `train` and `val` series gives a single comparable chart; two titles gives two charts you cannot overlay. And a curve is not a comparison column — final numbers go through <code>report_single_value</code> so they can be sorted in the experiments table.</li>
-  <li><b>Why is <code>task.connect</code> described as bidirectional?</b>Running locally it uploads your dict to the server. When an agent executes a clone of that task, the same call reads the server's values and returns them, overriding your defaults. That is precisely what makes clone-edit-enqueue work with no code change — and why you must read from the value <code>connect</code> returns rather than from your original literal.</li>
+  <li><b>What is <em>not</em> captured automatically?</b>Values you only print, data read from an unversioned path, system and conda packages, environment variables, excluded on purpose since they hold secrets, and any randomness you never seeded. Each has a deliberate replacement: report it, version it, use docker mode, or connect it as a parameter.</li>
+  <li><b>Explain <code>title</code> versus <code>series</code> in <code>report_scalar</code>.</b>Title is the chart, series is a line within it. One title with `train` and `val` series gives a single comparable chart; two titles gives two charts you cannot overlay. A curve is not a comparison column, so final numbers go through <code>report_single_value</code> and can be sorted in the experiments table.</li>
+  <li><b>Why is <code>task.connect</code> described as bidirectional?</b>Running locally it uploads your dict to the server. When an agent executes a clone of that task, the same call reads the server's values and returns them, overriding your defaults. That is what makes clone-edit-enqueue work with no code change, and why you must read from the value <code>connect</code> returns rather than from your original literal.</li>
   <li><b>How would you rerun a past experiment with a different learning rate?</b>Clone the task in the UI, which produces an editable draft; change the parameter; enqueue it to a queue an agent is watching. The agent rebuilds the environment from the recorded packages, checks out the recorded commit, applies the recorded diff, and runs it. No code change and no SSH.</li>
-  <li><b>What does <code>execute_remotely</code> do?</b>Everything above the call runs locally — the task is created, parameters uploaded, configuration registered. Then the local process enqueues the task and exits, and the agent runs everything below the line. Commenting out that one line gives you an identical local run for debugging.</li>
-  <li><b>What does an agent actually do with a queued task?</b>Claims it, creates an isolated environment (virtualenv, or a container in docker mode), clones the repository at the recorded commit, applies the stored diff, installs the recorded package list, then executes the recorded entry point with the server's current parameter values.</li>
+  <li><b>What does <code>execute_remotely</code> do?</b>Everything above the call runs locally: the task is created, parameters uploaded, configuration registered. Then the local process enqueues the task and exits, and the agent runs everything below the line. Commenting out that one line gives you an identical local run for debugging.</li>
+  <li><b>What does an agent do with a queued task?</b>Claims it, creates an isolated environment (virtualenv, or a container in docker mode), clones the repository at the recorded commit, applies the stored diff, installs the recorded package list, then executes the recorded entry point with the server's current parameter values.</li>
   <li><b>Why did my agent task fail with a git error?</b>Almost always because the commit exists only locally. The diff travels through the server, but the base commit has to be fetchable from the remote, so the branch must be pushed before enqueueing.</li>
-  <li><b>Artifact versus model — when do you use each?</b>An artifact is any attached file or object: a dataframe, a report, a vocabulary. A model is a first-class registry entry with tags, a publish state, and a link back to the task that produced it. Serving code should query the registry by project, name, and tag, so promotion is a tag move rather than a code change.</li>
-  <li><b>Where do artifacts go, and when is that wrong?</b>To the ClearML file server by default. That is fine for small reports and dataframes and wrong for checkpoints — set <code>output_uri</code> to S3 or another bucket so large objects go to real object storage with its own lifecycle rules.</li>
+  <li><b>Artifact versus model: when do you use each?</b>An artifact is any attached file or object: a dataframe, a report, a vocabulary. A model is a first-class registry entry with tags, a publish state, and a link back to the task that produced it. Serving code should query the registry by project, name, and tag, so promotion is a tag move rather than a code change.</li>
+  <li><b>Where do artifacts go, and when is that wrong?</b>To the ClearML file server by default. That is fine for small reports and dataframes and wrong for checkpoints, so set <code>output_uri</code> to S3 or another bucket and large objects go to real object storage with its own lifecycle rules.</li>
   <li><b>How does ClearML Dataset versioning work?</b>A dataset is itself a task holding a content-addressed file set. Versions are incremental: a child declares parents and uploads only its delta. <code>finalize()</code> makes a version immutable, which is what gives "trained on 1.1.0" any meaning. Consumers call <code>get_local_copy()</code>, which flattens the parent chain and caches locally.</li>
   <li><b>Why pass <code>alias=</code> to <code>Dataset.get</code>?</b>It records the resolved dataset id into the consuming task's configuration, so the experiment itself names the exact data version it read. Without it the run is reproducible only if nobody has to guess which dataset "the training data" meant.</li>
-  <li><b>How do you compare twenty experiments?</b>In the UI: add hyperparameters and single-value metrics as columns, sort, then select rows and hit Compare with "hide identical values" on, which reduces the runs to the fields that actually differ. In code: <code>Task.get_tasks</code> with a filter plus <code>get_last_scalar_metrics</code>, which is also how you would write a promotion gate.</li>
-  <li><b>What is a ClearML pipeline, mechanically?</b>A task that creates and monitors other tasks. Each step is an independent task with its own logs, metrics, and target queue, so different steps can run on different hardware. With the controller API a step is literally "clone this base task and override these parameters" — the same clone-and-enqueue loop, expressed as a graph.</li>
-  <li><b>How do you organise hundreds of runs?</b>Projects for structure, with <code>/</code> for nesting, and **tags** for everything cross-cutting — <code>baseline</code>, <code>ablation</code>, <code>candidate</code>, <code>broken</code>. Add tags in code with <code>task.add_tags</code> so they are never forgotten, since a table you cannot filter is a table nobody reads.</li>
+  <li><b>How do you compare twenty experiments?</b>In the UI: add hyperparameters and single-value metrics as columns, sort, then select rows and hit Compare with "hide identical values" on, which reduces the runs to the fields that differ. In code: <code>Task.get_tasks</code> with a filter plus <code>get_last_scalar_metrics</code>, which is also how you would write a promotion gate.</li>
+  <li><b>What is a ClearML pipeline, mechanically?</b>A task that creates and monitors other tasks. Each step is an independent task with its own logs, metrics, and target queue, so different steps can run on different hardware. With the controller API a step is literally "clone this base task and override these parameters", the same clone-and-enqueue loop expressed as a graph.</li>
+  <li><b>How do you organise hundreds of runs?</b>Projects for structure, with <code>/</code> for nesting, and **tags** for everything cross-cutting: <code>baseline</code>, <code>ablation</code>, <code>candidate</code>, <code>broken</code>. Add tags in code with <code>task.add_tags</code> so they are never forgotten, since a table you cannot filter is a table nobody reads.</li>
   <li><b>How is this different from MLflow?</b>MLflow tracks and packages; it has no agent, no queue, and no built-in dataset versioning, so a full setup is usually MLflow plus a scheduler plus a data-versioning tool. ClearML puts tracking, data versioning, and execution in one system, at the cost of running a heavier server. Which trade is right depends on whether you already have an orchestrator.</li>
-  <li><b>How do you debug a failed remote task?</b>Console tab for the traceback, Execution tab to verify the commit, entry point, and package list, Configuration to check the values it actually ran with, and Workers &amp; Queues to confirm an agent was even watching. Then reproduce locally with the same parameters via <code>Task.get_task(...).get_parameters()</code>.</li>
+  <li><b>How do you debug a failed remote task?</b>Console tab for the traceback, Execution tab to verify the commit, entry point, and package list, Configuration to check the values it ran with, and Workers &amp; Queues to confirm an agent was even watching. Then reproduce locally with the same parameters via <code>Task.get_task(...).get_parameters()</code>.</li>
   <li><b>Where do credentials live and what can they do?</b>An access/secret pair in <code>~/clearml.conf</code>, or the <code>CLEARML_API_*</code> environment variables in CI. That pair can read every experiment in the workspace and enqueue tasks that execute code on your agents, so it is a full-access credential and must never be committed.</li>
 </ol>
 

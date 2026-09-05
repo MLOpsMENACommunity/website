@@ -1,14 +1,14 @@
-This is part one of three. It covers **everything you need to do real work with MLflow** — not a teaser. By the end you can track an experiment without restructuring your code, log parameters, metrics, and artifacts on purpose, compare thirty runs in a table and a chart, package a model so someone else can load it without knowing your framework, register and promote it through stages, and serve it behind an HTTP endpoint. Mid-level and Senior take the same topics further; nothing here is thrown away.
+This is part one of three. It covers **everything you need to do real work with MLflow**, not a teaser. By the end you can track an experiment without restructuring your code, log parameters, metrics, and artifacts on purpose, compare thirty runs in a table and a chart, package a model so someone else can load it without knowing your framework, register and promote it through stages, and serve it behind an HTTP endpoint. Mid-level and Senior take the same topics further; nothing here is thrown away.
 
-Each section ends with a **Try it** task. Do them as you go — they take a few minutes each, and these ideas only stick once you have watched a metric appear in the MLflow UI while your script is still running.
+Each section ends with a **Try it** task. Do them as you go. They take a few minutes each, and these ideas only stick once you have watched a metric appear in the MLflow UI while your script is still running.
 
 ## What MLflow is, and the problem it solves
 
 You trained a model last Tuesday. It scored 0.94 AUC. Today you cannot reproduce it. The notebook has moved on, the learning rate in the cell is not the one that ran, the feature list changed, and the only surviving record of 0.94 is a number in a Slack message.
 
-That is not carelessness. It is a missing system: **nothing was writing anything down.** Every fact about that run lived in your terminal scrollback and your memory.
+Carelessness was never the problem. A system was missing: **nothing was writing anything down.** Every fact about that run lived in your terminal scrollback and your memory.
 
-MLflow writes it down. You add a handful of lines — often just one — and it records the parameters, the metrics over time, the artifacts, the source file, the git commit, and the environment needed to load the model again, into a store you and your team can query.
+MLflow writes it down. You add a handful of lines, often just one, and it records the parameters, the metrics over time, the artifacts, the source file, the git commit, and the environment needed to load the model again, into a store you and your team can query.
 
 <div class="flow">
   <div class="node">YOUR CODE<small>+ autolog</small></div>
@@ -20,7 +20,7 @@ MLflow writes it down. You add a handful of lines — often just one — and it 
   <div class="node">SERVING<small>load anywhere</small></div>
 </div>
 
-**MLflow's central idea is a framework-agnostic contract.** A logged model is not "a pickle from someone's laptop" — it is a directory with a declared flavour, a signature describing inputs and outputs, and a dependency list. Anything that understands that contract can load it: a batch job, a REST server, a Spark UDF, a Docker image. That single property is what turns a training script into something deployable.
+**MLflow's central idea is a framework-agnostic contract.** A logged model is a directory with a declared flavour, a signature describing inputs and outputs, and a dependency list rather than a bare pickle from someone's laptop. Anything that understands that contract can load it: a batch job, a REST server, a Spark UDF, a Docker image. That single property is what turns a training script into something deployable.
 
 That gives you four components, and they map exactly onto four problems:
 
@@ -38,14 +38,14 @@ The vocabulary is small, and getting it straight now prevents most later confusi
 | **Run** | One execution: parameters, metrics, tags, artifacts, and a status. The atomic unit |
 | **Experiment** | A named container of runs. The unit you compare within |
 | **Tracking server** | The service that stores run metadata and serves the UI |
-| **Backend store** | Where run metadata lives — a database, or local files |
-| **Artifact store** | Where files live — S3, GCS, Azure, or a local directory |
+| **Backend store** | Where run metadata lives: a database, or local files |
+| **Artifact store** | Where files live: S3, GCS, Azure, or a local directory |
 | **Artifact** | Any file attached to a run: a plot, a CSV, a model directory |
-| **Flavour** | How a logged model can be loaded — `sklearn`, `pytorch`, `pyfunc`, and others |
+| **Flavour** | How a logged model can be loaded: `sklearn`, `pytorch`, `pyfunc`, and others |
 | **Signature** | The declared input and output schema of a model |
 | **Registered model** | A named entry in the registry with numbered versions |
 
-You need very little to follow along: Python, a script that trains something small, and a folder. A tiny dataset and a five-line model are genuinely the best place to start, because a broken run costs you nothing.
+You need little to follow along: Python, a script that trains something small, and a folder. A tiny dataset and a five-line model are the best place to start, because a broken run costs you nothing.
 
 <div class="guide-try">
   <span class="ct">Try it</span>
@@ -55,12 +55,12 @@ You need very little to follow along: Python, a script that trains something sma
     <li>Find the model file it produced and try to name the git commit that trained it.</li>
     <li>Count the files on your disk matching <code>model_final*</code>, <code>*_v2*</code>, or a date in the name.</li>
   </ol>
-  <em>at least one of those is unanswerable, and usually all three. The third one — tying a model file to a commit — is the question that turns into an afternoon of archaeology during a code review, and it is the one MLflow answers with a run id.</em>
+  <em>at least one of those is unanswerable, and usually all three. The third one, tying a model file to a commit, is the question that turns into an afternoon of archaeology during a code review, and it is the one MLflow answers with a run id.</em>
 </div>
 
 ## The four components, and the two stores behind them
 
-MLflow is often described as one tool. It is really four that share a store, and you can adopt them in order.
+MLflow is often described as one tool. It is four that share a store, and you can adopt them in order.
 
 <div class="guide-timeline">
   <div class="guide-timeline-item"><span>1</span><strong>Tracking</strong><small>Log params, metrics, and artifacts. Useful on day one, with no infrastructure.</small></div>
@@ -75,13 +75,13 @@ Two stores sit behind everything, and confusing them causes a whole category of 
   <div class="arch-lane" style="--lane-cols:2">
     <span class="arch-label">your process</span>
     <div class="arch-node" data-kind="entry"><b><code>mlflow</code> client</b><small><code>log_param</code> · <code>log_metric</code> · <code>log_model</code></small></div>
-    <div class="arch-node"><b>Autolog patches</b><small>sklearn, torch, xgboost — params and metrics for free</small></div>
+    <div class="arch-node"><b>Autolog patches</b><small>sklearn, torch, xgboost: params and metrics for free</small></div>
   </div>
   <i class="arch-edge" data-dir="down"></i>
   <i class="arch-edge" data-dir="down"></i>
   <i class="arch-edge" data-dir="down" data-flow="optional"></i>
   <div class="arch-lane" style="--lane-cols:3">
-    <span class="arch-label">tracking server — two separate stores</span>
+    <span class="arch-label">tracking server: two separate stores</span>
     <div class="arch-node" data-kind="store"><b>Backend store</b><small>Runs, params, metrics, tags, <em>and the registry</em>. Needs a database for aliases</small></div>
     <div class="arch-node" data-kind="store"><b>Artifact store</b><small>Files: models, plots, reports. S3, GCS, Azure, or a directory</small></div>
     <div class="arch-node"><b>Web UI</b><small>Reads both. Compare, filter, chart</small></div>
@@ -92,7 +92,7 @@ Two stores sit behind everything, and confusing them causes a whole category of 
   <div class="arch-node" data-kind="worker"><b>Registry version</b><small>Immutable, numbered, linked to its run</small></div>
   <div class="arch-node" data-kind="worker"><b>Alias → <code>@champion</code></b><small>Moveable pointer. Promotion is a tag move</small></div>
   <div class="arch-node" data-kind="external"><b>Consumers</b><small>Batch job · REST server · container · Spark UDF</small></div>
-  <p class="arch-note"><b>The detail that surprises people:</b> by default the client reads and writes the <em>artifact store directly</em> — the tracking server only hands out a URI. That is why metrics can appear in the UI while artifacts 404, and it means every user and CI job needs storage credentials unless you enable proxied access.</p>
+  <p class="arch-note"><b>The detail that surprises people:</b> by default the client reads and writes the <em>artifact store directly</em>, and the tracking server only hands out a URI. That is why metrics can appear in the UI while artifacts 404, and it means every user and CI job needs storage credentials unless you enable proxied access.</p>
 </div>
 
 | Store | Holds | Configured by |
@@ -117,7 +117,7 @@ mlflow server --backend-store-uri postgresql://user:pass@host/mlflow \
 
 <div class="callout warn">
   <span class="ct">The Model Registry requires a database backend</span>
-  With the default file store, tracking works and the registry does not — you get a clear error the first time you call <code>register_model</code>. SQLite is enough for one person; Postgres or MySQL is what a team needs. Decide this early, because migrating a file store into a database later is a chore nobody enjoys.
+  With the default file store, tracking works and the registry does not. You get a clear error the first time you call <code>register_model</code>. SQLite is enough for one person; Postgres or MySQL is what a team needs. Decide this early, because migrating a file store into a database later is a chore nobody enjoys.
 </div>
 
 Your code points at a tracking server with one line, or one environment variable:
@@ -136,7 +136,7 @@ export MLFLOW_TRACKING_URI=http://127.0.0.1:5000
   <span class="ct">Try it</span>
   <ol>
     <li>Run <code>pip install mlflow</code>, then <code>mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlartifacts --port 5000</code>.</li>
-    <li>Open <code>http://127.0.0.1:5000</code> and note that it is empty — no runs, no experiments except <code>Default</code>.</li>
+    <li>Open <code>http://127.0.0.1:5000</code> and note that it is empty: no runs, no experiments except <code>Default</code>.</li>
     <li>Sketch the two stores from memory and label which one a metric goes to and which one a plot goes to.</li>
     <li>Now run a script with no <code>set_tracking_uri</code> at all and find the <code>mlruns/</code> directory it created.</li>
   </ol>
@@ -145,9 +145,9 @@ export MLFLOW_TRACKING_URI=http://127.0.0.1:5000
 
 ## Your first tracked run, line by line
 
-Here is a script with no MLflow in it:
+Start from a script with no MLflow in it:
 
-```python train.py — before
+```python train.py (before)
 from sklearn.datasets import load_breast_cancer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
@@ -163,9 +163,9 @@ model.fit(X_train, y_train)
 print("auc", roc_auc_score(y_test, model.predict_proba(X_test)[:, 1]))
 ```
 
-And here it is tracked:
+Here it is tracked:
 
-```python train.py — after
+```python train.py (after)
 import mlflow
 import mlflow.sklearn
 from sklearn.datasets import load_breast_cancer
@@ -199,7 +199,7 @@ Run it, then open the UI. Four things happened:
   <li><b>A run was created</b>With a run id, an experiment, a status, a start and end time, and the user and source file that produced it.</li>
   <li><b>Parameters were recorded</b>Immutable strings. A parameter is set once and describes the configuration of the run.</li>
   <li><b>A metric was recorded</b>A float with a step and a timestamp, so a metric is a series rather than a single number.</li>
-  <li><b>A model was logged</b>Not a bare pickle — a directory with an <code>MLmodel</code> file declaring its flavours, its signature, and its dependencies.</li>
+  <li><b>A model was logged</b>Not a bare pickle, but a directory with an <code>MLmodel</code> file declaring its flavours, its signature, and its dependencies.</li>
 </ol>
 
 The `with` block matters more than it looks. It sets the run's status to `FINISHED` on success and `FAILED` on an exception, and it guarantees the run is closed. Without it, an interrupted script leaves a run stuck in `RUNNING` forever.
@@ -217,7 +217,7 @@ The `with` block matters more than it looks. It sets the run's status to `FINISH
     <li>Raise an exception halfway through the <code>with</code> block and confirm the run's status becomes <code>FAILED</code>.</li>
     <li>Now do the same without the context manager and see the run stuck in <code>RUNNING</code>.</li>
   </ol>
-  <em>the <code>MLmodel</code> file is the thing to actually read. It is the entire "why MLflow" argument in twenty lines: a declared loader, a declared schema, and a declared environment — which is what makes the artifact portable rather than personal.</em>
+  <em>the <code>MLmodel</code> file is the thing to read. It is the entire "why MLflow" argument in twenty lines: a declared loader, a declared schema, and a declared environment, which is what makes the artifact portable rather than personal.</em>
 </div>
 
 ## Params, metrics, tags, artifacts: choosing correctly
@@ -252,24 +252,24 @@ mlflow.log_dict(config, "config.yaml")
 
 | Kind | Mutable | Type | Use for |
 |---|---|---|---|
-| **Param** | No — logging twice with a different value errors | String | Configuration: hyperparameters, feature-set version, seed |
-| **Metric** | Yes — appends a new step | Float | Anything measured: loss, AUC, latency, training minutes |
-| **Tag** | Yes — overwrites | String | Organisation and search: team, purpose, ticket, dataset |
+| **Param** | No: logging twice with a different value errors | String | Configuration: hyperparameters, feature-set version, seed |
+| **Metric** | Yes: appends a new step | Float | Anything measured: loss, AUC, latency, training minutes |
+| **Tag** | Yes: overwrites | String | Organisation and search: team, purpose, ticket, dataset |
 | **Artifact** | Append-only | File | Plots, reports, predictions, the model itself |
 
 Two rules resolve nearly every "which one?" question. **If it is a number you might plot, it is a metric.** **If it is something you might change your mind about after the run, it is a tag.**
 
 <div class="callout warn">
   <span class="ct">Params are immutable, and that bites in loops</span>
-  Calling <code>log_param("lr", x)</code> twice with different values raises. It is deliberate — a run has one configuration — but it surprises people who log parameters inside a training loop or a retry. Log parameters once, at the top of the run, and use metrics for anything that varies during it.
+  Calling <code>log_param("lr", x)</code> twice with different values raises. It is deliberate, a run has one configuration, but it surprises people who log parameters inside a training loop or a retry. Log parameters once, at the top of the run, and use metrics for anything that varies during it.
 </div>
 
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
     <li>Log the same parameter twice with different values and read the error.</li>
-    <li>Log a metric with <code>step=0..9</code> in a loop and look at the Metrics tab — note that you get a chart, not a number.</li>
-    <li>Set a tag, then set the same tag to a different value, and confirm it simply overwrites.</li>
+    <li>Log a metric with <code>step=0..9</code> in a loop and look at the Metrics tab, and note that you get a chart, not a number.</li>
+    <li>Set a tag, then set the same tag to a different value, and confirm it overwrites.</li>
     <li>Log a matplotlib figure with <code>log_figure</code> and confirm it appears under Artifacts without you writing a file.</li>
   </ol>
   <em>the immutability difference in steps one and three is the whole model: params describe the run, tags describe how you think about the run, and only one of those is allowed to change afterwards.</em>
@@ -293,7 +293,7 @@ mlflow.lightgbm.autolog()
 mlflow.transformers.autolog()
 ```
 
-With `sklearn.autolog()` active, calling `.fit()` logs the estimator's parameters, training metrics, the fitted model with a signature, and — for search objects like `GridSearchCV` — child runs for every candidate configuration:
+With `sklearn.autolog()` active, calling `.fit()` logs the estimator's parameters, training metrics, the fitted model with a signature, and, for search objects like `GridSearchCV`, child runs for every candidate configuration:
 
 ```python
 import mlflow
@@ -336,7 +336,7 @@ with mlflow.start_run(run_name="rf + business metric"):
 
 <div class="callout tip">
   <span class="ct">Call autolog before you create the estimator</span>
-  Autologging patches the framework, so it has to be active before the training call — and for some frameworks before the object is constructed. Putting <code>mlflow.autolog()</code> at the top of the entry point, next to the imports, removes an entire class of "why did nothing get logged".
+  Autologging patches the framework, so it has to be active before the training call, and for some frameworks before the object is constructed. Putting <code>mlflow.autolog()</code> at the top of the entry point, next to the imports, removes an entire class of "why did nothing get logged".
 </div>
 
 <div class="guide-try">
@@ -352,7 +352,7 @@ with mlflow.start_run(run_name="rf + business metric"):
 
 ## The MLflow Model format: flavours and signatures
 
-This is the component that makes MLflow more than a logbook, and it is worth understanding properly because everything downstream depends on it.
+This is the component that makes MLflow more than a logbook, and everything downstream depends on understanding it properly.
 
 `log_model` does not save a pickle. It creates a directory:
 
@@ -417,7 +417,7 @@ mlflow.sklearn.log_model(
 | Piece | Why it matters |
 |---|---|
 | `flavors` | How the model can be loaded, and by whom |
-| `signature` | Input/output schema — validated at serving time |
+| `signature` | Input/output schema: validated at serving time |
 | `input_example` | A concrete sample, used for docs and for signature inference |
 | `requirements.txt` | The pinned environment, so serving does not guess |
 | `run_id` | The link back to the run, and therefore to the params and metrics |
@@ -434,14 +434,14 @@ The URI schemes you will use constantly:
 
 <div class="callout warn">
   <span class="ct">Log a signature, or serving will accept anything</span>
-  Without a signature, an endpoint happily takes columns in the wrong order or of the wrong type and returns predictions that are quietly wrong. <code>infer_signature</code> costs one line and converts a class of silent production bugs into a loud 400 at the boundary. Always pass it, or pass <code>input_example</code> so MLflow can infer it.
+  Without a signature, an endpoint takes columns in the wrong order or of the wrong type and returns predictions that are wrong. <code>infer_signature</code> costs one line and converts a class of silent production bugs into a loud 400 at the boundary. Always pass it, or pass <code>input_example</code> so MLflow can infer it.
 </div>
 
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
     <li>Log a model, then open its <code>MLmodel</code> file and identify every flavour it declares.</li>
-    <li>Load it twice — once with <code>mlflow.sklearn.load_model</code>, once with <code>mlflow.pyfunc.load_model</code> — and note what each object can do.</li>
+    <li>Load it twice (once with <code>mlflow.sklearn.load_model</code>, once with <code>mlflow.pyfunc.load_model</code>) and note what each object can do.</li>
     <li>Log one model with a signature and one without, then feed both a DataFrame with the columns in the wrong order.</li>
     <li>Open the <code>requirements.txt</code> inside the model directory and compare it against your environment.</li>
   </ol>
@@ -460,9 +460,9 @@ In the experiment table:
 | Sort by a metric | Click the column header |
 | Filter | The search box, using the run-filter syntax |
 | Compare | Tick two or more runs → **Compare** |
-| Chart across runs | The Chart view — parallel coordinates, scatter, or bar |
+| Chart across runs | The Chart view: parallel coordinates, scatter, or bar |
 
-The search syntax is worth learning because it is the same language the Python API uses:
+Learn the search syntax, because the Python API uses the same language:
 
 ```text
 metrics.auc > 0.9
@@ -472,7 +472,7 @@ attributes.status = 'FINISHED'
 metrics.rmse < 1.5 and params.model_type != 'linear'
 ```
 
-And in code, which is how you build a report or a promotion gate:
+In code, which is how you build a report or a promotion gate:
 
 ```python
 import mlflow
@@ -525,7 +525,7 @@ print("best run:", best.run_id, best["metrics.auc"])
     <li>Select all four and open the Compare view, then the Chart view's parallel coordinates.</li>
     <li>Reproduce the ranking in Python with <code>mlflow.search_runs</code> and a <code>filter_string</code>.</li>
   </ol>
-  <em>parallel coordinates in step three is the underused one: with four runs it looks decorative, and with forty it tells you immediately which parameter actually matters. Step four matters because that same query is what a CI promotion check runs.</em>
+  <em>parallel coordinates in step three is the underused one: with four runs it looks decorative, and with forty it tells you immediately which parameter matters. Step four matters because that same query is what a CI promotion check runs.</em>
 </div>
 
 ## The Model Registry: versions and aliases
@@ -552,7 +552,7 @@ client.create_model_version(
 )
 ```
 
-Each registration creates a **numbered version** — version 1, 2, 3 — which is immutable in content and permanently linked back to the run that produced it.
+Each registration creates a **numbered version** (version 1, 2, 3) which is immutable in content and permanently linked back to the run that produced it.
 
 Then you point at a version by **alias** rather than by number, which is the part that makes deployment sane:
 
@@ -577,14 +577,14 @@ model = mlflow.pyfunc.load_model("models:/churn-classifier@champion")
 
 | Concept | Meaning |
 |---|---|
-| Registered model | The name — one per problem, e.g. `churn-classifier` |
+| Registered model | The name: one per problem, e.g. `churn-classifier` |
 | Version | An immutable numbered entry, linked to the producing run |
 | Alias | A moveable pointer: `champion`, `challenger`, `shadow` |
 | Tags | Metadata on the model or a version, searchable |
-| Description | Free text — what it is, who owns it, known limitations |
+| Description | Free text: what it is, who owns it, known limitations |
 
 <div class="callout warn">
-  <span class="ct">Stages are deprecated — use aliases</span>
+  <span class="ct">Stages are deprecated: use aliases</span>
   Older MLflow used fixed stages: <code>None</code>, <code>Staging</code>, <code>Production</code>, <code>Archived</code>, moved with <code>transition_model_version_stage</code>. You will see them in older code and tutorials, and they still appear in some UIs. Aliases replaced them because they are arbitrary, multiple, and not tied to a fixed vocabulary. Write new code against aliases; recognise stages when you read old code.
 </div>
 
@@ -593,10 +593,10 @@ model = mlflow.pyfunc.load_model("models:/churn-classifier@champion")
   <ol>
     <li>Register two models from two different runs and confirm you get versions 1 and 2.</li>
     <li>Set the <code>champion</code> alias to version 1, then load <code>models:/name@champion</code> and print a prediction.</li>
-    <li>Move the alias to version 2 and rerun the exact same loading code. Note that nothing in your code changed.</li>
+    <li>Move the alias to version 2 and rerun the exact same loading code. Nothing in your code changed.</li>
     <li>From a registered version in the UI, click through to the run that produced it and find its parameters.</li>
   </ol>
-  <em>step three is the entire point of a registry: a deployment changed without a code change, a redeploy, or a file path. Step four is the audit path — weights to run to parameters to commit — and it should take you seconds.</em>
+  <em>step three is the entire point of a registry: a deployment changed without a code change, a redeploy, or a file path. Step four is the audit path, weights to run to parameters to commit, and it should take you seconds.</em>
 </div>
 
 ## Loading and serving: batch, REST, container
@@ -629,9 +629,9 @@ curl -X POST http://127.0.0.1:5001/invocations \
 
 | Payload format | Shape |
 |---|---|
-| `dataframe_split` | `{"columns": [...], "data": [[...]]}` — the usual choice for tabular |
-| `dataframe_records` | `[{"col": value, ...}]` — row dicts |
-| `instances` | `[[...], [...]]` — tensor-style input |
+| `dataframe_split` | `{"columns": [...], "data": [[...]]}`: the usual choice for tabular |
+| `dataframe_records` | `[{"col": value, ...}]`: row dicts |
+| `instances` | `[[...], [...]]`: tensor-style input |
 | `inputs` | A named-tensor dict, for deep learning models |
 
 **As a container**, which is what you hand to a platform team:
@@ -651,12 +651,12 @@ The `--env-manager` flag decides how the serving environment is built, and it is
 
 <div class="callout warn">
   <span class="ct">A local MLflow endpoint has no authentication</span>
-  <code>mlflow models serve</code> starts an unauthenticated HTTP server that will run predictions for anyone who can reach it. Bind it to <code>127.0.0.1</code> for local work, and never expose it directly — put it behind an ingress or gateway that terminates TLS and enforces auth. Mid and Senior levels cover the production shape properly.
+  <code>mlflow models serve</code> starts an unauthenticated HTTP server that will run predictions for anyone who can reach it. Bind it to <code>127.0.0.1</code> for local work, and never expose it directly. Put it behind an ingress or gateway that terminates TLS and enforces auth. Mid and Senior levels cover the production shape properly.
 </div>
 
 <div class="callout tip">
   <span class="ct">Mismatched dependencies are the top serving failure</span>
-  A model pickled with scikit-learn 1.5 and loaded under 1.2 may fail loudly or, worse, load and behave differently. That is precisely what the logged <code>requirements.txt</code> is for — so let the default <code>virtualenv</code> manager use it in anything that matters, and reserve <code>--env-manager local</code> for quick local checks.
+  A model pickled with scikit-learn 1.5 and loaded under 1.2 may fail loudly or, worse, load and behave differently. That is what the logged <code>requirements.txt</code> is for, so let the default <code>virtualenv</code> manager use it in anything that matters, and reserve <code>--env-manager local</code> for quick local checks.
 </div>
 
 <div class="guide-try">
@@ -667,12 +667,12 @@ The `--env-manager` flag decides how the serving environment is built, and it is
     <li>Serve with <code>--env-manager virtualenv</code> and watch it build the environment from the logged requirements.</li>
     <li>Write the batch scoring script and run it against the same alias.</li>
   </ol>
-  <em>step two is why signatures exist — a clear 400 instead of a silently wrong prediction. Step three shows you where model portability actually comes from: the environment travels with the artifact, not with your laptop.</em>
+  <em>step two is why signatures exist: a clear 400 instead of a wrong prediction that arrives with no warning. Step three shows you where model portability comes from: the environment travels with the artifact, not with your laptop.</em>
 </div>
 
 ## Evaluating with `mlflow.evaluate`
 
-Logging your own metrics is fine. For standard tasks there is a built-in evaluator that produces a consistent, comparable set — plus plots and an explainability summary — from one call.
+Logging your own metrics is fine. For standard tasks there is a built-in evaluator that produces a consistent, comparable set, plus plots and an explainability summary, from one call.
 
 ```python
 import mlflow
@@ -722,7 +722,7 @@ result = mlflow.evaluate(
 
 <div class="callout tip">
   <span class="ct">One evaluator means every run is comparable</span>
-  Hand-rolled metrics drift: one run computes AUC on probabilities, another on labels, a third excludes a class. <code>mlflow.evaluate</code> computes the same set the same way for every run, which is what makes a leaderboard trustworthy rather than merely tidy.
+  Hand-rolled metrics drift: one run computes AUC on probabilities, another on labels, a third excludes a class. <code>mlflow.evaluate</code> computes the same set the same way for every run, which is what makes a leaderboard trustworthy rather than tidy.
 </div>
 
 <div class="guide-try">
@@ -733,12 +733,12 @@ result = mlflow.evaluate(
     <li>Add a custom cost metric with <code>make_metric</code> and sort your experiment table by it.</li>
     <li>Run it on a regressor and note that the metric and plot set changes automatically.</li>
   </ol>
-  <em>the custom cost metric in step three is the one that changes conversations: sorting by expected loss in dollars rather than by AUC very often reorders your leaderboard, and that reordering is the actual result.</em>
+  <em>the custom cost metric in step three is the one that changes conversations: sorting by expected loss in dollars rather than by AUC often reorders your leaderboard, and that reordering is the actual result.</em>
 </div>
 
 ## Reproducibility: what a run records, and what it does not
 
-A tracked run is not automatically a reproducible one. Here is what MLflow captures for you and what it does not.
+A tracked run is not automatically a reproducible one. MLflow captures some of what you need and leaves the rest to you.
 
 | Recorded automatically | Tag or field |
 |---|---|
@@ -746,14 +746,14 @@ A tracked run is not automatically a reproducible one. Here is what MLflow captu
 | Git commit, if run inside a repository | `mlflow.source.git.commit` |
 | Whether the tree was dirty | `mlflow.source.git.repoURL`, plus a dirty warning |
 | User | `mlflow.user` |
-| Run type | `mlflow.source.type` — `LOCAL`, `PROJECT`, `JOB`, `NOTEBOOK` |
+| Run type | `mlflow.source.type`: `LOCAL`, `PROJECT`, `JOB`, `NOTEBOOK` |
 | Model dependencies | `requirements.txt` inside the model directory |
 
 | Not recorded unless you do it | How |
 |---|---|
 | The data you trained on | `mlflow.log_input` with a dataset, or a tag naming a version |
-| Random seeds | Log them as parameters and actually set them |
-| Uncommitted code | MLflow records the commit, **not a diff** — commit before real runs |
+| Random seeds | Log them as parameters and set them |
+| Uncommitted code | MLflow records the commit, **not a diff**: commit before real runs |
 | System packages, CUDA | Use a container; the pip list is not the whole environment |
 | Feature definitions | Log the feature-set version as a param or tag |
 
@@ -779,7 +779,7 @@ with mlflow.start_run():
   <span class="ct">Try it</span>
   <ol>
     <li>Run a script inside a git repository and find <code>mlflow.source.git.commit</code> in the run's tags.</li>
-    <li>Make an uncommitted edit, rerun, and confirm the commit tag is unchanged — the edit is invisible.</li>
+    <li>Make an uncommitted edit, rerun, and confirm the commit tag is unchanged, because the edit is invisible.</li>
     <li>Add <code>mlflow.log_input</code> with a dataset and find it in the run's Datasets section.</li>
     <li>Log your seed as a parameter, then try to reproduce a run exactly from what MLflow recorded. Note what was missing.</li>
   </ol>
@@ -788,7 +788,7 @@ with mlflow.start_run():
 
 ## MLflow Projects: a run as one command
 
-A Project is a directory with a declared entry point and environment, so a run becomes a command anyone can execute — including MLflow itself, straight from a git URL.
+A Project is a directory with a declared entry point and environment, so a run becomes a command anyone can execute, including MLflow itself, straight from a git URL.
 
 ```yaml MLproject
 name: churn
@@ -839,7 +839,7 @@ mlflow run . --env-manager local
 | `name` | Shows up on the run |
 | `python_env` / `conda_env` / `docker_env` | How the environment is built |
 | `entry_points` | Named commands; `main` is the default |
-| `parameters` | Typed, with defaults — overridable with `-P` |
+| `parameters` | Typed, with defaults: overridable with `-P` |
 | `command` | The shell command, with `{param}` substitution |
 
 A run launched this way gets `mlflow.source.type = PROJECT` and records the entry point and its parameters, so the run itself tells you the command that produced it.
@@ -852,7 +852,7 @@ A run launched this way gets `mlflow.source.type = PROJECT` and records the entr
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
-    <li>Add an <code>MLproject</code> and <code>python_env.yaml</code> to your project and run it with <code>mlflow run . -P max_depth=8</code>.</li>
+    <li>Add an <code>MLproject</code> and <code>python_env.yaml</code> to your project and run it with <code>mlflow run. -P max_depth=8</code>.</li>
     <li>Watch it build an isolated environment, then check the run's source type in the UI.</li>
     <li>Push the repo and run it from the git URL at a pinned commit.</li>
     <li>Add a second entry point and invoke it with <code>-e</code>.</li>
@@ -868,7 +868,7 @@ Debugging MLflow has an order, and following it beats guessing.
   <li><b>Check the run's status and whether it exists at all</b>A run stuck in <code>RUNNING</code> means the process died without closing it. No run at all means the tracking URI was wrong and you wrote to a local <code>mlruns/</code> somewhere.</li>
   <li><b>Confirm the tracking URI and experiment</b><code>mlflow.get_tracking_uri()</code> and <code>mlflow.get_experiment_by_name(...)</code>. Runs landing in the wrong place is the most common "MLflow is broken".</li>
   <li><b>Read the run's tags</b>Source file, git commit, and user. A surprising commit explains a lot.</li>
-  <li><b>Read the params, not your code</b>Especially with autolog, the recorded parameters are what actually ran.</li>
+  <li><b>Read the params, not your code</b>Especially with autolog, the recorded parameters are what ran.</li>
   <li><b>Open the model's <code>MLmodel</code> and <code>requirements.txt</code></b>Serving and loading failures are nearly always environment mismatches, and this is where the truth is.</li>
   <li><b>Reload the model in a clean environment</b><code>mlflow models predict -m ... --env-manager virtualenv</code> reproduces the serving path without standing up a server.</li>
 </ol>
@@ -901,19 +901,19 @@ client.set_terminated(run.info.run_id, status="FAILED")   # close a stuck run
 ```
 
 <div class="guide-try">
-  <span class="ct">Try it — cause each failure on purpose</span>
+  <span class="ct">Try it: cause each failure on purpose</span>
   <ol>
     <li>Unset your tracking URI, run a script, and find the local <code>mlruns/</code> it created instead.</li>
     <li>Point at a file-based store and call <code>register_model</code>. Read the error.</li>
     <li>Kill a script mid-run and find the stuck <code>RUNNING</code> run, then close it with <code>set_terminated</code>.</li>
     <li>For each one, diagnose it from the client API rather than from memory of what you broke.</li>
   </ol>
-  <em>the first one is by far the most common real-world confusion — two people "using MLflow" while writing to two different local folders. Recognising it from a missing experiment saves hours.</em>
+  <em>the first one is by far the most common real-world confusion: two people "using MLflow" while writing to two different local folders. Recognising it from a missing experiment saves hours.</em>
 </div>
 
 ## Putting it all together
 
-Everything above in one project. Nothing here is new — read it as a whole and you should be able to justify every line.
+Everything above in one project. Nothing here is new. Read it as a whole and you should be able to justify every line.
 
 ```text project layout
 .
@@ -1043,20 +1043,20 @@ Ten decisions in there are the whole lesson of this page:
 | An `MLproject` entry point, so a run is one command | MLflow Projects |
 
 <div class="guide-try">
-  <span class="ct">Try it — the one that matters</span>
+  <span class="ct">Try it: the one that matters</span>
   <ol>
-    <li>Take this structure into a project you actually work on, adapting the training body to your own code.</li>
+    <li>Take this structure into a project you work on, adapting the training body to your own code.</li>
     <li>Get one run green with autolog, a custom metric, a signature, a registered model, and an evaluation.</li>
     <li>Run it twice with different parameters and pick a winner from the experiment table.</li>
     <li>Promote the winner by moving the <code>champion</code> alias, then serve <code>models:/name@champion</code> locally and call it with <code>curl</code>.</li>
     <li>Move the alias to the other version and call the endpoint again without changing a line of code.</li>
   </ol>
-  <em>step five is the acceptance test: a deployment that changed by moving a pointer. If anything in your loop required editing a path or a version number, that is the spot to fix — it is exactly where production drift comes from.</em>
+  <em>step five is the acceptance test: a deployment that changed by moving a pointer. If anything in your loop required editing a path or a version number, that is the spot to fix. It is exactly where production drift comes from.</em>
 </div>
 
 ## What you can now do, and what comes next
 
-You can track runs with parameters, metrics, tags, and artifacts; autolog whole frameworks in one line; log models in a portable format with a signature and an environment; compare dozens of runs in the UI and in Python; register versions and move aliases so deployment is a pointer change; evaluate models consistently with built-in and custom metrics; serve a model locally, in a batch job, or as a container; declare a Project so a run is one reproducible command; and debug a failed run in a fixed order. That is a working practitioner's toolkit — enough to own the experiment-tracking and model-delivery story on a real project.
+You can track runs with parameters, metrics, tags, and artifacts; autolog whole frameworks in one line; log models in a portable format with a signature and an environment; compare dozens of runs in the UI and in Python; register versions and move aliases so deployment is a pointer change; evaluate models consistently with built-in and custom metrics; serve a model locally, in a batch job, or as a container; declare a Project so a run is one reproducible command; and debug a failed run in a fixed order. That is a working practitioner's toolkit, enough to own the experiment-tracking and model-delivery story on a real project.
 
 | Can you… | |
 |---|---|
@@ -1064,16 +1064,16 @@ You can track runs with parameters, metrics, tags, and artifacts; autolog whole 
 | Give the two stores and what each holds? | Backend for metadata, artifact store for files |
 | Say why the registry needs a database? | The file store cannot back it |
 | Explain param vs metric vs tag? | Immutable config, movable number, mutable label |
-| Say what `log_model` actually writes? | A directory with `MLmodel`, flavours, signature, requirements |
+| Say what `log_model` writes? | A directory with `MLmodel`, flavours, signature, requirements |
 | Explain a flavour, and what pyfunc buys? | A loader; pyfunc is the framework-agnostic one |
 | Say why a signature matters? | Wrong-shaped input fails loudly instead of silently |
 | Name the model URI schemes? | `runs:/`, `models:/name/1`, `models:/name@alias` |
 | Say why aliases replaced stages? | Arbitrary, multiple, not a fixed vocabulary |
 | Explain what MLflow does *not* record? | Uncommitted diffs, data unless you log it, system packages |
 | Say what `mlflow.evaluate` gives you? | One consistent metric and plot set per task type |
-| Name the first check when runs are missing? | The tracking URI — you probably wrote to local `mlruns/` |
+| Name the first check when runs are missing? | The tracking URI. You probably wrote to local `mlruns/` |
 
-**Mid-level takes every one of those topics further** — nested runs and sweep structure, `pyfunc` custom models and wrappers, model dependencies and environment management in depth, dataset tracking and lineage, the registry as a promotion workflow with webhooks and CI, `mlflow.evaluate` with custom metrics and validation thresholds, MLflow Tracing and LLM evaluation, deployment targets and the deployments API, autologging internals, the client API and bulk operations, and the CI patterns that make a training run a pull-request check.
+**Mid-level takes every one of those topics further:** nested runs and sweep structure, `pyfunc` custom models and wrappers, model dependencies and environment management in depth, dataset tracking and lineage, the registry as a promotion workflow with webhooks and CI, `mlflow.evaluate` with custom metrics and validation thresholds, MLflow Tracing and LLM evaluation, deployment targets and the deployments API, autologging internals, the client API and bulk operations, and the CI patterns that make a training run a pull-request check.
 
 **Senior then covers what you own when MLflow is your team's platform**: the self-hosted deployment and its stores, authentication and multi-tenancy, artifact-store access control and credential handling, backend database scaling and what breaks first, backup and upgrade procedure, cost and retention policy for artifacts, lineage and audit for regulated work, promotion gates and approval trails, incident playbooks, and where MLflow stops and a feature store, an orchestrator, or a dedicated serving platform begins.
 

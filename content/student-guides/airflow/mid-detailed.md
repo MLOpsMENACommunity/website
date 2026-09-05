@@ -1,4 +1,4 @@
-This is part two of three. It picks up exactly where Beginner ended and takes **every topic from there further**, then adds the machinery you have not met yet. Nothing is dropped and nothing is repeated for its own sake — where you already know the basics, we go straight to the depth.
+This is part two of three. It picks up exactly where Beginner ended and takes **every topic from there further**, then adds the machinery you have not met yet. Nothing is dropped and nothing is repeated for its own sake. Where you already know the basics, we go straight to the depth.
 
 ## Where this picks up
 
@@ -12,11 +12,11 @@ This is part two of three. It picks up exactly where Beginner ended and takes **
 | XCom | Custom backends, size limits, and passing data through object storage |
 | Connections and Variables | `Params`, `dag_run.conf`, and configuration precedence |
 | Templating | `template_fields`, custom macros, `user_defined_macros`, and rendering pitfalls |
-| Sensors | **Deferrable operators** and the triggerer — why sensors are now a fallback |
+| Sensors | **Deferrable operators** and the triggerer: why sensors are now a fallback |
 | Branching | Trigger rules in full, `latest_only`, short-circuiting, and setup/teardown |
 | The UI and CLI | Testing DAGs properly, `dag.test()`, and CI that blocks a broken DAG |
 | Top-level code | Parse-time budgets, `.airflowignore`, and measuring the scheduler |
-| — **new** — | Dynamic task mapping · datasets · pools and priority · custom operators · CI |
+| **new** | Dynamic task mapping · datasets · pools and priority · custom operators · CI |
 
 Each section starts with the problem it solves, and ends with a **Try it** you can do on a real Airflow in a few minutes.
 
@@ -32,13 +32,13 @@ Beginner treated the executor as a black box. Choosing it is the single most con
 | `KubernetesExecutor` | One pod per task | Horizontal, on demand | Variable load, per-task isolation |
 | `CeleryKubernetesExecutor` | Both, by queue | Both | Mixed workloads |
 
-The trade-off that actually matters is **startup latency versus isolation**:
+The trade-off that matters is **startup latency versus isolation**:
 
 <div class="guide-compare">
   <div class="guide-compare-col good">
     <h4>Celery</h4>
     <ul>
-      <li>Workers already running — task starts in under a second</li>
+      <li>Workers already running: task starts in under a second</li>
       <li>Efficient for thousands of short tasks</li>
       <li>Queues let you route work to specific worker pools</li>
       <li>But: shared environment, and a dependency conflict affects everyone</li>
@@ -49,7 +49,7 @@ The trade-off that actually matters is **startup latency versus isolation**:
     <h4>Kubernetes</h4>
     <ul>
       <li>Per-task pod: full isolation, per-task image and resources</li>
-      <li>Scales to zero — you pay for what runs</li>
+      <li>Scales to zero. You pay for what runs</li>
       <li>A task needing 64 GB gets 64 GB without resizing a worker</li>
       <li>But: pod startup is 10–30 seconds, every task</li>
       <li>But: a thousand tiny tasks means a thousand pod launches</li>
@@ -78,7 +78,7 @@ The three limits interact and people get caught by the tightest one:
 | `worker_concurrency` | One worker | Queue depth grows; workers are not saturated |
 | Pool slots | A named group | Only tasks in that pool queue up |
 
-The **triggerer** is the sixth component, and it exists for deferrable operators. It runs an asyncio event loop that can hold tens of thousands of waiting tasks in one process — which is the point of the next section but one.
+The **triggerer** is the sixth component, and it exists for deferrable operators. It runs an asyncio event loop that can hold tens of thousands of waiting tasks in one process, which is the point of the next section but one.
 
 <div class="guide-try">
   <span class="ct">Try it</span>
@@ -114,7 +114,7 @@ counts = process.expand(key=list_files())     # N parallel task instances
 summarise(counts)
 ```
 
-`.expand()` creates one **mapped task instance** per element, at run time, and the UI groups them under a single task with an index. `summarise` receives the list of all results — that collection is automatic.
+`.expand()` creates one **mapped task instance** per element, at run time, and the UI groups them under a single task with an index. `summarise` receives the list of all results. That collection is automatic.
 
 Three forms cover almost everything:
 
@@ -143,7 +143,7 @@ BashOperator.partial(task_id="process").expand(
 )
 ```
 
-And the limits are real, so know them:
+The limits are real, so know them:
 
 ```ini airflow.cfg
 [core]
@@ -152,7 +152,7 @@ max_map_length = 1024            # the cap on mapped instances per task
 
 <div class="callout tip">
   <span class="ct">Mapping is not a substitute for a batch job</span>
-  Ten thousand mapped tasks means ten thousand scheduler decisions, ten thousand database rows, and — on Kubernetes — ten thousand pod launches. If the per-item work is small, one task processing a batch is dramatically cheaper. Map when each item is <b>substantial and independently retryable</b>; batch when it is not.
+  Ten thousand mapped tasks means ten thousand scheduler decisions, ten thousand database rows, and, on Kubernetes, ten thousand pod launches. If the per-item work is small, one task processing a batch is cheaper. Map when each item is <b>substantial and independently retryable</b>; batch when it is not.
 </div>
 
 <div class="guide-try">
@@ -170,7 +170,7 @@ max_map_length = 1024            # the cap on mapped instances per task
 
 Beginner used sensors and learned that `poke` mode wastes worker slots. Deferrable operators remove the problem entirely.
 
-A deferrable operator starts, discovers it must wait, and **defers**: it releases its worker slot completely, handing a lightweight `Trigger` to the triggerer process. The triggerer runs thousands of these in one asyncio loop. When the condition is met, the task is rescheduled onto a worker to finish.
+A deferrable operator starts, discovers it must wait, and **defers**: it releases its worker slot, handing a lightweight `Trigger` to the triggerer process. The triggerer runs thousands of these in one asyncio loop. When the condition is met, the task is rescheduled onto a worker to finish.
 
 <div class="flow">
   <div class="node">TASK STARTS<small>on a worker</small></div>
@@ -202,7 +202,7 @@ wait = S3KeySensor(
 | Sensor, `reschedule` mode | Zero between checks, one per check | Hundreds |
 | **Deferrable, `deferrable=True`** | Zero | Tens of thousands |
 
-Many operators are deferrable, not just sensors — `deferrable=True` on a Spark submit, a BigQuery job, or an EMR step means Airflow does not hold a worker while an external system works.
+Many operators are deferrable, not just sensors. `deferrable=True` on a Spark submit, a BigQuery job, or an EMR step means Airflow does not hold a worker while an external system works.
 
 Writing your own is a class and a trigger:
 
@@ -240,7 +240,7 @@ class WaitForTable(BaseOperator):
 
 <div class="callout warn">
   <span class="ct">Deferrable operators need a running triggerer</span>
-  If no triggerer process exists, deferred tasks sit forever in <code>deferred</code> state and nothing tells you loudly. Confirm it is running before adopting them, and treat it as a required component rather than an optional extra. Also note that trigger code must be <b>async</b> — a blocking call inside a trigger stalls every other deferred task in that process.
+  If no triggerer process exists, deferred tasks sit forever in <code>deferred</code> state and nothing tells you loudly. Confirm it is running before adopting them, and treat it as a required component rather than an optional extra. Also note that trigger code must be <b>async</b>: a blocking call inside a trigger stalls every other deferred task in that process.
 </div>
 
 <div class="guide-try">
@@ -256,7 +256,7 @@ class WaitForTable(BaseOperator):
 
 ## Datasets and data-aware scheduling
 
-Beginner scheduled on time. Sometimes the correct trigger is not "it is 2am" but "the upstream table was updated" — and chaining DAGs with `ExternalTaskSensor` is fragile because it couples two schedules.
+Beginner scheduled on time. Sometimes the correct trigger is not "it is 2am" but "the upstream table was updated", and chaining DAGs with `ExternalTaskSensor` is fragile because it couples two schedules.
 
 ```python
 from airflow.datasets import Dataset
@@ -286,7 +286,7 @@ def train_model():
     ...
 ```
 
-The consumer runs when every dataset in its `schedule` list has been updated since its last run. No sensor, no polling, no shared schedule assumption — and the **Datasets** view in the UI draws the resulting cross-DAG graph.
+The consumer runs when every dataset in its `schedule` list has been updated since its last run. No sensor, no polling, no shared schedule assumption, and the **Datasets** view in the UI draws the resulting cross-DAG graph.
 
 | Approach | Coupling | Cost |
 |---|---|---|
@@ -296,7 +296,7 @@ The consumer runs when every dataset in its `schedule` list has been updated sin
 
 <div class="callout tip">
   <span class="ct">The dataset URI is just a string</span>
-  Airflow does not check the resource exists or was really written — the URI is an identifier the two DAGs agree on. That makes it flexible and means you should establish a naming convention early: <code>scheme://system/schema.table</code> is a reasonable one. Inconsistent URIs mean two DAGs that <em>look</em> connected in the code and are not connected at all.
+  Airflow does not check the resource exists or was written. The URI is an identifier the two DAGs agree on. That makes it flexible and means you should establish a naming convention early: <code>scheme://system/schema.table</code> is a reasonable one. Inconsistent URIs mean two DAGs that <em>look</em> connected in the code and are not connected at all.
 </div>
 
 You can also combine time and data conditions, and express logic across them:
@@ -347,7 +347,7 @@ with DAG(...) as dag:
     start >> extract >> validate
 ```
 
-TaskGroups are purely organisational — they create no runtime overhead. The `task_id` becomes `extract.orders`, which matters when you target a task from the CLI. The decorator form is neater in TaskFlow:
+TaskGroups are organisational. They create no runtime overhead. The `task_id` becomes `extract.orders`, which matters when you target a task from the CLI. The decorator form is neater in TaskFlow:
 
 ```python
 from airflow.decorators import task_group
@@ -361,7 +361,7 @@ def quality_checks(table: str):
     check_nulls(table) >> check_freshness(table)
 ```
 
-And a **DAG factory** generates similar DAGs from configuration — a common need when twenty tables follow the same pattern:
+A **DAG factory** generates similar DAGs from configuration, a common need when twenty tables follow the same pattern:
 
 ```python dags/table_pipelines.py
 import yaml
@@ -392,7 +392,7 @@ for name, cfg in yaml.safe_load(CONFIG.read_text()).items():
 
 <div class="callout warn">
   <span class="ct">A factory must read config from a file, not from a database or an API</span>
-  This code runs on <b>every parse</b>. A local YAML read is microseconds and fine. A database query or an HTTP call to build the DAG list means every parse cycle depends on that system being up and fast — and when it is slow, your entire scheduler is slow. If the config genuinely lives in a database, sync it to a file on a schedule and let the factory read the file.
+  This code runs on <b>every parse</b>. A local YAML read is microseconds and fine. A database query or an HTTP call to build the DAG list means every parse cycle depends on that system being up and fast, and when it is slow, your entire scheduler is slow. If the config lives in a database, sync it to a file on a schedule and let the factory read the file.
 </div>
 
 <div class="guide-try">
@@ -410,7 +410,7 @@ for name, cfg in yaml.safe_load(CONFIG.read_text()).items():
 
 Beginner set `max_active_runs`. That protects one DAG. **Pools** protect a shared resource across every DAG.
 
-The classic problem: a legacy database accepts five concurrent connections. Ten DAGs each with a task hitting it will happily open forty and take it down.
+The classic problem: a legacy database accepts five concurrent connections. Ten DAGs each with a task hitting it will open forty and take it down.
 
 ```bash
 airflow pools set legacy_db 5 "Legacy Oracle: max 5 concurrent connections"
@@ -439,11 +439,11 @@ SQLExecuteQueryOperator(
 | `priority_weight` | One task | Which queued task goes first |
 | `queue` | Celery routing | Sends work to specific workers |
 
-`priority_weight` has a detail worth knowing: by default it is `downstream`, meaning a task's effective weight includes its downstream tasks — so a task blocking a long chain naturally outranks a leaf. You can set `weight_rule="absolute"` to use the number literally.
+`priority_weight` has a detail worth knowing: by default it is `downstream`, meaning a task's effective weight includes its downstream tasks, so a task blocking a long chain naturally outranks a leaf. You can set `weight_rule="absolute"` to use the number literally.
 
 <div class="callout tip">
   <span class="ct">A pool is a promise to an external system</span>
-  The number in a pool should come from the thing you are protecting: the connection limit, the API rate limit, the number of GPUs. Setting pool sizes by guessing means either an unprotected system or wasted capacity. Write the reason in the pool's description field — the next person will need it.
+  The number in a pool should come from the thing you are protecting: the connection limit, the API rate limit, the number of GPUs. Setting pool sizes by guessing means either an unprotected system or wasted capacity. Write the reason in the pool's description field. The next person will need it.
 </div>
 
 <div class="guide-try">
@@ -500,11 +500,11 @@ default_args = {
 | `on_skipped_callback` | It was skipped |
 | `sla_miss_callback` | A task exceeded its `sla` window |
 
-An **SLA** in Airflow means "this task should complete within X of the DAG run's start". It does not stop or fail anything — it records a miss and fires the callback. That is a genuine limitation worth knowing: for a hard stop you need `execution_timeout`.
+An **SLA** in Airflow means "this task should complete within X of the DAG run's start". It does not stop or fail anything. It records a miss and fires the callback. That is a genuine limitation worth knowing: for a hard stop you need `execution_timeout`.
 
 <div class="callout warn">
   <span class="ct">Alert on the right thing, or nobody will read your alerts</span>
-  A callback on every task in every DAG produces a channel nobody looks at, which is worse than no alerting. Alert on <b>the DAG run failing</b> and on <b>SLA misses for pipelines with real consumers</b>. Route the noisy rest to a dashboard. And always include the log URL — an alert you cannot act on from your phone is an alert you will act on tomorrow.
+  A callback on every task in every DAG produces a channel nobody looks at, which is worse than no alerting. Alert on <b>the DAG run failing</b> and on <b>SLA misses for pipelines with real consumers</b>. Route the noisy rest to a dashboard. Always include the log URL: an alert you cannot act on from your phone is an alert you will act on tomorrow.
 </div>
 
 The other half of alerting is making failures self-describing:
@@ -531,7 +531,7 @@ That renders in the UI, so whoever is on call at 3am has the runbook in front of
     <li>Add <code>"sla": timedelta(seconds=30)</code> to a task that sleeps for sixty and watch the SLA miss appear under <strong>Browse → SLA Misses</strong>.</li>
     <li>Add a <code>doc_md</code> to the DAG and find it rendered in the UI.</li>
   </ol>
-  <em>a single actionable alert rather than one per retry, a recorded SLA miss that did not stop anything, and a runbook visible in the UI. Step two is the detail people get wrong — callbacks fire on final failure, not on every attempt.</em>
+  <em>a single actionable alert rather than one per retry, a recorded SLA miss that did not stop anything, and a runbook visible in the UI. Step two is the detail people get wrong: callbacks fire on final failure, not on every attempt.</em>
 </div>
 
 ## Custom operators and hooks
@@ -580,7 +580,7 @@ RowCountCheckOperator(
 
 Four details in there are the lesson:
 
-**`template_fields`** is what makes `{{ ds }}` work in your operator's arguments. Forget it and you get the literal string — a very common bug in first custom operators.
+**`template_fields`** is what makes `{{ ds }}` work in your operator's arguments. Forget it and you get the literal string, a common bug in first custom operators.
 
 **`self.log`** is the task logger, so your messages appear in the task's log in the UI rather than in the worker's stdout.
 
@@ -616,7 +616,7 @@ class InternalApiHook(BaseHook):
 
 <div class="callout tip">
   <span class="ct">Write the operator when the pattern appears the third time</span>
-  Two copies of similar task code is fine. The third is the signal: extract an operator, put it in a package the whole team installs, and version it. A shared operator is also where you enforce standards — the row-count check that every table load must pass is far more likely to happen if it is one line rather than forty.
+  Two copies of similar task code is fine. The third is the signal: extract an operator, put it in a package the whole team installs, and version it. A shared operator is also where you enforce standards: the row-count check that every table load must pass is far more likely to happen if it is one line rather than forty.
 </div>
 
 <div class="guide-try">
@@ -624,10 +624,10 @@ class InternalApiHook(BaseHook):
   <ol>
     <li>Write a small custom operator with one templated field and use it in a DAG.</li>
     <li>Check the <strong>Rendered Template</strong> tab and confirm the field resolved.</li>
-    <li>Remove that field from <code>template_fields</code> and rerun — see the literal <code>{{ ds }}</code>.</li>
+    <li>Remove that field from <code>template_fields</code> and rerun to see the literal <code>{{ ds }}</code>.</li>
     <li>Raise <code>AirflowFailException</code> from it and confirm the task fails <em>without</em> using its retries.</li>
   </ol>
-  <em>a working custom operator, then the literal-template bug, then a data failure that correctly refuses to retry. Those three results cover the operator-authoring mistakes people actually make.</em>
+  <em>a working custom operator, then the literal-template bug, then a data failure that correctly refuses to retry. Those three results cover the operator-authoring mistakes people make.</em>
 </div>
 
 ## Params and run configuration
@@ -679,7 +679,7 @@ airflow dags trigger reprocess_range \
 
 <div class="callout tip">
   <span class="ct"><code>params</code> over raw <code>conf</code></span>
-  <code>dag_run.conf</code> is an untyped dict — a typo in a key produces a <code>KeyError</code> halfway through the run, at 3am, in a task nobody is watching. <code>params</code> gives you defaults, types, bounds, and a UI form, and it fails before the run starts. Use <code>conf</code> only for programmatic triggers where the caller is also code you control.
+  <code>dag_run.conf</code> is an untyped dict, so a typo in a key produces a <code>KeyError</code> halfway through the run, at 3am, in a task nobody is watching. <code>params</code> gives you defaults, types, bounds, and a UI form, and it fails before the run starts. Use <code>conf</code> only for programmatic triggers where the caller is also code you control.
 </div>
 
 <div class="guide-try">
@@ -782,7 +782,7 @@ jobs:
     <li>Break a DAG file with a syntax error and confirm the test catches it.</li>
     <li>Run <code>dag.test()</code> on a small DAG and watch it execute in your terminal.</li>
   </ol>
-  <em>a test suite that enforces your own standards, failing on real DAGs you had thought were fine. That metadata test is the cheapest way to make a convention actually stick across a team.</em>
+  <em>a test suite that enforces your own standards, failing on real DAGs you had thought were fine. That metadata test is the cheapest way to make a convention stick across a team.</em>
 </div>
 
 ## Timetables and scheduling beyond cron
@@ -827,14 +827,14 @@ def weekday_report():
     ...
 ```
 
-Before writing one, check the built-ins — they cover more than people expect:
+Before writing one, check the built-ins. They cover more than people expect:
 
 | Timetable | Expresses |
 |---|---|
 | `CronTriggerTimetable` | Cron, but fires **at** the time rather than at interval end |
 | `DeltaDataIntervalTimetable` | A `timedelta`, aligned to the previous run |
 | `DatasetOrTimeSchedule` | Datasets **or** a schedule, whichever comes first |
-| `EventsTimetable` | An explicit list of datetimes — ideal for irregular calendars |
+| `EventsTimetable` | An explicit list of datetimes: ideal for irregular calendars |
 
 `CronTriggerTimetable` deserves a note because it resolves a real confusion: a plain cron schedule fires *after* the interval it covers, while `CronTriggerTimetable("0 6 * * *")` fires at 06:00 and treats that instant as the logical date. If you have ever wanted "run at 6am and call it today's run", that is the one.
 
@@ -857,7 +857,7 @@ from airflow.timetables.trigger import CronTriggerTimetable
     <li>Set a non-UTC timezone and check the <strong>Next Run</strong> column in the UI.</li>
     <li>Write a minimal custom timetable that skips weekends and confirm no Saturday or Sunday runs appear.</li>
   </ol>
-  <em>the same cron string producing different logical dates under the two timetables — which is exactly the confusion <code>CronTriggerTimetable</code> exists to remove. Step one is worth doing even if you never write a custom timetable.</em>
+  <em>the same cron string producing different logical dates under the two timetables, which is exactly the confusion <code>CronTriggerTimetable</code> exists to remove. Step one is worth doing even if you never write a custom timetable.</em>
 </div>
 
 ## XCom backends and passing real data
@@ -908,7 +908,7 @@ Small values stay in the database and remain visible in the UI; large ones move 
 
 <div class="callout warn">
   <span class="ct">A custom backend makes cleanup your problem</span>
-  Airflow's <code>db clean</code> removes XCom <b>rows</b>; it has no idea about the S3 objects those rows point at. Without a lifecycle rule on the bucket you accumulate orphaned objects forever. Set an expiry on the XCom prefix — a few days is usually plenty, since XCom values are only read by the same DAG run.
+  Airflow's <code>db clean</code> removes XCom <b>rows</b>; it has no idea about the S3 objects those rows point at. Without a lifecycle rule on the bucket you accumulate orphaned objects forever. Set an expiry on the XCom prefix. A few days is usually plenty, since XCom values are only read by the same DAG run.
 </div>
 
 The alternative, and often the better one, is explicitness:
@@ -927,7 +927,7 @@ def transform(path: str) -> str:
     ...
 ```
 
-That is more code and it makes the data flow visible in the DAG, which reviewers appreciate. A backend is better when many DAGs would otherwise each reimplement the same pattern.
+The explicit version is more code, and it makes the data flow visible in the DAG, which reviewers appreciate. A backend is better when many DAGs would otherwise each reimplement the same pattern.
 
 <div class="guide-try">
   <span class="ct">Try it</span>
@@ -942,7 +942,7 @@ That is more code and it makes the data flow visible in the DAG, which reviewers
 
 ## Setup, teardown, and resource lifecycles
 
-A DAG that provisions a cluster, uses it, and tears it down has a problem: if the middle task fails, the teardown must still run — and `TriggerRule.ALL_DONE` on a cleanup task is a blunt approximation.
+A DAG that provisions a cluster, uses it, and tears it down has a problem: if the middle task fails, the teardown must still run, and `TriggerRule.ALL_DONE` on a cleanup task is a blunt approximation.
 
 Airflow has first-class **setup and teardown** tasks:
 
@@ -984,15 +984,15 @@ with create_cluster() as cluster:          # setup/teardown context
 |---|---|---|
 | Runs after failure | Yes | Yes |
 | Its own failure fails the run | Yes | **No** by default |
-| Excluded from a clear of the main tasks | No | Yes — teardown reruns as needed |
+| Excluded from a clear of the main tasks | No | Yes: teardown reruns as needed |
 | Reflects intent in the UI | No | Yes, drawn distinctly |
 | Skipped when nothing needed it | No | Yes |
 
-The behaviour that matters: a **teardown failure does not fail the DAG run** unless you ask it to. That is usually right — if the job succeeded and only the cluster termination was flaky, the pipeline's output is still valid, and you want an alert rather than a red run that masks a success.
+The behaviour that matters: a **teardown failure does not fail the DAG run** unless you ask it to. That is usually right. If the job succeeded and only the cluster termination was flaky, the pipeline's output is still valid, and you want an alert rather than a red run that masks a success.
 
 <div class="callout tip">
   <span class="ct">Use setup/teardown for anything you pay for by the minute</span>
-  Ephemeral clusters, GPU nodes, database connections, temporary tables, lock files. The pattern's value is that a failure in the middle cannot leave the expensive resource running — which is a cost bug that only shows up on next month's invoice.
+  Ephemeral clusters, GPU nodes, database connections, temporary tables, lock files. The pattern's value is that a failure in the middle cannot leave the expensive resource running, which is a cost bug that only shows up on next month's invoice.
 </div>
 
 <div class="guide-try">
@@ -1008,7 +1008,7 @@ The behaviour that matters: a **teardown failure does not fail the DAG run** unl
 
 ## Putting it all together
 
-Everything from this level in one DAG. Nothing here is new — read it as a whole and you should be able to justify every line.
+Everything from this level in one DAG. Nothing here is new. Read it as a whole and you should be able to justify every line.
 
 ```python dags/events_platform.py
 """
@@ -1149,11 +1149,11 @@ Twelve decisions in there are the whole lesson of this level:
 | No top-level listing, queries, or imports | (Beginner) Top-level code |
 
 <div class="guide-try">
-  <span class="ct">Try it — the one that matters</span>
+  <span class="ct">Try it: the one that matters</span>
   <ol>
     <li>Rebuild a real pipeline of yours against this template and get it green.</li>
     <li>Verify each mechanism actively: confirm the deferred sensor holds no worker slot, confirm the pool caps concurrency, confirm the downstream dataset DAG starts on its own, confirm a mapped instance can be retried alone.</li>
-    <li>Add the integrity test suite and make it pass — including the assertions about retries, tags, and <code>dagrun_timeout</code>.</li>
+    <li>Add the integrity test suite and make it pass, including the assertions about retries, tags, and <code>dagrun_timeout</code>.</li>
     <li>Check the parse duration is under a second, then backfill three days with <code>max_active_runs=1</code>.</li>
   </ol>
   <em>a pipeline that waits without cost, respects a shared resource, triggers its consumer by data, and is retryable at the individual-partition level. Those four properties are what separate a DAG that works from one a platform team is happy to host.</em>
@@ -1167,8 +1167,8 @@ You can choose an executor deliberately, map tasks dynamically at run time, repl
 |---|---|
 | Give the Celery/Kubernetes trade-off in one sentence? | Startup latency versus per-task isolation |
 | Name the three concurrency limits and their scopes? | `parallelism`, `max_active_tasks`, `worker_concurrency` |
-| Say what `expand` with two lists produces? | A cross product — use `expand_kwargs` for pairs |
-| Explain what a deferred task costs in worker slots? | Nothing — the triggerer holds it |
+| Say what `expand` with two lists produces? | A cross product: use `expand_kwargs` for pairs |
+| Explain what a deferred task costs in worker slots? | Nothing: the triggerer holds it |
 | Say what happens if the triggerer is not running? | Deferred tasks hang silently |
 | Explain data-aware scheduling in one sentence? | The consumer runs when its datasets are updated |
 | Say why a DAG factory must not query a database? | It runs on every parse |
@@ -1180,4 +1180,4 @@ You can choose an executor deliberately, map tasks dynamically at run time, repl
 | Explain the difference between cron and `CronTriggerTimetable`? | Fires after the interval versus at the time |
 | Say why teardown failure should not fail the run? | The output is still valid; alert instead |
 
-**Senior takes every one of these further, with a security, scale, or ownership dimension.** Who can see and trigger which DAG, and how multi-tenancy actually works. Secrets backends so credentials never live in the metadata database at all. Scaling the scheduler, the database, and the executor — and knowing which one is your bottleneck. Cost modelling across executors and idle capacity. Upgrade and migration strategy without a maintenance window nobody will grant you. Observability, SLOs, and the metrics that predict an incident. Incident playbooks for a stuck scheduler, a poisoned queue, a bloated metadata database, and a backfill that took down production. Running Airflow as a platform for many teams. And where Airflow stops and a streaming system, a warehouse scheduler, or an in-database tool begins.
+**Senior takes every one of these further, with a security, scale, or ownership dimension.** Who can see and trigger which DAG, and how multi-tenancy works. Secrets backends so credentials never live in the metadata database at all. Scaling the scheduler, the database, and the executor, and knowing which one is your bottleneck. Cost modelling across executors and idle capacity. Upgrade and migration strategy without a maintenance window nobody will grant you. Observability, SLOs, and the metrics that predict an incident. Incident playbooks for a stuck scheduler, a poisoned queue, a bloated metadata database, and a backfill that took down production. Running Airflow as a platform for many teams. Where Airflow stops and a streaming system, a warehouse scheduler, or an in-database tool begins.

@@ -1,6 +1,6 @@
-This is part three of three. It closes the series by taking **every topic from Beginner and Mid one level further** — each one now has a security, scale, or ownership dimension — and adds the work you own when Airflow is your responsibility rather than your tool.
+This is part three of three. It closes the series by taking **every topic from Beginner and Mid one level further** (each one now has a security, scale, or ownership dimension) and adds the work you own when Airflow is your responsibility rather than your tool.
 
-Up to this point the questions have been about making a DAG run correctly. From here they are different: who can see and trigger which pipeline, where the credentials actually live, which component breaks first under load, what the whole thing costs, how you upgrade it without a maintenance window nobody will grant you, and what you do at 3am when the scheduler stops scheduling.
+Up to this point the questions have been about making a DAG run correctly. From here they are different: who can see and trigger which pipeline, where the credentials live, which component breaks first under load, what the whole thing costs, how you upgrade it without a maintenance window nobody will grant you, and what you do at 3am when the scheduler stops scheduling.
 
 ## Where this picks up
 
@@ -8,8 +8,8 @@ Up to this point the questions have been about making a DAG run correctly. From 
 |---|---|
 | The five components | **Which one is your bottleneck**, and the metrics that tell you before users do |
 | Executors | Cost modelling, idle capacity, and multi-executor routing by workload |
-| Connections and Variables | **Secrets backends** — credentials never in the metadata database |
-| The webserver and UI | RBAC, per-DAG access control, and what multi-tenancy really means |
+| Connections and Variables | **Secrets backends**: credentials never in the metadata database |
+| The webserver and UI | RBAC, per-DAG access control, and what multi-tenancy means |
 | Top-level code | Parse-time budgets as an SLO, and DAG-processor isolation |
 | The metadata database | Growth, `db clean`, query hot spots, and connection pooling |
 | Pools and concurrency | Fair sharing across teams, and noisy-neighbour containment |
@@ -19,7 +19,7 @@ Up to this point the questions have been about making a DAG run correctly. From 
 | Custom operators | A shared library as a product, with versioning and a release cadence |
 | Testing and CI | Deployment strategy, DAG rollout, and blocking a bad DAG at the gate |
 | Backfills | Backfills that do not take production down |
-| — **new** — | Upgrades · observability · incident playbooks · platform ownership · where Airflow ends |
+| **new** | Upgrades · observability · incident playbooks · platform ownership · where Airflow ends |
 
 I am starting with the security model, because every other decision in this track depends on it.
 
@@ -37,7 +37,7 @@ Airflow's security surface is larger than people expect, and the reason is a sin
 
 Three properties make this sharper than it first appears:
 
-**Anyone who can write a DAG file has remote code execution on your cluster.** There is no sandbox. A DAG file could read every connection in the metadata database, exfiltrate them, and delete its own logs. DAG-folder write access is therefore equivalent to administrative access, and the control is code review plus a deployment pipeline — not Airflow configuration.
+**Anyone who can write a DAG file has remote code execution on your cluster.** There is no sandbox. A DAG file could read every connection in the metadata database, exfiltrate them, and delete its own logs. DAG-folder write access is therefore equivalent to administrative access, and the control is code review plus a deployment pipeline, not Airflow configuration.
 
 **Logs leak secrets by default.** Airflow masks values it knows are sensitive, based on connection fields and a configured list of key names. A credential you fetched yourself and printed is not masked. This is the most common real-world Airflow security incident, and it is entirely preventable.
 
@@ -47,17 +47,17 @@ hide_sensitive_var_conn_fields = True
 sensitive_var_conn_names = api_token, private_key, client_secret
 ```
 
-**The UI shows more than people assume.** By default an authenticated user can read every DAG's source, every log, and the list of connections. Variables' *values* are masked when the name looks sensitive — which is a heuristic, not a boundary.
+**The UI shows more than people assume.** By default an authenticated user can read every DAG's source, every log, and the list of connections. Variables' *values* are masked when the name looks sensitive, which is a heuristic, not a boundary.
 
 <div class="callout warn">
   <span class="ct">Write access to the DAG folder is administrative access</span>
-  No amount of RBAC configuration limits what a DAG file can do once the scheduler parses it. If contributors must not have cluster-wide privileges, they must not be able to put files in the DAG folder directly — everything goes through a pull request and a deployment pipeline. Treating the DAG folder as a code artifact rather than a shared drive is the single most important security decision in an Airflow deployment.
+  No amount of RBAC configuration limits what a DAG file can do once the scheduler parses it. If contributors must not have cluster-wide privileges, they must not be able to put files in the DAG folder directly. Everything goes through a pull request and a deployment pipeline. Treating the DAG folder as a code artifact rather than a shared drive is the single most important security decision in an Airflow deployment.
 </div>
 
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
-    <li>List everyone who can write to your DAG folder — including anyone with access to the bucket, the volume, or the git branch it syncs from.</li>
+    <li>List everyone who can write to your DAG folder, including anyone with access to the bucket, the volume, or the git branch it syncs from.</li>
     <li>In a test environment, write a DAG that reads a connection and prints its password. Confirm whether the log masks it.</li>
     <li>Now fetch the same secret manually into a variable with a non-obvious name and print it. Check the masking again.</li>
     <li>Log in as a low-privilege user and see how much DAG code and how many connections you can read.</li>
@@ -72,10 +72,10 @@ Airflow ships role-based access control. Understanding what it does and does not
 | Role | Typical use |
 |---|---|
 | `Admin` | Platform team only |
-| `Op` | Can manage connections, variables, pools — a senior operator |
+| `Op` | Can manage connections, variables, pools: a senior operator |
 | `User` | Can trigger and clear DAGs |
 | `Viewer` | Read-only |
-| `Public` | Unauthenticated — should have nothing |
+| `Public` | Unauthenticated: should have nothing |
 
 Per-DAG permissions are the mechanism that makes team separation possible:
 
@@ -124,22 +124,22 @@ So genuine multi-tenancy needs infrastructure, not configuration:
 | Task code separation | `KubernetesExecutor` with per-team namespaces and service accounts |
 | Credential separation | A secrets backend with per-team paths and IAM scoping |
 | Resource separation | Separate Celery queues or Kubernetes node pools, plus pools |
-| Full separation | **Separate Airflow deployments** — the honest answer for hostile tenants |
+| Full separation | **Separate Airflow deployments**: the honest answer for hostile tenants |
 
 <div class="callout warn">
   <span class="ct">One Airflow for mutually untrusting teams is the wrong architecture</span>
-  If two teams must not be able to read each other's data or credentials, and both can author DAGs, one deployment cannot deliver that — because a DAG file runs arbitrary code. The answer is separate deployments, or a model where nobody authors DAGs directly and pipelines are generated from a restricted specification. Saying this clearly in an interview is a senior signal; claiming RBAC solves it is not.
+  If two teams must not be able to read each other's data or credentials, and both can author DAGs, one deployment cannot deliver that, because a DAG file runs arbitrary code. The answer is separate deployments, or a model where nobody authors DAGs directly and pipelines are generated from a restricted specification. Saying this in an interview is a senior signal; claiming RBAC solves it is not.
 </div>
 
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
     <li>Create a role scoped to a single DAG and a user with only that role. Log in as them.</li>
-    <li>Confirm they cannot see other DAGs — and check whether they can still see the connections list.</li>
+    <li>Confirm they cannot see other DAGs, and check whether they can still see the connections list.</li>
     <li>Write a DAG under that team's ownership that reads a connection belonging to another team. Confirm it works.</li>
-    <li>Write down which of your isolation requirements RBAC actually satisfies.</li>
+    <li>Write down which of your isolation requirements RBAC satisfies.</li>
   </ol>
-  <em>per-DAG visibility that works, and a task that happily reads a credential it has no business reading. Step three is the demonstration that separates "we have RBAC" from "we have isolation".</em>
+  <em>per-DAG visibility that works, and a task that reads a credential it has no business reading. Step three is the demonstration that separates "we have RBAC" from "we have isolation".</em>
 </div>
 
 ## Secrets backends
@@ -163,7 +163,7 @@ Airflow resolves a `conn_id` through the backend chain: the secrets backend firs
 
 | Backend | Rotation | Per-team scoping | Audit trail |
 |---|---|---|---|
-| Metadata database | Manual | None — any DAG reads any connection | None |
+| Metadata database | Manual | None: any DAG reads any connection | None |
 | Environment variables | Restart required | Per worker, if you segregate workers | None |
 | **Vault / AWS Secrets Manager / GCP Secret Manager** | Native, automatic | **Yes, by path and IAM** | **Yes, per read** |
 
@@ -183,9 +183,9 @@ Three consequences worth stating:
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
-    <li>Configure a secrets backend in a test environment — the local filesystem backend is enough to see the mechanism.</li>
+    <li>Configure a secrets backend in a test environment. The local filesystem backend is enough to see the mechanism.</li>
     <li>Move one connection out of the metadata database into it and confirm the DAG still works.</li>
-    <li>Delete the connection from the Airflow UI and confirm the DAG <em>still</em> works — proving the backend is being used.</li>
+    <li>Delete the connection from the Airflow UI and confirm the DAG <em>still</em> works, which proves the backend is being used.</li>
     <li>Point the backend at an unreachable address and observe how the task fails.</li>
   </ol>
   <em>a working pipeline whose credentials do not exist in Airflow, and a clear failure mode when the backend is down. Step three is the moment the chain of resolution becomes concrete.</em>
@@ -193,11 +193,11 @@ Three consequences worth stating:
 
 ## Scaling: which component breaks first
 
-Mid taught you the components. At scale you need to know **which one saturates**, because the symptom is always "Airflow is slow" and the cause is one of four very different things.
+Mid taught you the components. At scale you need to know **which one saturates**, because the symptom is always "Airflow is slow" and the cause is one of four different things.
 
 <div class="guide-arch" style="--arch-cols:4">
   <div class="arch-lane" style="--lane-cols:4">
-    <span class="arch-label">saturation order — each one presents as "airflow is slow"</span>
+    <span class="arch-label">saturation order. Each one presents as "airflow is slow"</span>
     <div class="arch-node" data-kind="entry"><b>1 · DAG parsing</b><small>New DAGs appear slowly; scheduler CPU pinned</small></div>
     <div class="arch-node" data-kind="worker"><b>2 · Scheduler loop</b><small>Tasks sit in <code>scheduled</code> before reaching <code>queued</code></small></div>
     <div class="arch-node" data-kind="danger"><b>3 · Metadata database</b><small>Everything slow; UI pages time out. <b>The usual real ceiling</b></small></div>
@@ -222,7 +222,7 @@ Mid taught you the components. At scale you need to know **which one saturates**
   <div class="arch-node" data-kind="worker"><b>More schedulers</b><small>Active-active, row-level locking</small></div>
   <div class="arch-node" data-kind="worker"><b><code>db clean</code> first</b><small>Retention beats a bigger instance</small></div>
   <div class="arch-node" data-kind="worker"><b>More workers, pools</b><small><code>worker_concurrency</code></small></div>
-  <p class="arch-note"><b>Read the order literally.</b> Adding workers when the database is the ceiling makes things worse, because more workers means more heartbeats and state writes. Diagnose which lane you are in before changing anything — and note that three of the four fixes are configuration or retention, not more hardware.</p>
+  <p class="arch-note"><b>Read the order literally.</b> Adding workers when the database is the ceiling makes things worse, because more workers means more heartbeats and state writes. Diagnose which lane you are in before changing anything, and note that three of the four fixes are configuration or retention, not more hardware.</p>
 </div>
 
 | Bottleneck | Symptom | Diagnose with | Fix |
@@ -253,20 +253,20 @@ sql_alchemy_pool_recycle = 1800
 
 Three scaling facts that matter more than the rest:
 
-**Multiple schedulers are active-active.** Since Airflow 2 you run two or three schedulers behind row-level locking and they share the work. This is the answer to both throughput and availability, and it needs a database that supports `SELECT … FOR UPDATE SKIP LOCKED` — Postgres 12+ or MySQL 8+.
+**Multiple schedulers are active-active.** Since Airflow 2 you run two or three schedulers behind row-level locking and they share the work. This is the answer to both throughput and availability, and it needs a database that supports `SELECT … FOR UPDATE SKIP LOCKED`: Postgres 12+ or MySQL 8+.
 
-**The metadata database is almost always the real ceiling.** Every heartbeat, state change, XCom write, and UI page is a query. A cluster running fifty thousand task instances a day generates a very large amount of write traffic, and the fix is usually retention rather than a bigger machine.
+**The metadata database is almost always the real ceiling.** Every heartbeat, state change, XCom write, and UI page is a query. A cluster running fifty thousand task instances a day generates a large amount of write traffic, and the fix is usually retention rather than a bigger machine.
 
 ```bash
 airflow db clean --clean-before-timestamp 2024-01-01
 airflow db clean --clean-before-timestamp 2024-01-01 --tables task_instance,dag_run,log,xcom
 ```
 
-**Raising `min_file_process_interval` is the cheapest parsing win.** The default re-parses every file every thirty seconds. Sixty or a hundred and twenty seconds is almost always acceptable — new DAGs appear a minute later, and the scheduler does a fraction of the work.
+**Raising `min_file_process_interval` is the cheapest parsing win.** The default re-parses every file every thirty seconds. Sixty or a hundred and twenty seconds is almost always acceptable. New DAGs appear a minute later, and the scheduler does a fraction of the work.
 
 <div class="callout warn">
   <span class="ct">Retention is not optional at scale</span>
-  Without <code>db clean</code> on a schedule, <code>task_instance</code> and <code>log</code> grow forever. A multi-hundred-gigabyte metadata database makes the UI unusable, slows the scheduler loop, and turns every upgrade migration into a multi-hour outage. Set retention before you need it — retrofitting it onto a huge table means a long, careful, out-of-hours operation.
+  Without <code>db clean</code> on a schedule, <code>task_instance</code> and <code>log</code> grow forever. A multi-hundred-gigabyte metadata database makes the UI unusable, slows the scheduler loop, and turns every upgrade migration into a multi-hour outage. Set retention before you need it. Retrofitting it onto a huge table means a long, careful, out-of-hours operation.
 </div>
 
 <div class="guide-try">
@@ -289,7 +289,7 @@ Airflow's cost is rarely the scheduler. It is idle capacity, the database, and t
 | Celery workers | Provisioned capacity × time | Sized for the 2am peak, idle for twenty hours |
 | Kubernetes pods | Pod-seconds | Thousands of tiny pods, each with fixed startup overhead |
 | Metadata database | Instance size + storage | An unretained history nobody queries |
-| Triggerer | One or two small processes | Almost nothing — this is the point |
+| Triggerer | One or two small processes | Almost nothing. This is the point |
 | Task compute | Whatever your tasks call | Sensors in `poke` mode holding expensive workers |
 | Logs | Object storage + requests | Verbose logs kept forever |
 
@@ -323,7 +323,7 @@ spec:
 
 <div class="callout tip">
   <span class="ct">Publish the number or it will not be managed</span>
-  Worker utilisation — task-seconds divided by worker-seconds paid for — is the single most revealing Airflow cost metric, and it is usually far lower than people guess. Put it on a dashboard next to the monthly figure. A team that can see 12% utilisation will fix it; a team that cannot see it will keep adding workers.
+  Worker utilisation, task-seconds divided by worker-seconds paid for, is the single most revealing Airflow cost metric, and it is usually far lower than people guess. Put it on a dashboard next to the monthly figure. A team that can see 12% utilisation will fix it; a team that cannot see it will keep adding workers.
 </div>
 
 <div class="guide-try">
@@ -349,12 +349,12 @@ statsd_port = 8125
 statsd_prefix = airflow
 ```
 
-The metrics that actually predict incidents:
+The metrics that predict incidents:
 
 | Metric | Watch for | Means |
 |---|---|---|
 | `scheduler.scheduler_loop_duration` | Rising above a few seconds | The scheduler is falling behind |
-| `scheduler.tasks.starving` | Non-zero and sustained | Tasks want to run and cannot — pool or slot exhaustion |
+| `scheduler.tasks.starving` | Non-zero and sustained | Tasks want to run and cannot: pool or slot exhaustion |
 | `dagbag_import_errors` | Any non-zero value | A broken DAG file is deployed right now |
 | `dag_processing.total_parse_time` | Rising trend | Top-level code creeping in |
 | `executor.queued_tasks` | Growing without draining | Worker capacity or queue routing problem |
@@ -363,7 +363,7 @@ The metrics that actually predict incidents:
 | `dagrun.schedule_delay.<dag_id>` | Rising | Runs starting later than they should |
 | `sla_missed` | Any | A consumer-facing promise broken |
 
-Then define SLOs on the things consumers actually care about:
+Then define SLOs on the things consumers care about:
 
 | SLO | Example target | Why it is the right shape |
 |---|---|---|
@@ -376,7 +376,7 @@ That last distinction is the one that makes a platform team's life livable: **se
 
 <div class="callout tip">
   <span class="ct">The one alert every Airflow deployment needs</span>
-  <b>Scheduler heartbeat age.</b> If the scheduler stops, everything stops — no failures, no alerts, no red DAGs, just silence, because failure alerts come from tasks that never ran. A heartbeat alert is the only thing that catches it, and its absence is why "we found out at 10am that nothing had run since 2am" is such a common story.
+  <b>Scheduler heartbeat age.</b> If the scheduler stops, everything stops: no failures, no alerts, no red DAGs, just silence, because failure alerts come from tasks that never ran. A heartbeat alert is the only thing that catches it, and its absence is why "we found out at 10am that nothing had run since 2am" is such a common story.
 </div>
 
 <div class="guide-try">
@@ -384,10 +384,10 @@ That last distinction is the one that makes a platform team's life livable: **se
   <ol>
     <li>Find whether metrics are exported at all in your deployment. If not, that is your first task.</li>
     <li>Chart scheduler loop duration and total parse time for the last week and look for a trend.</li>
-    <li>Check <code>tasks.starving</code> — a non-zero value you did not know about is very common.</li>
+    <li>Check <code>tasks.starving</code>. A non-zero value you did not know about is common.</li>
     <li>Stop the scheduler for five minutes and confirm something alerts. If nothing does, add it today.</li>
   </ol>
-  <em>a trend line for the two metrics that predict scheduler trouble, and — in step four — the discovery that most deployments are silent when the scheduler dies. That fourth test is worth running in production during a quiet window.</em>
+  <em>a trend line for the two metrics that predict scheduler trouble, and, in step four, the discovery that most deployments are silent when the scheduler dies. That fourth test is worth running in production during a quiet window.</em>
 </div>
 
 ## Upgrades and migrations
@@ -427,7 +427,7 @@ apache-airflow-providers-postgres==5.12.0
 
 <div class="callout warn">
   <span class="ct">There is no downgrade path for the database</span>
-  <code>airflow db migrate</code> applies schema changes that are not reversible in practice. Your rollback plan is a database backup taken immediately before, and it must be tested — a backup you have never restored is a hypothesis. Take it, verify you can restore it into a scratch instance, <em>then</em> migrate.
+  <code>airflow db migrate</code> applies schema changes that are not reversible in practice. Your rollback plan is a database backup taken immediately before, and it must be tested: a backup you have never restored is a hypothesis. Take it, verify you can restore it into a scratch instance, <em>then</em> migrate.
 </div>
 
 <div class="guide-try">
@@ -497,7 +497,7 @@ jobs:
 
 <div class="callout tip">
   <span class="ct">Git-sync plus a hard CI gate is the pragmatic middle</span>
-  Baked images are safer; git-sync is faster to iterate with; a required, fast integrity check on the branch that git-sync follows gets you most of both. What is not acceptable is git-sync from a branch anyone can push to without CI — that is a production deployment with no gate.
+  Baked images are safer; git-sync is faster to iterate with; a required, fast integrity check on the branch that git-sync follows gets you most of both. What is not acceptable is git-sync from a branch anyone can push to without CI. That is a production deployment with no gate.
 </div>
 
 <div class="guide-try">
@@ -508,7 +508,7 @@ jobs:
     <li>Confirm whether a broken DAG file can reach production without CI passing.</li>
     <li>Add a parse-time budget assertion to CI and watch it fail on a deliberately slow DAG.</li>
   </ol>
-  <em>a rollback procedure you have actually timed, and — usually — the discovery that a broken DAG can reach production faster than a review. That parse-time gate is the cheapest way to stop scheduler degradation creeping in.</em>
+  <em>a rollback procedure you have timed, and, usually, the discovery that a broken DAG can reach production faster than a review. That parse-time gate is the cheapest way to stop scheduler degradation creeping in.</em>
 </div>
 
 ## Running Airflow as a platform
@@ -517,7 +517,7 @@ Once several teams share one Airflow, the highest-leverage work stops being tech
 
 **Publish a template repository, not documentation.** A working DAG with retries, timeouts, tags, `doc_md`, and idempotent SQL; the integrity test suite; the CI workflow. Teams inherit every good decision by cloning, and a wiki page is read once.
 
-**Publish a shared operator library as a versioned package.** The row-count check, the Slack alert callback, the standard extract pattern. It is where you enforce standards effectively — a quality gate that is one line gets adopted, and forty lines does not.
+**Publish a shared operator library as a versioned package.** The row-count check, the Slack alert callback, the standard extract pattern. It is where you enforce standards: a quality gate that is one line gets adopted, and forty lines does not.
 
 **Own the contract, not the DAGs.** The platform team owns scheduler health, punctuality, the shared library, and the deployment gate. DAG owners own correctness, their SLAs, and their own on-call. Writing that split down is what stops the platform team being paged for every data bug.
 
@@ -535,7 +535,7 @@ Once several teams share one Airflow, the highest-leverage work stops being tech
 
 <div class="callout warn">
   <span class="ct">The failure mode of a shared Airflow</span>
-  One team's DAG parses slowly, or floods the workers with a backfill, and every other team's pipelines are late. Without pools, per-team queues, and a parse-time budget enforced in CI, the platform is one careless commit away from an incident that is not the platform's fault but is the platform's problem. Noisy-neighbour containment is not a nice-to-have on a shared deployment — it is the deployment's primary engineering requirement.
+  One team's DAG parses slowly, or floods the workers with a backfill, and every other team's pipelines are late. Without pools, per-team queues, and a parse-time budget enforced in CI, the platform is one careless commit away from an incident that is not the platform's fault but is the platform's problem. On a shared deployment, containing noisy neighbours is the primary engineering requirement.
 </div>
 
 <div class="guide-try">
@@ -543,7 +543,7 @@ Once several teams share one Airflow, the highest-leverage work stops being tech
   <ol>
     <li>Build a template repository with a working DAG, the integrity tests, and CI. Use it for one real pipeline.</li>
     <li>Query your metadata database for DAGs with no retries, no <code>dagrun_timeout</code>, or no owner. Count them per team.</li>
-    <li>Pick two of the metrics above and actually publish them somewhere the teams see.</li>
+    <li>Pick two of the metrics above and publish them somewhere the teams see.</li>
     <li>Write the one-page contract: what the platform promises, what DAG owners own, and how fast you answer a request.</li>
   </ol>
   <em>a template that makes the right thing the default, and a standards-adoption number per team that is usually worse than expected. Step four is what determines whether the platform is trusted or worked around.</em>
@@ -555,17 +555,17 @@ Under pressure, ordering matters more than knowledge. Five shapes, with the firs
 
 ### The scheduler has stopped scheduling
 
-Nothing is failing — nothing is *running*. Confirm first with `airflow jobs check --job-type SchedulerJob`, because a dead scheduler produces silence rather than alerts.
+Nothing is failing. Nothing is *running*. Confirm first with `airflow jobs check --job-type SchedulerJob`, because a dead scheduler produces silence rather than alerts.
 
 Then work the four causes in order of likelihood: is the process alive; can it reach the metadata database; is one DAG file taking longer than `dag_file_processor_timeout` and blocking a processor slot; and is the database itself refusing connections because the pool is exhausted. `airflow dags report` names a pathological file immediately, and `.airflowignore` gets it out of the way while you fix it. Afterwards: the heartbeat alert, if you did not already have it.
 
 ### Tasks are stuck in `queued`
 
-They are scheduled but nothing picks them up, which is always a capacity or routing problem. Check in order: `parallelism` cluster-wide, then the DAG's `max_active_tasks`, then pool slots — `airflow pools list` shows used against total — then whether the tasks name a `queue` that no running worker consumes. That last one is the sneaky case, because it looks identical to capacity exhaustion and no amount of extra workers fixes it.
+They are scheduled but nothing picks them up, which is always a capacity or routing problem. Check in order: `parallelism` cluster-wide, then the DAG's `max_active_tasks`, then pool slots, `airflow pools list` shows used against total, then whether the tasks name a `queue` that no running worker consumes. That last one is the sneaky case, because it looks identical to capacity exhaustion and no amount of extra workers fixes it.
 
 ### The metadata database is degrading
 
-The UI times out, the scheduler loop lengthens, everything is slow. Check size and row counts first, then the connection count against the server's limit. The immediate action is `db clean` with a conservative cutoff; the durable fixes are scheduled retention, PgBouncer in front of a Postgres with hundreds of Airflow connections, and moving large XCom values out of the database. Resist the instinct to resize the instance first — it buys weeks and hides the cause.
+The UI times out, the scheduler loop lengthens, everything is slow. Check size and row counts first, then the connection count against the server's limit. The immediate action is `db clean` with a conservative cutoff; the durable fixes are scheduled retention, PgBouncer in front of a Postgres with hundreds of Airflow connections, and moving large XCom values out of the database. Resist the instinct to resize the instance first. It buys weeks and hides the cause.
 
 ### A backfill took production down
 
@@ -579,7 +579,7 @@ The UI times out, the scheduler loop lengthens, everything is slow. Check size a
 
 ### A secret leaked into a task log
 
-Rotate before anything else — the log is in object storage, in a log aggregator, possibly in a Slack alert, and in anyone's browser cache. Deleting the log line is not containment. Then find the code path that printed it, and fix the class rather than the instance: add the key name to `sensitive_var_conn_names`, and add a CI check that greps DAG code for printing connection or variable values. Rotating and moving on without closing the class means it happens again with a different credential.
+Rotate before anything else. The log is in object storage, in a log aggregator, possibly in a Slack alert, and in anyone's browser cache. Deleting the log line is not containment. Then find the code path that printed it, and fix the class rather than the instance: add the key name to `sensitive_var_conn_names`, and add a CI check that greps DAG code for printing connection or variable values. Rotating and moving on without closing the class means it happens again with a different credential.
 
 <div class="guide-try">
   <span class="ct">Try it</span>
@@ -589,12 +589,12 @@ Rotate before anything else — the log is in object storage, in a log aggregato
     <li>Add a task to a DAG that names a non-existent queue and confirm it queues forever with no error.</li>
     <li>Write your own version of these playbooks for your deployment, and put them where an on-call engineer will find them.</li>
   </ol>
-  <em>a measured detection time for the worst failure mode, and a task queued forever with no error message anywhere. That third experiment is worth doing once — it is the hardest of these to diagnose without having seen it.</em>
+  <em>a measured detection time for the worst failure mode, and a task queued forever with no error message anywhere. Run the third experiment at least once. It is the hardest failure here to diagnose if you have never seen it.</em>
 </div>
 
 ## Where Airflow stops
 
-Knowing the boundary is itself a senior signal, and stating it clearly is worth more than defending Airflow for every workload.
+Naming the boundary is itself a senior signal, and it lands better than defending Airflow for every workload.
 
 <div class="guide-compare">
   <div class="guide-compare-col good">
@@ -621,11 +621,11 @@ Knowing the boundary is itself a senior signal, and stating it clearly is worth 
 
 | Tool | Solves | Overlaps Airflow on |
 |---|---|---|
-| **dbt** | SQL transformation, testing, and lineage inside the warehouse | Transform DAGs — usually run *from* Airflow, not instead |
+| **dbt** | SQL transformation, testing, and lineage inside the warehouse | Transform DAGs: usually run *from* Airflow, not instead |
 | **Dagster** | Asset-centric orchestration with strong typing and lineage | Directly; a genuine alternative with different ergonomics |
 | **Prefect** | Python-native flows with dynamic control flow | Directly; lighter for dynamic workloads |
 | **Step Functions / Cloud Composer** | Managed orchestration | Airflow itself, in the managed case |
-| **Kafka / Flink** | Streaming and event processing | Nothing — a different latency class |
+| **Kafka / Flink** | Streaming and event processing | Nothing: a different latency class |
 | **Argo Workflows** | Kubernetes-native container DAGs | Container orchestration, without Airflow's scheduling model |
 
 The shape that works in practice: **Airflow schedules and orchestrates, the heavy work happens in a purpose-built engine, and transformation logic lives in dbt or SQL rather than in Python inside a task.** A DAG whose tasks are mostly `SubmitSparkJob`, `RunDbtModel`, and `WaitForBigQueryJob` is a well-designed DAG. A DAG whose tasks load dataframes into worker memory is a misuse that will eventually force a rewrite.
@@ -641,20 +641,20 @@ The shape that works in practice: **Airflow schedules and orchestrates, the heav
     <li>List your heaviest DAGs and classify each task: does the work happen in the worker, or elsewhere?</li>
     <li>For anything doing work in the worker, decide where it should happen instead.</li>
     <li>Write down the specific requirement that would justify a different orchestrator.</li>
-    <li>Name the one thing in your stack currently orchestrated by nothing — a cron job, a notebook, a person.</li>
+    <li>Name the one thing in your stack currently orchestrated by nothing: a cron job, a notebook, a person.</li>
   </ol>
   <em>a clear split between orchestration and computation, and usually one unorchestrated component nobody had noticed. That last answer is often the most valuable thing on this page.</em>
 </div>
 
 ## The review checklist
 
-This is the artefact to take away from this level. Run it against any DAG — your own, or one you are reviewing — and it catches nearly everything in this guide before it becomes an incident.
+Take this checklist away from this level. Run it against any DAG (your own, or one you are reviewing) and it catches nearly everything covered here before it becomes an incident.
 
 | Check | Looking for | Level |
 |---|---|---|
 | Is `catchup=False` unless a backfill is intended? | No accidental flood of runs | Beginner |
 | Does the DAG use `{{ ds }}` rather than `now()`? | Reruns and backfills are reproducible | Beginner |
-| Are tasks idempotent — delete the partition, then write? | Retries and backfills are safe | Beginner |
+| Are tasks idempotent: delete the partition, then write? | Retries and backfills are safe | Beginner |
 | Are `retries` and `retry_delay` set? | Transient failures self-heal | Beginner |
 | Is `execution_timeout` set on every task? | A hung task cannot hold a slot forever | Beginner |
 | Is `dagrun_timeout` set? | A stuck run cannot pile up intervals | Beginner |
@@ -678,12 +678,12 @@ This is the artefact to take away from this level. Run it against any DAG — yo
 
 <div class="callout tip">
   <span class="ct">Automate the mechanical half</span>
-  Most of the Beginner and Mid rows are machine-checkable from the <code>DagBag</code>: retries, timeouts, tags, owner, <code>doc_md</code>, <code>catchup</code>, and parse time. Put them in the integrity test and reserve human review for the judgement calls — is this task genuinely idempotent, is that pool size right, should this work be in a worker at all.
+  Most of the Beginner and Mid rows are machine-checkable from the <code>DagBag</code>: retries, timeouts, tags, owner, <code>doc_md</code>, <code>catchup</code>, and parse time. Put them in the integrity test and reserve human review for the judgement calls: is this task idempotent, is that pool size right, should this work be in a worker at all.
 </div>
 
 ## The complete picture
 
-The series' final artefact — every level's topics, hardened. Nothing in it is new.
+The series' final artefact: every level's topics, hardened. Nothing in it is new.
 
 ```python dags/events_platform.py
 """
@@ -807,7 +807,7 @@ def events_platform():
 events_platform()
 ```
 
-```ini airflow.cfg — the platform side
+```ini airflow.cfg: the platform side
 [core]
 executor = CeleryKubernetesExecutor
 parallelism = 128
@@ -840,14 +840,14 @@ airflow db clean --dry-run --clean-before-timestamp $(date -d '90 days ago' -I)
 ```
 
 <div class="guide-try">
-  <span class="ct">Try it — the final exercise</span>
+  <span class="ct">Try it: the final exercise</span>
   <ol>
     <li>Build this end to end on a real pipeline: a secrets backend, a deferrable sensor, pooled writes, dataset publication, per-DAG access control, and the shared library.</li>
     <li>Verify each control actively rather than trusting it: confirm the deferred sensor holds no worker slot; confirm the pool caps concurrency regardless of cluster capacity; confirm a low-privilege user cannot trigger it; confirm deleting the connection from the UI does not break it.</li>
     <li>Reproduce a run from three months ago by clearing that interval, and confirm the output is identical rather than duplicated.</li>
     <li>Then hand it to a colleague and ask them to run the review checklist against it.</li>
   </ol>
-  <em>several refusals and one successful historical rerun. A control you have never watched refuse anything is decoration — step two is the difference between a pipeline that looks governed and one that is. The colleague review will find something you did not, which is the point.</em>
+  <em>several refusals and one successful historical rerun. A control you have never watched refuse anything is decoration. Step two is the difference between a pipeline that looks governed and one that is. The colleague review will find something you did not, which is the point.</em>
 </div>
 
 ## Where the series leaves you
@@ -872,14 +872,14 @@ You should now be able to look at an Airflow deployment and see not just what it
 | Say what a secrets backend buys you? | Rotation, per-team scoping, an audit trail |
 | Name the four scaling bottlenecks and their metrics? | Parsing, scheduler loop, database, workers |
 | Give the cheapest parsing win? | Raise `min_file_process_interval` |
-| Say what is almost always the real ceiling? | The metadata database — retention, not size |
+| Say what is almost always the real ceiling? | The metadata database: retention, not size |
 | Name the biggest cost lever? | Deferrable operators, then autoscaling on queue depth |
 | Give the one alert every deployment needs? | Scheduler heartbeat age |
-| Say what the rollback plan for `db migrate` is? | A tested backup — there is no downgrade |
+| Say what the rollback plan for `db migrate` is? | A tested backup. There is no downgrade |
 | Explain the split between platform and pipeline SLOs? | Punctuality is platform; correctness is the owner |
-| Name the first move when nothing is running? | `airflow jobs check` — silence, not failure |
+| Name the first move when nothing is running? | `airflow jobs check`: silence, not failure |
 | Say what a task queued forever with no error means? | Often a `queue` no worker consumes |
 | Say where Airflow stops? | Streaming, sub-second latency, in-worker compute |
 | Give the honest answer to "should we migrate off"? | Usually the practices, not the tool |
 
-That review instinct is the most valuable thing in this guide, because — exactly as with containers and data versioning — most orchestration incidents are prevented at review time rather than at 3am.
+That review instinct matters more than any single configuration flag, because, as with containers and data versioning, most orchestration incidents are prevented at review time rather than at 3am.

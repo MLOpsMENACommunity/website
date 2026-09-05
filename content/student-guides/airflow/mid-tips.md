@@ -2,7 +2,7 @@ Part two of three. At this level your DAGs run and your schedules are correct, s
 
 ## Common errors at this level
 
-Cumulative — Beginner's errors still apply, and these are the ones that appear once things basically work.
+Cumulative: Beginner's errors still apply, and these are the ones that appear once things work.
 
 | Symptom | Real cause | Fix |
 |---|---|---|
@@ -15,13 +15,13 @@ Cumulative — Beginner's errors still apply, and these are the ones that appear
 | A mapped task fails with `max_map_length` | More elements than the configured cap | Batch the items, or raise the limit deliberately |
 | Ten thousand mapped tasks crawled | Per-item overhead dominates the work | Batch instead of mapping |
 | Deferred tasks hang forever | The triggerer is not running | Start it; treat it as a required component |
-| A deferrable operator blocks other waits | A blocking call inside an async trigger | Triggers must be genuinely async |
-| A dataset-scheduled DAG never fires | The URIs do not match exactly | They are unvalidated strings — compare character by character |
+| A deferrable operator blocks other waits | A blocking call inside an async trigger | Triggers must be async |
+| A dataset-scheduled DAG never fires | The URIs do not match exactly | They are unvalidated strings: compare character by character |
 | Two DAGs look connected and are not | Different dataset URIs for the same table | Adopt a naming convention and enforce it |
 | The DAG factory made the scheduler slow | It queries a database or an API at parse time | Read a local file; sync the config on a schedule |
 | A `foreach` stage cannot be targeted | Generated ids use `@` | `dvc`-style quoting: `airflow tasks test dag 'group.task'` |
 | A pool has free slots but tasks wait | They are queued behind a different limit | Check the cluster and DAG limits too |
-| A pool is exhausted by one task | It requested several `pool_slots` | Intended behaviour — check the value |
+| A pool is exhausted by one task | It requested several `pool_slots` | Intended behaviour: check the value |
 | Alerts fired five times for one failure | A callback on retries rather than final failure | `on_failure_callback` fires after retries; check what you attached |
 | Nobody reads the alert channel | Alerting on every task in every DAG | Alert on DAG-run failure and consumer-facing SLA misses only |
 | An SLA miss did not stop anything | SLAs never stop anything | Use `execution_timeout` for a hard stop |
@@ -30,14 +30,14 @@ Cumulative — Beginner's errors still apply, and these are the ones that appear
 | A `conf` key typo failed mid-run | `dag_run.conf` is untyped | Use `params` with types and bounds |
 | Works locally, fails on the cluster | Different environment or credentials | Compare installed packages; check the `conn_id` resolves |
 | The metadata database is growing fast | Large XCom values, or no retention | Pass paths; schedule `db clean` |
-| CI passed but the DAG broke production | No DagBag integrity test | Add it — seconds, no database, catches import errors |
+| CI passed but the DAG broke production | No DagBag integrity test | Add it: seconds, no database, catches import errors |
 | A teardown failure turned the run red | It was an `ALL_DONE` cleanup, not a teardown | Use setup/teardown so teardown failure does not fail the run |
 
 ## The practices that pay off most
 
 <div class="cards">
   <div class="card"><div class="icon">⏸️</div><h4>Defer, never poke</h4><p><code>deferrable=True</code> on anything that waits. Zero worker slots held, and it scales to tens of thousands.</p></div>
-  <div class="card"><div class="icon">🚧</div><h4>A pool per external system</h4><p>Sized from the thing it protects — a connection limit, an API rate limit, a GPU count.</p></div>
+  <div class="card"><div class="icon">🚧</div><h4>A pool per external system</h4><p>Sized from the thing it protects: a connection limit, an API rate limit, a GPU count.</p></div>
   <div class="card"><div class="icon">📡</div><h4>Datasets over sensors</h4><p>A consumer scheduled by data costs nothing while waiting and couples only on a URI.</p></div>
   <div class="card"><div class="icon">🧪</div><h4>A DagBag test in CI</h4><p>Seconds, no database, and it asserts your own standards. The highest-value test available.</p></div>
   <div class="card"><div class="icon">📏</div><h4>A parse-time budget</h4><p>Assert it in CI. Scheduler degradation creeps in one careless import at a time.</p></div>
@@ -56,7 +56,7 @@ Cumulative — Beginner's errors still apply, and these are the ones that appear
   <li><b>Break the triggerer</b>Stop it while deferred tasks are waiting. Confirm they hang indefinitely and nothing alerts.</li>
   <li><b>Wire a dataset</b>Build a producer and a consumer, trigger the producer manually, and watch the consumer start by itself. Then change one character of the URI and watch it stop working.</li>
   <li><b>Cap a shared resource</b>Create a two-slot pool, queue six tasks into it, and confirm only two run regardless of cluster capacity. Then set `priority_weight` on two and watch the order change.</li>
-  <li><b>Make CI catch a real bug</b>Add the DagBag integrity test with assertions about retries and timeouts. Run it against your existing DAGs — it will fail on at least one.</li>
+  <li><b>Make CI catch a real bug</b>Add the DagBag integrity test with assertions about retries and timeouts. Run it against your existing DAGs. It will fail on at least one.</li>
   <li><b>Measure a parse-time regression</b>Add a top-level import of pandas to one DAG and watch <strong>DAG Processing</strong>. Then add the budget assertion to CI and confirm it fails.</li>
 </ol>
 
@@ -119,10 +119,10 @@ if slow:
 
 <div class="callout tip">
   <span class="ct">Raising <code>min_file_process_interval</code> is the cheapest win available</span>
-  The default re-parses every file every thirty seconds. At sixty or a hundred and twenty seconds new DAGs appear a minute later — almost never a problem — and the scheduler does a fraction of the work. It is one line and it is usually the first thing to change on a busy deployment.
+  The default re-parses every file every thirty seconds. At sixty or a hundred and twenty seconds new DAGs appear a minute later, almost never a problem, and the scheduler does a fraction of the work. It is one line and it is usually the first thing to change on a busy deployment.
 </div>
 
-## Alerting people actually read
+## Alerting people read
 
 ```python
 def alert(context):
@@ -148,7 +148,7 @@ def alert(context):
 
 <div class="callout warn">
   <span class="ct">A channel nobody reads is worse than no alerting</span>
-  Alerting on every task in every DAG trains the team to ignore the channel, and then a real incident is missed. Fewer, better alerts — DAG-run failures and SLA misses on pipelines with real consumers — beats completeness every time.
+  Alerting on every task in every DAG trains the team to ignore the channel, and then a real incident is missed. Fewer, better alerts, DAG-run failures and SLA misses on pipelines with real consumers, beats completeness every time.
 </div>
 
 ## Testing that catches real breakage
@@ -200,7 +200,7 @@ Five differences, roughly in the order they are the answer.
 | A different `conn_id` or missing connection | `airflow connections get <id>` on the cluster |
 | A path that only exists locally | The task reads `/Users/...` or a relative path |
 | Top-level code that worked locally at low scale | `airflow dags report` on the cluster |
-| Resource limits — memory, timeout, pool | Exit reason in the log; check `execution_timeout` |
+| Resource limits: memory, timeout, pool | Exit reason in the log; check `execution_timeout` |
 
 ```bash
 # On the cluster, not your laptop
@@ -212,7 +212,7 @@ airflow tasks test my_dag my_task 2024-05-01   # run it where it fails
 
 <div class="callout warn">
   <span class="ct">Run the failing task where it fails</span>
-  <code>airflow tasks test</code> executed inside the worker's own environment — the container, the pod, the host — resolves the majority of these in one command. Debugging from your laptop reproduces your laptop's environment, which is precisely the thing that is not the problem.
+  <code>airflow tasks test</code> executed inside the worker's own environment (the container, the pod, the host) resolves the majority of these in one command. Debugging from your laptop reproduces your laptop's environment, which is precisely the thing that is not the problem.
 </div>
 
 ## Habits worth adopting now

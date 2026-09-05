@@ -4,7 +4,7 @@ Part one of three. Almost every beginner problem comes from one of two things: a
 
 | Symptom | Real cause | Fix |
 |---|---|---|
-| Nothing appears in the Actions tab | File not in `.github/workflows/` | Fix the path — no error is reported |
+| Nothing appears in the Actions tab | File not in `.github/workflows/` | Fix the path: no error is reported |
 | "No such file or directory" for a repo file | The runner starts empty | `- uses: actions/checkout@v4` first |
 | Cryptic YAML parse error | A tab character, or uneven indentation | Spaces only, two per level |
 | `python-version: 3.10` installs 3.1 | YAML read it as a number | Quote it: `'3.10'` |
@@ -16,7 +16,7 @@ Part one of three. Almost every beginner problem comes from one of two things: a
 | `if` never matches on main | `github.ref` is `refs/heads/main` | Compare the full ref |
 | Test report missing after a failure | The failed step stopped the job | `if: always()` on the upload |
 | Cron job never fires | UTC, and default branch only | Add `workflow_dispatch` to test it |
-| Secrets empty on a contributor's PR | Fork PRs get no secrets, by design | Expected — do not work around it |
+| Secrets empty on a contributor's PR | Fork PRs get no secrets, by design | Expected: do not work around it |
 | Matrix job disappeared from checks | Adding an axis renamed the job | Set an explicit `name:` |
 | Second run is as slow as the first | No dependency cache | `cache:` on the setup action |
 | Job ran for hours | No timeout; default ceiling is six hours | `timeout-minutes:` on every job |
@@ -27,14 +27,14 @@ Part one of three. Almost every beginner problem comes from one of two things: a
   <div class="card"><div class="icon">🧩</div><h4>Install a YAML linter</h4><p>The Red Hat YAML extension knows the workflow schema and catches errors as you type, not five minutes into a run.</p></div>
   <div class="card"><div class="icon">🖐️</div><h4>Add <code>workflow_dispatch</code></h4><p>Costs nothing and lets you re-run without inventing a commit. Put it on anything you are developing.</p></div>
   <div class="card"><div class="icon">⚡</div><h4>Add <code>cache:</code></h4><p>One line on your setup action makes every run after the first noticeably faster.</p></div>
-  <div class="card"><div class="icon">💾</div><h4>Add <code>if: always()</code></h4><p>On anything that saves a report. A red run's diagnostics are the ones you actually need.</p></div>
-  <div class="card"><div class="icon">⏱️</div><h4>Add <code>timeout-minutes</code></h4><p>The default ceiling is six hours. One hung job quietly eats your allowance.</p></div>
+  <div class="card"><div class="icon">💾</div><h4>Add <code>if: always()</code></h4><p>On anything that saves a report. A red run's diagnostics are the ones you need.</p></div>
+  <div class="card"><div class="icon">⏱️</div><h4>Add <code>timeout-minutes</code></h4><p>The default ceiling is six hours. One hung job eats your allowance.</p></div>
   <div class="card"><div class="icon">🔎</div><h4>Print what you doubt</h4><p>A step is a shell. <code>pwd</code>, <code>ls -la</code>, <code>echo "$VAR"</code> resolve most confusion in one run.</p></div>
 </div>
 
 ## Set your editor up so it catches YAML for you
 
-Do this before anything else — it removes an entire category of wasted runs.
+Do this before anything else. It removes an entire category of wasted runs.
 
 ```text .editorconfig
 [*.{yml,yaml}]
@@ -54,11 +54,11 @@ Install the Red Hat **YAML** extension for VS Code, then turn on **View → Rend
 The most reported problem, and almost never a broken workflow. Work through these in order.
 
 <ol class="guide-steps">
-  <li><b>Check the folder path character by character</b>It must be <code>.github/workflows/</code> — not <code>.github/workflow/</code>, not <code>github/workflows/</code>, not the repository root. A file in the wrong place is silently ignored: no error, no warning, nothing in the Actions tab.</li>
+  <li><b>Check the folder path character by character</b>It must be <code>.github/workflows/</code>, not <code>.github/workflow/</code>, not <code>github/workflows/</code>, not the repository root. A file in the wrong place is silently ignored: no error, no warning, nothing in the Actions tab.</li>
   <li><b>Check the file extension</b><code>.yml</code> or <code>.yaml</code>. A file saved as <code>ci.yml.txt</code> looks right in a listing and does nothing.</li>
   <li><b>Read your <code>on:</code> block</b>A <code>branches: [main]</code> filter means pushes to your feature branch do nothing. Correct behaviour that looks like a bug.</li>
   <li><b>Check the file is on the branch you pushed</b>A workflow only runs if it exists on the triggering branch. Adding CI on a feature branch and pushing elsewhere runs nothing.</li>
-  <li><b>If it is a schedule, check the timezone</b><code>cron</code> is UTC, only runs from the default branch, and is queued rather than punctual. Never test a schedule by waiting — add <code>workflow_dispatch</code> and click the button.</li>
+  <li><b>If it is a schedule, check the timezone</b><code>cron</code> is UTC, only runs from the default branch, and is queued rather than punctual. Never test a schedule by waiting. Add <code>workflow_dispatch</code> and click the button.</li>
   <li><b>Look for a parse error</b>A file that fails to parse appears in the Actions tab as a failed run with a YAML error. If you see <em>nothing at all</em>, it is one of the reasons above.</li>
 </ol>
 
@@ -93,7 +93,7 @@ Four failures, one root cause. Internalise "the runner starts with nothing and d
 
 <div class="callout warn">
   <span class="ct">The one that catches people twice</span>
-  A value written to <code>$GITHUB_ENV</code> is <b>not</b> readable in the step that wrote it — only from the next step onwards. If you need it in the same step, set a normal shell variable as well.
+  A value written to <code>$GITHUB_ENV</code> is <b>not</b> readable in the step that wrote it, only from the next step onwards. If you need it in the same step, set a normal shell variable as well.
 </div>
 
 ## YAML gotchas that produce baffling errors
@@ -190,16 +190,16 @@ Three habits resolve most beginner failures with no special tooling:
 
 **Run the failing command locally first.** If `pytest -q` fails on your laptop too, the workflow is innocent and you are debugging your project.
 
-**Read the log from the top of the failing step.** Tools print a summary at the end; the cause is usually much earlier. GitHub expands the failed step — scroll up inside it.
+**Read the log from the top of the failing step.** Tools print a summary at the end; the cause is usually much earlier. GitHub expands the failed step, so scroll up inside it.
 
 <div class="callout tip">
   <span class="ct">Two switches worth knowing early</span>
-  Re-run with <b>Enable debug logging</b> ticked for far more detail. And inside a <code>run</code> block, <code>set -x</code> makes the shell print each command before executing it, showing exactly where a script died.
+  Re-run with <b>Enable debug logging</b> ticked for far more detail. Inside a <code>run</code> block, <code>set -x</code> makes the shell print each command before executing it, showing exactly where a script died.
 </div>
 
 ## Make your feedback loop shorter
 
-Add `workflow_dispatch` to anything you are actively developing, so you can re-run from the Actions tab without inventing a commit. Use **Re-run failed jobs** rather than re-running everything. And develop on a scratch workflow with an unfiltered trigger so you never wonder whether it matched.
+Add `workflow_dispatch` to anything you are actively developing, so you can re-run from the Actions tab without inventing a commit. Use **Re-run failed jobs** rather than re-running everything. Develop on a scratch workflow with an unfiltered trigger so you never wonder whether it matched.
 
 ```yaml .github/workflows/scratch.yml
 name: Scratch
@@ -217,7 +217,7 @@ jobs:
       - run: echo "trying something"
 ```
 
-Delete or tighten it before merging — an unfiltered trigger on a shared repository burns minutes for nobody's benefit.
+Delete or tighten it before merging, because an unfiltered trigger on a shared repository burns minutes for nobody's benefit.
 
 ## Name things so the Actions tab stays readable
 
@@ -242,7 +242,7 @@ Delete or tighten it before merging — an unfiltered trigger on a shared reposi
   </div>
 </div>
 
-`run-name` sets the title of an individual run, which is worth it for manual workflows: `run-name: Deploy ${{ inputs.environment }} by @${{ github.actor }}`.
+`run-name` sets the title of an individual run, which pays off for manual workflows: `run-name: Deploy ${{ inputs.environment }} by @${{ github.actor }}`.
 
 ## Version references: what to copy and what to avoid
 
@@ -255,20 +255,20 @@ Delete or tighten it before merging — an unfiltered trigger on a shared reposi
 
 <div class="callout warn">
   <span class="ct">Never point at a branch on somebody else's action</span>
-  <code>@main</code> means "whatever is on that branch the instant my job starts" — a remote-code-execution surface aimed at your own repository. Use a tag at minimum, and a commit SHA if the action is not from a name you recognise.
+  <code>@main</code> means "whatever is on that branch the instant my job starts", a remote-code-execution surface aimed at your own repository. Use a tag at minimum, and a commit SHA if the action is not from a name you recognise.
 </div>
 
 ## Getting around the interface quickly
 
 | Where | Do this |
 |---|---|
-| A failed run | Click the red job, then the red step — it expands automatically |
+| A failed run | Click the red job, then the red step. It expands automatically |
 | A long log | Press <code>/</code> to search inside it; the gear icon downloads raw text |
 | The run list | Filter with `status:failure`, `branch:main`, `event:schedule`, `actor:username` |
 | Any run | **Re-run failed jobs** to retry; **Re-run all jobs** to start clean |
 | Any step | Toggle timestamps to see how long each line took |
 
-`github.com/OWNER/REPO/actions/workflows/ci.yml` jumps straight to one workflow's history — worth bookmarking for the pipeline you watch most.
+`github.com/OWNER/REPO/actions/workflows/ci.yml` jumps straight to one workflow's history, worth bookmarking for the pipeline you watch most.
 
 ## A starter workflow worth keeping
 

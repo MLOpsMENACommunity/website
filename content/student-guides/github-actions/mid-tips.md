@@ -5,7 +5,7 @@ Part two of three. At this level your pipelines work, so the problems change cha
 | Symptom | Real cause | Fix |
 |---|---|---|
 | Cache never seems to help | Key contains `github.sha`, `run_id`, or a date | Hash the lockfile, add `restore-keys` |
-| CI uses stale dependencies | Fixed key that never invalidates | Same — the key must change when content does |
+| CI uses stale dependencies | Fixed key that never invalidates | Same: the key must change when content does |
 | Failure makes no sense against the diff | Poisoned or stale cache | Delete the entry, re-run, then fix the key |
 | Restoring the cache breaks the build | You cached an installed tree, not downloads | Cache `~/.npm`, `~/.cache/pip`, not `node_modules` |
 | First run fails, re-run passes | Service container with no health check | Add `--health-cmd` and retries |
@@ -37,14 +37,14 @@ Part two of three. At this level your pipelines work, so the problems change cha
 
 ## Diagnosing a slow pipeline properly
 
-The instinct is to reach for a bigger runner. Resist — a faster machine does not fix a serial pipeline, and it turns a cost problem into a bigger one. Work in order of leverage.
+The instinct is to reach for a bigger runner. Resist, because a faster machine does not fix a serial pipeline and turns a cost problem into a bigger one. Work in order of leverage.
 
 <ol class="guide-steps">
-  <li><b>Measure before you touch anything</b>Open the run view and toggle step timestamps. Almost every pipeline has one step that is most of the wall clock, and it is rarely the one people assume. For trends, the REST API exposes timing for every run — pull the last few hundred and take the p95 per job.</li>
+  <li><b>Measure before you touch anything</b>Open the run view and toggle step timestamps. Almost every pipeline has one step that is most of the wall clock, and it is rarely the one people assume. For trends, the REST API exposes timing for every run, so pull the last few hundred and take the p95 per job.</li>
   <li><b>Stop work nobody needs</b>Cancel superseded runs with <code>concurrency</code>. Add <code>paths-ignore</code> for documentation. Put expensive suites behind an <code>if</code> or a schedule. Free, and usually the largest single win.</li>
   <li><b>Stop repeating work you already did</b>Dependency caching, and a prebuilt container image for anything with a long install. If installing dependencies is two minutes of a four-minute run, that is your whole problem.</li>
   <li><b>Only then parallelise</b>Split the suite across a matrix. A matrix is bounded by its slowest shard, so shard by measured duration rather than file count.</li>
-  <li><b>Consider a larger runner last</b>After the above, if the job is genuinely CPU-bound, more cores help. Before the above, it just costs more.</li>
+  <li><b>Consider a larger runner last</b>After the above, if the job is CPU-bound, more cores help. Before the above, it just costs more.</li>
 </ol>
 
 ```yaml
@@ -66,7 +66,7 @@ steps:
 
 A cache that silently does nothing is worse than none, because you pay the archive-and-upload cost for no benefit.
 
-**"The cache never hits."** Your key contains something that changes every run — `github.sha`, `run_id`, a date, or `hashFiles('**')` which includes your source.
+**"The cache never hits."** Your key contains something that changes every run: `github.sha`, `run_id`, a date, or `hashFiles('**')` which includes your source.
 
 **"CI is using stale dependencies."** Your key contains nothing that changes when dependencies change. The entry was written once and is immutable, so it is restored forever.
 
@@ -85,14 +85,14 @@ A cache that silently does nothing is worse than none, because you pay the archi
 
 <div class="callout warn">
   <span class="ct">When a failure makes no sense against the diff</span>
-  Suspect the cache before the code. The <b>Caches</b> page under Actions lets you delete an entry; delete it and re-run. If the failure disappears you had a stale or poisoned cache, and the real fix is a better key — not a manual deletion every fortnight.
+  Suspect the cache before the code. The <b>Caches</b> page under Actions lets you delete an entry; delete it and re-run. If the failure disappears you had a stale or poisoned cache, and the real fix is a better key, not a manual deletion every fortnight.
 </div>
 
-Two more rules. Cache the **download** directory, not an installed tree — restoring `node_modules` or a virtualenv brings platform-specific binaries and half-resolved state. And never restore something and then execute it without verification, because a pull request branch can write a cache that a later `main` run restores.
+Two more rules. Cache the **download** directory, not an installed tree, because restoring `node_modules` or a virtualenv brings platform-specific binaries and half-resolved state. Never restore something and then execute it without verification, because a pull request branch can write a cache that a later `main` run restores.
 
 ## Making flaky tests stop being normal
 
-Flakiness is the most expensive problem at this level, because the usual response — re-run until green — destroys the signal CI exists to provide. Once a team habitually re-runs, a genuine regression is indistinguishable from noise.
+Flakiness is the most expensive problem at this level, because the usual response, re-run until green, destroys the signal CI exists to provide. Once a team habitually re-runs, a genuine regression is indistinguishable from noise.
 
 | Cause | Symptom | Fix |
 |---|---|---|
@@ -105,12 +105,12 @@ Flakiness is the most expensive problem at this level, because the usual respons
 
 <div class="callout tip">
   <span class="ct">Quarantine rather than tolerate</span>
-  If you cannot fix a flaky test today, move it to a separate non-blocking job with a clear name. That keeps the main signal trustworthy and makes the debt visible — strictly better than a retry loop that hides it forever.
+  If you cannot fix a flaky test today, move it to a separate non-blocking job with a clear name. That keeps the main signal trustworthy and makes the debt visible, better than a retry loop that hides it forever.
 </div>
 
 ## Matrix hygiene
 
-Matrices grow quietly. A team adds an axis, then another, and a pull request suddenly generates fifty jobs nobody reads.
+Matrices grow. A team adds an axis, then another, and a pull request suddenly generates fifty jobs nobody reads.
 
 ```yaml
 strategy:
@@ -129,11 +129,11 @@ continue-on-error: ${{ matrix.experimental == true }}
 
 **Use `include` for the odd one out** rather than adding an axis and excluding most of it.
 
-**Set an explicit `name:`** on any matrix job that is a required status check — the generated name embeds the combination, so adding an axis renames it and branch protection waits for a check that no longer exists.
+**Set an explicit `name:`** on any matrix job that is a required status check, because the generated name embeds the combination, so adding an axis renames it and branch protection waits for a check that no longer exists.
 
 **Turn `fail-fast` off while debugging, on afterwards.** During diagnosis you need every cell's result; in steady state you want a fast red signal.
 
-**Use `max-parallel` when cells share anything** — a staging database, a rate-limited API, a licence server.
+**Use `max-parallel` when cells share anything**: a staging database, a rate-limited API, a licence server.
 
 ## Artifacts and outputs that stay tidy
 
@@ -149,7 +149,7 @@ continue-on-error: ${{ matrix.experimental == true }}
     if-no-files-found: error
 ```
 
-For anything a human reads, prefer the step summary — nobody downloads a zip to see three numbers:
+For anything a human reads, prefer the step summary. Nobody downloads a zip to see three numbers:
 
 ```yaml
 - if: always()
@@ -165,7 +165,7 @@ For anything a human reads, prefer the step summary — nobody downloads a zip t
 
 <div class="callout warn">
   <span class="ct">Job outputs are small and not secret</span>
-  They are size-limited and stored in plain text in run metadata. Pass identifiers, versions, and JSON manifests — never a credential, and never a file. And remember the output must be declared at <b>job</b> level, not only written to <code>$GITHUB_OUTPUT</code> in a step.
+  They are size-limited and stored in plain text in run metadata. Pass identifiers, versions, and JSON manifests, never a credential, and never a file. Remember too that the output must be declared at <b>job</b> level, not only written to <code>$GITHUB_OUTPUT</code> in a step.
 </div>
 
 ## Service containers that do not flake
@@ -185,7 +185,7 @@ services:
 
 Without the health check the container counts as started the instant Docker returns, and your first test connects before Postgres accepts connections. That is the entire explanation for "fails on the first run, passes on the re-run", and five lines removes it permanently.
 
-Two details that cost an afternoon: the hostname is `localhost` when steps run on the runner but the **service name** when the job runs inside a `container:` — moving a job into a container silently breaks every connection string. And if you need four or five containers, stop using `services` and start your own Compose stack in a `run` step.
+Two details that cost an afternoon: the hostname is `localhost` when steps run on the runner but the **service name** when the job runs inside a `container:`, so moving a job into a container breaks every connection string with no warning. If you need four or five containers, stop using `services` and start your own Compose stack in a `run` step.
 
 ## Reuse without building a maze
 
@@ -214,7 +214,7 @@ Two details that cost an afternoon: the hostname is `localhost` when steps run o
   </div>
 </div>
 
-Treat the callee as a public API, because it is. Removing an input is a breaking change even if only one repository used it — and the failure lands on somebody else's pull request rather than yours.
+Treat the callee as a public API, because it is. Removing an input is a breaking change even if only one repository used it, and the failure lands on somebody else's pull request rather than yours.
 
 Also remember `shell:` is mandatory on every `run` step inside a composite action. It is the most common reason a new one refuses to load, and the error does not say so.
 
@@ -232,7 +232,7 @@ concurrency:
   cancel-in-progress: false
 ```
 
-Applying the CI pattern to a deploy job kills a release halfway through — the worst possible time. Applying the CD pattern to CI serialises every pull request behind every other. Because they need different keys, a real pipeline declares workflow-level concurrency for CI and a separate group on the deploy job.
+Applying the CI pattern to a deploy job kills a release halfway through, at the worst possible time. Applying the CD pattern to CI serialises every pull request behind every other. Because they need different keys, a real pipeline declares workflow-level concurrency for CI and a separate group on the deploy job.
 
 Concurrency is a guard, not a correctness property. If two deploys running together would corrupt something, make the deploy idempotent as well.
 
@@ -258,7 +258,7 @@ jobs:
   <div class="guide-timeline-item"><span>1</span><strong>Read the trigger before the steps</strong><small>Half of "it did not run" is a branch filter, a path filter, or a fork pull request.</small></div>
   <div class="guide-timeline-item"><span>2</span><strong>Dump the context</strong><small><code>run: echo '${{ toJSON(github) }}'</code> answers most "why did the condition not match" questions in one run.</small></div>
   <div class="guide-timeline-item"><span>3</span><strong>Re-run with debug logging</strong><small>The <b>Re-run</b> menu has a checkbox. Re-run only the failed job for a two-minute answer.</small></div>
-  <div class="guide-timeline-item"><span>4</span><strong>Compare against the last green run</strong><small>The difference is often environmental — runner image version, an action release, a cache hit that became a miss.</small></div>
+  <div class="guide-timeline-item"><span>4</span><strong>Compare against the last green run</strong><small>The difference is often environmental: runner image version, an action release, a cache hit that became a miss.</small></div>
   <div class="guide-timeline-item"><span>5</span><strong>Bypass the cache</strong><small>Delete the entry or change the key. Stale caches produce failures that make no sense against the code.</small></div>
   <div class="guide-timeline-item"><span>6</span><strong>Bisect in a scratch workflow</strong><small>Copy the failing job into its own file with <code>workflow_dispatch</code> and delete half the steps at a time.</small></div>
 </div>
@@ -276,13 +276,13 @@ jobs:
 
 ## Habits that compound
 
-**Put `timeout-minutes` on every job.** The default is six hours; one hung job quietly consumes your allowance.
+**Put `timeout-minutes` on every job.** The default is six hours; one hung job consumes your allowance.
 
-**Add a `permissions` floor to every workflow.** One line — `permissions: { contents: read }` — removes the token's ability to push, tag, or comment, and you widen it per job where genuinely needed. Declaring any scope zeroes the rest, which is the whole mechanism.
+**Add a `permissions` floor to every workflow.** One line, `permissions: { contents: read }`, removes the token's ability to push, tag, or comment, and you widen it per job where needed. Declaring any scope zeroes the rest, which is the whole mechanism.
 
 **Add `persist-credentials: false` to checkout** unless a later step needs to push. Otherwise a usable token sits in `.git/config` for every subsequent step, including third-party ones.
 
-**Pin third-party actions and keep the pins fresh.** A tag can be moved under you, so pin anything you do not own to a SHA — and enable Dependabot for `github-actions`, because a pinned-and-forgotten action is an unpatched one. Neither control works alone.
+**Pin third-party actions and keep the pins fresh.** A tag can be moved under you, so pin anything you do not own to a SHA, and enable Dependabot for `github-actions`, because a pinned-and-forgotten action is an unpatched one. Neither control works alone.
 
 **Pass event data through `env`, never into a shell.** A pull request title containing shell metacharacters becomes a command otherwise. This matters more at senior level, but the habit belongs here.
 

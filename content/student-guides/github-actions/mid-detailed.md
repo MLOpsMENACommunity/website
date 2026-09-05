@@ -1,4 +1,4 @@
-This is part two of three. It picks up exactly where Beginner ended and takes **every topic from there further**, then adds the machinery you have not met yet. Nothing is dropped and nothing is repeated for its own sake — where you already know the basics, we go straight to the depth.
+This is part two of three. It picks up exactly where Beginner ended and takes **every topic from there further**, then adds the machinery you have not met yet. Nothing is dropped and nothing is repeated for its own sake. Where you already know the basics, we go straight to the depth.
 
 ## Where this picks up
 
@@ -16,11 +16,11 @@ This is part two of three. It picks up exactly where Beginner ended and takes **
 | Matrix | `include`, `exclude`, `fail-fast`, `max-parallel`, dynamic generation |
 | Guards | Concurrency control and cancellation strategy |
 | Debugging | Context dumps, debug logging, cache bypass, bisecting |
-| — **new** — | Service containers · container jobs · reusable workflows · composite actions · environments and approvals |
+| **new** | Service containers · container jobs · reusable workflows · composite actions · environments and approvals |
 
 ## Expressions: the full reference
 
-You have used `${{ }}` for a handful of values. Here is everything that is actually available.
+You have used `${{ }}` for a handful of values. The full set of contexts:
 
 | Context | Available in | Holds |
 |---|---|---|
@@ -65,7 +65,7 @@ matrix:
 
 <div class="callout tip">
   <span class="ct">Two precedence rules worth memorising</span>
-  Inside <code>if:</code> the <code>${{ }}</code> wrapper is <b>optional</b> because the value is already evaluated as an expression — everywhere else it is required, and mixing the two styles in one condition produces confusing partial evaluation. And <code>&amp;&amp;</code>/<code>||</code> return <b>operands, not booleans</b>, which is why <code>${{ inputs.tag || github.sha }}</code> works as a default-value idiom.
+  Inside <code>if:</code> the <code>${{ }}</code> wrapper is <b>optional</b> because the value is already evaluated as an expression; everywhere else it is required, and mixing the two styles in one condition produces confusing partial evaluation. <code>&amp;&amp;</code>/<code>||</code> return <b>operands, not booleans</b>, which is why <code>${{ inputs.tag || github.sha }}</code> works as a default-value idiom.
 </div>
 
 <div class="guide-try">
@@ -75,7 +75,7 @@ matrix:
     <li>Use the default-value idiom: add a <code>workflow_dispatch</code> input <code>tag</code> and echo <code>${{ inputs.tag || github.sha }}</code>, once with the input filled and once empty.</li>
     <li>Try <code>contains(fromJSON('["main","develop"]'), github.ref_name)</code> as an <code>if</code> on a step, from two different branches.</li>
   </ol>
-  <em>the <code>||</code> idiom falls back to the SHA when the input is blank — proof that these operators return operands rather than booleans. And <code>needs</code> is an empty object in a job with no dependencies, which is worth knowing before you debug an empty value.</em>
+  <em>the <code>||</code> idiom falls back to the SHA when the input is blank, proof that these operators return operands rather than booleans. <code>needs</code> is an empty object in a job with no dependencies, which is worth knowing before you debug an empty value.</em>
 </div>
 
 ## Step results: `outcome` versus `conclusion`
@@ -94,8 +94,8 @@ Beginner used `if: failure()`. The precise mechanics matter once you tolerate fa
 
 | Field | Value after a tolerated failure |
 |---|---|
-| `steps.flaky.outcome` | `failure` — what the step actually did |
-| `steps.flaky.conclusion` | `success` — the result after `continue-on-error` is applied |
+| `steps.flaky.outcome` | `failure`: what the step did |
+| `steps.flaky.conclusion` | `success`: the result after `continue-on-error` is applied |
 
 The same distinction exists at job level as `needs.<job>.result`, which is `success`, `failure`, `cancelled`, or `skipped`.
 
@@ -103,7 +103,7 @@ The same distinction exists at job level as `needs.<job>.result`, which is `succ
 
 | Function | True when |
 |---|---|
-| `success()` | Every previous step/job succeeded — the implicit default |
+| `success()` | Every previous step/job succeeded: the implicit default |
 | `failure()` | Any previous step/job failed |
 | `cancelled()` | The run was cancelled |
 | `always()` | Always, including cancellation |
@@ -120,7 +120,7 @@ The same distinction exists at job level as `needs.<job>.result`, which is `succ
     <li>Follow it with a step printing both values: <code>echo "outcome=${{ steps.flaky.outcome }} conclusion=${{ steps.flaky.conclusion }}"</code>.</li>
     <li>Now add a step with <code>if: always()</code> and cancel the run from the Actions tab while it is going.</li>
   </ol>
-  <em><code>outcome=failure conclusion=success</code>, and the job is green. The cancelled run still executes the <code>always()</code> step — which is exactly why <code>!cancelled()</code> exists for cleanup that should stop.</em>
+  <em><code>outcome=failure conclusion=success</code>, and the job is green. The cancelled run still executes the <code>always()</code> step, which is why <code>!cancelled()</code> exists for cleanup that should stop.</em>
 </div>
 
 ## The four special files
@@ -160,7 +160,7 @@ Multi-line values need a delimiter, or the file format breaks:
 
 <div class="callout warn">
   <span class="ct">Two limits</span>
-  A value written to <code>$GITHUB_ENV</code> is <b>not</b> readable in the step that wrote it — only from the next step onwards. And none of these four cross a <b>job</b> boundary; that needs job outputs or artifacts.
+  A value written to <code>$GITHUB_ENV</code> is <b>not</b> readable in the step that wrote it, only from the next step onwards. None of these four cross a <b>job</b> boundary; that needs job outputs or artifacts.
 </div>
 
 <div class="guide-try">
@@ -175,7 +175,7 @@ Multi-line values need a delimiter, or the file format breaks:
 
 ## Environment variables: precedence and defaults
 
-Three scopes, most specific wins — and there is a fourth source you did not declare.
+Three scopes, most specific wins, and there is a fourth source you did not declare.
 
 ```yaml
 env:
@@ -218,7 +218,7 @@ GitHub also injects a set of default variables into every step:
     <li>Dump the raw event: <code>jq '.repository.full_name, .ref' "$GITHUB_EVENT_PATH"</code>.</li>
     <li>Re-run the same job and watch <code>GITHUB_RUN_ATTEMPT</code> change.</li>
   </ol>
-  <em>the step-level value wins, and you have found the event payload on disk — often faster to explore with <code>jq</code> than through expressions.</em>
+  <em>the step-level value wins, and you have found the event payload on disk, often faster to explore with <code>jq</code> than through expressions.</em>
 </div>
 
 ## Secrets and variables
@@ -227,7 +227,7 @@ Beginner treated secrets as one thing. There are two kinds, and conflating them 
 
 <div class="guide-compare">
   <div class="guide-compare-col good">
-    <h4>Secrets — <code>${{ secrets.NAME }}</code></h4>
+    <h4>Secrets: <code>${{ secrets.NAME }}</code></h4>
     <ul>
       <li>Encrypted at rest, write-only in the interface</li>
       <li>Masked in logs on a best-effort basis</li>
@@ -236,7 +236,7 @@ Beginner treated secrets as one thing. There are two kinds, and conflating them 
     </ul>
   </div>
   <div class="guide-compare-col bad">
-    <h4>Variables — <code>${{ vars.NAME }}</code></h4>
+    <h4>Variables: <code>${{ vars.NAME }}</code></h4>
     <ul>
       <li>Plain text, readable by anyone with repo access</li>
       <li>Printed normally in logs</li>
@@ -246,7 +246,7 @@ Beginner treated secrets as one thing. There are two kinds, and conflating them 
   </div>
 </div>
 
-Both exist at **three levels**, most specific winning — which is more useful than it first appears:
+Both exist at **three levels**, most specific winning, which is more useful than it first appears:
 
 ```text organisation  →  repository  →  environment
    AWS_REGION=eu-west-1   AWS_REGION=eu-west-2   AWS_REGION=us-east-1
@@ -266,7 +266,7 @@ jobs:
 
 <div class="callout warn">
   <span class="ct">Masking is a safety net, not a mechanism</span>
-  GitHub redacts <b>known</b> secret values from logs. It cannot redact a value you transformed — base64-encode a secret and print it and the redaction fails. Never print secrets, and pass them via <code>env</code> so they never appear in a command line.
+  GitHub redacts <b>known</b> secret values from logs. It cannot redact a value you transformed: base64-encode a secret and print it and the redaction fails. Never print secrets, and pass them via <code>env</code> so they never appear in a command line.
 </div>
 
 <div class="guide-try">
@@ -282,7 +282,7 @@ jobs:
 
 ## Caching: designing the key
 
-Beginner used `cache: pip`. Here is what that one line is doing, and how to build your own.
+Beginner used `cache: pip`. That one line hides a mechanism you can build yourself.
 
 ```yaml
 - uses: actions/cache@v4
@@ -297,10 +297,10 @@ Beginner used `cache: pip`. Here is what that one line is doing, and how to buil
 | Piece | Behaviour |
 |---|---|
 | `key` | **Exact** match. A hit restores and **skips the save** at the end of the job |
-| `restore-keys` | Ordered **prefixes** tried on a miss — a partial hit, still useful |
+| `restore-keys` | Ordered **prefixes** tried on a miss: a partial hit, still useful |
 | `path` | What gets archived. The dependency *cache*, not the installed tree |
 | Immutability | An entry is never overwritten, so the key must change when content should |
-| Scope | Follows the branch graph — a branch reads its own and its base's caches |
+| Scope | Follows the branch graph: a branch reads its own and its base's caches |
 | `cache-hit` | `'true'` **only** on an exact key match |
 
 There are exactly two ways to get this wrong, and they fail in opposite directions:
@@ -317,9 +317,9 @@ There are exactly two ways to get this wrong, and they fail in opposite directio
   <div class="guide-compare-col bad">
     <h4>Keys that waste money</h4>
     <ul>
-      <li><code>github.sha</code> or <code>run_id</code> — misses <b>every</b> run</li>
-      <li>A fixed string — never invalidates, ships <b>stale</b> dependencies</li>
-      <li><code>hashFiles('**')</code> — any source edit busts the dependency cache</li>
+      <li><code>github.sha</code> or <code>run_id</code>: misses <b>every</b> run</li>
+      <li>A fixed string: never invalidates, ships <b>stale</b> dependencies</li>
+      <li><code>hashFiles('**')</code>: any source edit busts the dependency cache</li>
     </ul>
   </div>
 </div>
@@ -362,7 +362,7 @@ There are exactly two ways to get this wrong, and they fail in opposite directio
     <li>Change it to a fixed string like <code>deps-cache</code>, edit your lockfile, and run again.</li>
     <li>Open <b>Actions → Caches</b> and look at what has accumulated.</li>
   </ol>
-  <em>the good key misses then hits. The SHA key misses both times. The fixed key hits even though the lockfile changed — silently shipping stale dependencies. Seeing all three once makes key design obvious forever.</em>
+  <em>the good key misses then hits. The SHA key misses both times. The fixed key hits even though the lockfile changed, shipping stale dependencies with no warning. Seeing all three once makes key design obvious forever.</em>
 </div>
 
 ## Artifacts: retention, collisions, and emptiness
@@ -411,7 +411,7 @@ Downloading is the mirror image, and can reach across runs:
     <li>Fix it by suffixing with <code>${{ matrix.python }}</code>.</li>
     <li>Point <code>path:</code> at a directory that does not exist, first without and then with <code>if-no-files-found: error</code>.</li>
   </ol>
-  <em>the duplicate name produces a conflict error in v4 rather than merging. And the missing path silently succeeds until you add <code>if-no-files-found: error</code> — which is why it belongs on every upload.</em>
+  <em>the duplicate name produces a conflict error in v4 rather than merging. The missing path silently succeeds until you add <code>if-no-files-found: error</code>, which is why it belongs on every upload.</em>
 </div>
 
 ## The job dependency graph
@@ -452,11 +452,11 @@ jobs:
         run: ./notify.sh
 ```
 
-Two things to note. `needs.<job>.result` is `success`, `failure`, `cancelled`, or `skipped` — and a job that `needs` a matrix job sees a **single** aggregated result. And `if: always()` is what lets a reporting job run even when the thing it reports on failed.
+Two things to note. `needs.<job>.result` is `success`, `failure`, `cancelled`, or `skipped`, and a job that `needs` a matrix job sees a **single** aggregated result. `if: always()` is what lets a reporting job run even when the thing it reports on failed.
 
 <div class="callout warn">
   <span class="ct">Job outputs are small and not secret</span>
-  They are size-limited and stored in plain text in the run metadata. Pass identifiers, versions, and JSON manifests — never a credential, and never a file. Files need artifacts.
+  They are size-limited and stored in plain text in the run metadata. Pass identifiers, versions, and JSON manifests, never a credential, and never a file. Files need artifacts.
 </div>
 
 <div class="guide-try">
@@ -466,7 +466,7 @@ Two things to note. `needs.<job>.result` is `success`, `failure`, `cancelled`, o
     <li>Print <code>needs.build.result</code> in the report job.</li>
     <li>Make one matrix cell fail, then re-run and inspect the reported result.</li>
   </ol>
-  <em>the report job runs despite the failure, and <code>needs.build.result</code> is a single aggregated <code>failure</code> for the whole matrix — not one result per cell. That aggregation surprises people the first time they rely on it.</em>
+  <em>the report job runs despite the failure, and <code>needs.build.result</code> is a single aggregated <code>failure</code> for the whole matrix, not one result per cell. That aggregation surprises people the first time they rely on it.</em>
 </div>
 
 ## Matrix in depth
@@ -505,11 +505,11 @@ jobs:
 
 | Setting | Meaning |
 |---|---|
-| Axes | Multiply — 2 OSes × 2 Pythons = 4 jobs |
+| Axes | Multiply: 2 OSes × 2 Pythons = 4 jobs |
 | `include` | Adds a combination, or attaches extra keys to an existing one |
 | `exclude` | Removes a generated combination |
 | `fail-fast` | `true` by default: one failure cancels every sibling |
-| `max-parallel` | Caps concurrent cells — use when they share a database or API quota |
+| `max-parallel` | Caps concurrent cells: use when they share a database or API quota |
 | Ceiling | 256 jobs per workflow run |
 
 <div class="callout warn">
@@ -598,7 +598,7 @@ jobs:
 
 <div class="callout warn">
   <span class="ct">The health check is not decoration</span>
-  Without it the container counts as started the instant Docker returns, so your first test connects before Postgres accepts connections. That is the whole explanation for <b>"fails on the first run, passes on the re-run"</b> — which teams then dismiss as flakiness.
+  Without it the container counts as started the instant Docker returns, so your first test connects before Postgres accepts connections. That is the whole explanation for <b>"fails on the first run, passes on the re-run"</b>, which teams then dismiss as flakiness.
 </div>
 
 <div class="guide-try">
@@ -608,7 +608,7 @@ jobs:
     <li>Run it several times.</li>
     <li>Add the <code>--health-cmd</code> options and run several times again.</li>
   </ol>
-  <em>the first version fails intermittently — the classic "fails on the first run, passes on the re-run". With the health check it never does. You have just reproduced and fixed the most common source of CI flakiness.</em>
+  <em>the first version fails intermittently, the classic "fails on the first run, passes on the re-run". With the health check it never does. You have just reproduced and fixed the most common source of CI flakiness.</em>
 </div>
 
 ## Container jobs
@@ -636,7 +636,7 @@ jobs:
 
 <div class="callout warn">
   <span class="ct">The hostname changes</span>
-  With no <code>container:</code>, services are reachable at <code>localhost</code>. Once the job runs <em>inside</em> a container, they are reachable at the <b>service name</b> — <code>postgres:5432</code>. Moving a job into a container silently breaks every connection string that said <code>localhost</code>.
+  With no <code>container:</code>, services are reachable at <code>localhost</code>. Once the job runs <em>inside</em> a container, they are reachable at the <b>service name</b>: <code>postgres:5432</code>. Moving a job into a container breaks every connection string that said <code>localhost</code>, with no warning.
 </div>
 
 <div class="guide-try">
@@ -646,7 +646,7 @@ jobs:
     <li>Run it without changing the connection string.</li>
     <li>Change <code>localhost</code> to <code>postgres</code> and run again.</li>
   </ol>
-  <em>the first run fails with a connection error even though nothing else changed. That hostname switch is invisible in a diff and costs people an afternoon — now it will cost you nothing.</em>
+  <em>the first run fails with a connection error even though nothing else changed. That hostname switch is invisible in a diff and costs people an afternoon. Now it will cost you nothing.</em>
 </div>
 
 ## Reusable workflows
@@ -721,7 +721,7 @@ jobs:
       - run: echo "coverage ${{ needs.ci.outputs.coverage }}%"
 ```
 
-That doubled path — `my-org/.github/.github/workflows/…` — is correct and surprises everyone exactly once: the first `.github` is the **repository** name, the second is the folder inside it.
+That doubled path, `my-org/.github/.github/workflows/…`, is correct and surprises everyone exactly once: the first `.github` is the **repository** name, the second is the folder inside it.
 
 <div class="guide-try">
   <span class="ct">Try it</span>
@@ -731,7 +731,7 @@ That doubled path — `my-org/.github/.github/workflows/…` — is correct and 
     <li>Add <code>permissions: { contents: read }</code> to the caller and <code>packages: write</code> to the callee, then run it.</li>
     <li>Now pass a secret two ways: explicitly, then with <code>secrets: inherit</code>.</li>
   </ol>
-  <em>the local path form works for practice without publishing anything. The permissions experiment fails — the callee cannot exceed the caller's token, which is the constraint that explains most reusable-workflow permission errors.</em>
+  <em>the local path form works for practice without publishing anything. The permissions experiment fails: the callee cannot exceed the caller's token, which is the constraint that explains most reusable-workflow permission errors.</em>
 </div>
 
 ## Composite actions
@@ -780,7 +780,7 @@ steps:
 
 <div class="guide-compare">
   <div class="guide-compare-col good">
-    <h4>Reusable workflow — job level</h4>
+    <h4>Reusable workflow: job level</h4>
     <ul>
       <li>Brings its own jobs, runners, <code>permissions</code></li>
       <li>Typed <code>inputs</code>, explicit <code>secrets</code>, <code>outputs</code></li>
@@ -789,7 +789,7 @@ steps:
     </ul>
   </div>
   <div class="guide-compare-col bad">
-    <h4>Composite action — step level</h4>
+    <h4>Composite action: step level</h4>
     <ul>
       <li>Runs in the caller's job on the caller's runner</li>
       <li>Cannot define jobs, matrices, or its own runner</li>
@@ -842,7 +842,7 @@ Configured in **Settings → Environments**, an environment gives you:
 
 <div class="callout tip">
   <span class="ct">The right answer to "keep this credential away from CI"</span>
-  Put it on the <b>environment</b>, not the repository. Ordinary test jobs then cannot read it at all, because only a job that declares <code>environment: production</code> — and passed its approval gate — gets it.
+  Put it on the <b>environment</b>, not the repository. Ordinary test jobs then cannot read it at all, because only a job that declares <code>environment: production</code>, and passed its approval gate, gets it.
 </div>
 
 <div class="guide-try">
@@ -853,7 +853,7 @@ Configured in **Settings → Environments**, an environment gives you:
     <li>Watch the job pause, then approve it.</li>
     <li>Add a secret to the environment and try to read it from a job that does <b>not</b> declare the environment.</li>
   </ol>
-  <em>the job waits before its first step and records who approved it. The environment secret is empty in the other job — the mechanism for keeping a production credential away from ordinary CI.</em>
+  <em>the job waits before its first step and records who approved it. The environment secret is empty in the other job, the mechanism for keeping a production credential away from ordinary CI.</em>
 </div>
 
 ## Concurrency
@@ -878,7 +878,7 @@ jobs:
 
 <div class="callout warn">
   <span class="ct">The group key is the whole decision</span>
-  Keyed on <code>github.ref</code> with cancellation you get one run per branch — correct for CI, and every force-push stops wasting a full pipeline. Keyed on an environment <b>without</b> cancellation you get one deploy at a time, queued — correct for CD. Getting these backwards either kills a release halfway through or serialises every pull request behind every other one.
+  Keyed on <code>github.ref</code> with cancellation you get one run per branch, correct for CI, and every force-push stops wasting a full pipeline. Keyed on an environment <b>without</b> cancellation you get one deploy at a time, queued, correct for CD. Getting these backwards either kills a release halfway through or serialises every pull request behind every other one.
 </div>
 
 Because they need different keys, a real pipeline declares both, at different scopes.
@@ -890,7 +890,7 @@ Because they need different keys, a real pipeline declares both, at different sc
     <li>Push twice in quick succession and watch the first run.</li>
     <li>Now add a deploy job with its own group and <code>cancel-in-progress: false</code>, and push twice again.</li>
   </ol>
-  <em>the first CI run is cancelled the moment the second starts — that is the saving. The deploy job instead <b>queues</b>, which is what you want for a release. Seeing both makes the group-key decision concrete.</em>
+  <em>the first CI run is cancelled the moment the second starts. That is the saving. The deploy job instead <b>queues</b>, which is what you want for a release. Seeing both makes the group-key decision concrete.</em>
 </div>
 
 ## Path filters and the required-check trap
@@ -929,7 +929,7 @@ jobs:
     <li>Open a pull request that changes only the README.</li>
     <li>Add the same-named stub workflow and re-open the pull request.</li>
   </ol>
-  <em>the doc-only pull request sits on "Expected — waiting for status" forever, unmergeable, with no error anywhere. The stub reports immediately and unblocks it. Worth causing once on purpose.</em>
+  <em>the doc-only pull request sits on "Expected: waiting for status" forever, unmergeable, with no error anywhere. The stub reports immediately and unblocks it. Worth causing once on purpose.</em>
 </div>
 
 ## Triggers in depth
@@ -981,7 +981,7 @@ curl -X POST \
 |---|---|
 | `pull_request` `types` | Default is `opened`, `synchronize`, `reopened`. Add `ready_for_review`, `labeled` as needed |
 | `schedule` | UTC only, default branch only, and **queued** rather than punctual on busy repositories |
-| `workflow_run` | Runs in the **base** repository context with a writable token — see Senior |
+| `workflow_run` | Runs in the **base** repository context with a writable token: see Senior |
 | `repository_dispatch` | Needs a token with `contents: write`; payload arrives as `client_payload` |
 
 <div class="guide-try">
@@ -991,7 +991,7 @@ curl -X POST \
     <li>Gate the second on <code>github.event.workflow_run.conclusion == 'success'</code>, then make the first one fail.</li>
     <li>Add a <code>repository_dispatch</code> trigger and fire it with the <code>curl</code> command above.</li>
   </ol>
-  <em>the chained workflow runs only after success, and the dispatch fires from outside GitHub entirely. Note the second workflow runs against the <b>default branch</b> version of itself — the detail that matters for security at Senior level.</em>
+  <em>the chained workflow runs only after success, and the dispatch fires from outside GitHub entirely. Note the second workflow runs against the <b>default branch</b> version of itself, the detail that matters for security at Senior level.</em>
 </div>
 
 ## Debugging, one level deeper
@@ -1000,7 +1000,7 @@ curl -X POST \
   <div class="guide-timeline-item"><span>1</span><strong>Read the trigger first</strong><small>Half of "it did not run" is a branch filter, a path filter, or a fork pull request.</small></div>
   <div class="guide-timeline-item"><span>2</span><strong>Dump the context</strong><small><code>run: echo '${{ toJSON(github) }}'</code> answers most "why didn't my condition match" questions in one run.</small></div>
   <div class="guide-timeline-item"><span>3</span><strong>Re-run with debug logging</strong><small>The <b>Re-run</b> menu has a checkbox. Re-run only the failed job for a two-minute answer.</small></div>
-  <div class="guide-timeline-item"><span>4</span><strong>Compare against the last green run</strong><small>The difference is often environmental — runner image version, an action release, a cache hit that became a miss.</small></div>
+  <div class="guide-timeline-item"><span>4</span><strong>Compare against the last green run</strong><small>The difference is often environmental: runner image version, an action release, a cache hit that became a miss.</small></div>
   <div class="guide-timeline-item"><span>5</span><strong>Bypass the cache</strong><small>Delete the entry from the Caches page or change the key. Stale caches produce failures that make no sense against the code.</small></div>
   <div class="guide-timeline-item"><span>6</span><strong>Bisect in a scratch workflow</strong><small>Copy the failing job into its own file with <code>workflow_dispatch</code> and delete half the steps at a time.</small></div>
 </div>
@@ -1024,7 +1024,7 @@ curl -X POST \
     <li>Add the <code>if: failure()</code> diagnostics step and force a failure.</li>
     <li>Delete a cache entry from <b>Actions → Caches</b> and re-run.</li>
   </ol>
-  <em>the event payloads are strikingly different between the two triggers, which explains most condition bugs. And the diagnostics step gives you runner image, ref, and cache state for free on every future failure.</em>
+  <em>the event payloads are strikingly different between the two triggers, which explains most condition bugs. The diagnostics step gives you runner image, ref, and cache state for free on every future failure.</em>
 </div>
 
 ## Putting it all together
@@ -1132,12 +1132,12 @@ jobs:
 ```
 
 <div class="guide-try">
-  <span class="ct">Try it — the one that matters</span>
+  <span class="ct">Try it: the one that matters</span>
   <ol>
     <li>Take this pipeline into a real project and get it green.</li>
     <li>Confirm the concurrency cancellation works by pushing twice quickly.</li>
     <li>Confirm the deploy job pauses for approval and that the report job runs even when something fails.</li>
-    <li>Then remove one safeguard at a time — the health check, the cache key, the unique artifact name — and observe exactly what breaks.</li>
+    <li>Then remove one safeguard at a time (the health check, the cache key, the unique artifact name) and observe what breaks.</li>
   </ol>
   <em>a production-shaped pipeline you built rather than copied, plus first-hand knowledge of what each safeguard prevents. That last step turns this from a recipe into understanding.</em>
 </div>
@@ -1150,10 +1150,10 @@ You can now build a pipeline that is fast, that does not repeat work, that moves
 
 | This level | Senior adds |
 |---|---|
-| Triggers | The **trust model** — which triggers give fork code a privileged token |
+| Triggers | The **trust model**, which triggers give fork code a privileged token |
 | Secrets | OIDC, so there is no stored credential to leak |
 | `permissions` (mentioned only) | Least privilege in full, and why declaring one scope zeroes the rest |
-| Actions you consume | Actions you **author** — composite, JavaScript, Docker |
+| Actions you consume | Actions you **author**: composite, JavaScript, Docker |
 | Reusable workflows | Running them as a versioned platform across sixty repositories |
 | Runners | Self-hosted strategy, ephemerality, and the cost model |
 | Caching | Container layer caching with Buildx, and cache poisoning |

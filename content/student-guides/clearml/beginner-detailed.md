@@ -1,14 +1,14 @@
-This is part one of three. It covers **everything you need to do real work with ClearML** — not a teaser. By the end you can track an experiment without changing your training loop, log metrics and artifacts on purpose, compare twenty runs in a table, version a dataset, clone a run and re-launch it on a GPU box you never SSH into, and answer "what exactly produced this model?" with a task id. Mid-level and Senior take the same topics further; nothing here is thrown away.
+This is part one of three. It covers **everything you need to do real work with ClearML**, not a teaser. By the end you can track an experiment without changing your training loop, log metrics and artifacts on purpose, compare twenty runs in a table, version a dataset, clone a run and re-launch it on a GPU box you never SSH into, and answer "what exactly produced this model?" with a task id. Mid-level and Senior take the same topics further; nothing here is thrown away.
 
-Each section ends with a **Try it** task. Do them as you go — they take a few minutes each, and these ideas only stick once you have watched a scalar appear in the web UI while your script is still running.
+Each section ends with a **Try it** task. Do them as you go. They take a few minutes each, and these ideas only stick once you have watched a scalar appear in the web UI while your script is still running.
 
 ## What ClearML is, and the problem it solves
 
 You trained a model on Tuesday. It scored 0.94. On Thursday you cannot reproduce it. The notebook has moved on, the learning rate in the cell is not the one you ran, the dataset folder has been "cleaned up", and the only record of 0.94 is a screenshot in Slack.
 
-That is not a discipline problem. It is a tooling problem: **nothing was watching.** Every fact about that run lived in your head, your terminal scrollback, and a filename.
+Discipline was never the problem. The tooling was: **nothing was watching.** Every fact about that run lived in your head, your terminal scrollback, and a filename.
 
-ClearML watches. You add two lines to your script and it records the code, the git commit, the uncommitted diff, the installed packages, the command-line arguments, every metric you print to TensorBoard, the model file you saved, and the machine it ran on — into a server you and your team can query.
+ClearML watches. You add two lines to your script and it records the code, the git commit, the uncommitted diff, the installed packages, the command-line arguments, every metric you print to TensorBoard, the model file you saved, and the machine it ran on, all into a server you and your team can query.
 
 <div class="flow">
   <div class="node">YOUR SCRIPT<small>+ 2 lines</small></div>
@@ -20,7 +20,7 @@ ClearML watches. You add two lines to your script and it records the code, the g
   <div class="node">AGENT<small>reruns it anywhere</small></div>
 </div>
 
-**ClearML's central trick is that a recorded run is executable.** Other tools log an experiment so you can look at it. ClearML logs enough — repository, commit, diff, packages, arguments, environment — that a worker can rebuild the environment and run it again on a different machine. That single property is what turns a log into a workflow.
+**ClearML's central trick is that a recorded run is executable.** Other tools log an experiment so you can look at it. ClearML logs enough (repository, commit, diff, packages, arguments, environment) that a worker can rebuild the environment and run it again on a different machine. That single property is what turns a log into a workflow.
 
 That gives you four things, and they are the reason ClearML exists rather than a spreadsheet and a naming convention:
 
@@ -35,16 +35,16 @@ The vocabulary is small, and getting it straight now saves confusion later:
 
 | Term | What it is |
 |---|---|
-| **Task** | One recorded run — an experiment, a dataset version, a pipeline step. The core object |
+| **Task** | One recorded run: an experiment, a dataset version, a pipeline step. The core object |
 | **Project** | A folder of tasks. Supports `/` for nesting, like `research/nlp/ner` |
 | **Server** | The API server, web server, and file server that store and show everything |
 | **Agent** | A worker process that pulls tasks off a queue and executes them |
 | **Queue** | A named, ordered list of tasks waiting for an agent |
-| **Artifact** | Any file or object you attach to a task — a dataframe, a plot, a checkpoint |
+| **Artifact** | Any file or object you attach to a task: a dataframe, a plot, a checkpoint |
 | **Model** | A first-class artifact with its own registry entry, tags, and lineage |
 | **Dataset** | A special task that holds an immutable, versioned collection of files |
 
-You need very little to follow along: Python, a script that trains something small, and a free account on the hosted server. A tiny model on a tiny dataset is genuinely the best place to start, because a broken run costs you thirty seconds.
+You need little to follow along: Python, a script that trains something small, and a free account on the hosted server. A tiny model on a tiny dataset is the best place to start, because a broken run costs you thirty seconds.
 
 <div class="guide-try">
   <span class="ct">Try it</span>
@@ -54,7 +54,7 @@ You need very little to follow along: Python, a script that trains something sma
     <li>Look for the model file it produced and try to name the git commit that trained it.</li>
     <li>Count how many folders on your disk match <code>*_v2*</code>, <code>*_final*</code>, or <code>runs/</code>.</li>
   </ol>
-  <em>at least one of those three questions is unanswerable, and usually all three. That is the gap ClearML fills — and the third one, tying a model file to a commit, is the one that hurts most in a code review six months later.</em>
+  <em>at least one of those three questions is unanswerable, and usually all three. That is the gap ClearML fills, and the third one, tying a model file to a commit, is the one that hurts most in a code review six months later.</em>
 </div>
 
 ## The architecture: four parts, three data stores
@@ -64,27 +64,27 @@ ClearML has more moving pieces than a single library, and knowing which piece do
 <div class="guide-arch" style="--arch-cols:3">
   <div class="arch-lane" style="--lane-cols:1">
     <span class="arch-label">your training process</span>
-    <div class="arch-node" data-kind="entry"><b>SDK — <code>Task.init()</code></b><small>Patches frameworks at import time, records code, diff, packages, args; streams metrics</small></div>
+    <div class="arch-node" data-kind="entry"><b>SDK: <code>Task.init()</code></b><small>Patches frameworks at import time, records code, diff, packages, args; streams metrics</small></div>
   </div>
   <i class="arch-edge" data-dir="down"></i>
   <i class="arch-edge" data-dir="down"></i>
   <i class="arch-edge" data-dir="down" data-flow="optional"></i>
   <div class="arch-lane" style="--lane-cols:3">
-    <span class="arch-label">server — api :8008 · web :8080 · files :8081</span>
+    <span class="arch-label">server: api :8008 · web :8080 · files :8081</span>
     <div class="arch-node" data-kind="store"><b>MongoDB</b><small>Task metadata: params, status, queues. "Task list is slow" lives here</small></div>
-    <div class="arch-node" data-kind="store"><b>Elasticsearch</b><small>Metrics and console logs. "Scalars are slow" — and it fills up first</small></div>
+    <div class="arch-node" data-kind="store"><b>Elasticsearch</b><small>Metrics and console logs. "Scalars are slow", and it fills up first</small></div>
     <div class="arch-node" data-kind="store"><b>Redis</b><small>Ephemeral worker state and locks</small></div>
   </div>
   <i class="arch-edge" data-dir="down"></i>
   <i class="arch-edge" data-dir="down"></i>
   <i class="arch-edge" data-dir="down"></i>
   <div class="arch-lane" style="--lane-cols:3">
-    <span class="arch-label">execution — optional, and the half people find confusing</span>
+    <span class="arch-label">execution: optional, and the half people find confusing</span>
     <div class="arch-node"><b>Queue</b><small>A named, ordered list. A task sits here until an agent claims it</small></div>
     <div class="arch-node" data-kind="worker"><b>Agent</b><small>Rebuilds the env, clones the commit, applies the diff, runs the entry point</small></div>
-    <div class="arch-node" data-kind="external"><b>Artifact storage</b><small>File server, or S3 via <code>output_uri</code> — use S3 for anything large</small></div>
+    <div class="arch-node" data-kind="external"><b>Artifact storage</b><small>File server, or S3 via <code>output_uri</code>: use S3 for anything large</small></div>
   </div>
-  <p class="arch-note"><b>Learn the top two lanes first.</b> Tracking needs no agent anywhere: install the SDK, run your script, get a full record. The bottom lane is the second half of the story — <em>re-executing</em> a recorded run elsewhere — and trying to learn both at once is why people find ClearML complicated.</p>
+  <p class="arch-note"><b>Learn the top two lanes first.</b> Tracking needs no agent anywhere: install the SDK, run your script, get a full record. The bottom lane is the second half of the story, <em>re-executing</em> a recorded run elsewhere, and trying to learn both at once is why people find ClearML complicated.</p>
 </div>
 
 | Part | What it does | Where it runs |
@@ -113,20 +113,20 @@ You have two options for the server, and for learning there is only one sensible
     <ul>
       <li>Docker Compose or Kubernetes, plus Mongo, Elasticsearch, Redis</li>
       <li>You own backups, upgrades, storage, and access control</li>
-      <li>Necessary when data cannot leave your network — Senior covers it</li>
+      <li>Necessary when data cannot leave your network; Senior covers it</li>
     </ul>
   </div>
 </div>
 
 <div class="callout note">
   <span class="ct">The agent is where the confusion usually is</span>
-  Nothing about tracking requires an agent. You can install the SDK, run your script, and get full tracking with no worker anywhere. The agent is for the second half of the story — <em>re-executing</em> a recorded run somewhere else. Learn tracking first, then add the agent; trying to learn both at once is why people find ClearML complicated.
+  Nothing about tracking requires an agent. You can install the SDK, run your script, and get full tracking with no worker anywhere. The agent is for the second half of the story: <em>re-executing</em> a recorded run somewhere else. Learn tracking first, then add the agent; trying to learn both at once is why people find ClearML complicated.
 </div>
 
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
-    <li>Sign up at the hosted server and open the Workers &amp; Queues page. Note that it is empty — nothing needs an agent yet.</li>
+    <li>Sign up at the hosted server and open the Workers &amp; Queues page. It is empty. Nothing needs an agent yet.</li>
     <li>Open Settings &rarr; Workspace and find the "Create new credentials" button. Do not click it yet.</li>
     <li>Sketch the four parts above from memory and label which one your training script talks to.</li>
   </ol>
@@ -156,7 +156,7 @@ api {
 }
 ```
 
-That gets written to `~/clearml.conf` — a large, heavily commented file that is worth skimming once. The four lines that matter today:
+That gets written to `~/clearml.conf`, a large, heavily commented file worth skimming once. The four lines that matter today:
 
 | Setting | Means |
 |---|---|
@@ -195,14 +195,14 @@ python -c "from clearml import Task; print(Task.get_projects()[:3])"
     <li>Run the one-line Python check above and confirm you get a list back rather than an authentication error.</li>
     <li>Add <code>clearml.conf</code> to your global gitignore right now: <code>echo "clearml.conf" &gt;&gt; ~/.gitignore_global</code>.</li>
   </ol>
-  <em>a working connection and a config file you have actually looked at. That last step takes five seconds and prevents the most common ClearML security incident, which is a credentials block committed to a public repository.</em>
+  <em>a working connection and a config file you have looked at. That last step takes five seconds and prevents the most common ClearML security incident, which is a credentials block committed to a public repository.</em>
 </div>
 
 ## Your first tracked task, in two lines
 
-This is the whole beginner story in two lines. Here is a script with no ClearML in it:
+This is the whole beginner story in two lines. Start from a script with no ClearML in it:
 
-```python train.py — before
+```python train.py (before)
 import numpy as np
 from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestClassifier
@@ -219,9 +219,9 @@ model.fit(X_train, y_train)
 print("accuracy", model.score(X_test, y_test))
 ```
 
-And here it is tracked:
+Here it is tracked:
 
-```python train.py — after
+```python train.py (after)
 from clearml import Task
 
 task = Task.init(project_name="iris-demo", task_name="random forest baseline")
@@ -255,9 +255,9 @@ Open that link while the script is still running and you are watching the consol
 
 <ol class="guide-steps">
   <li><b>A task was created</b>With an id, a project, a name, a status of <code>running</code>, and a start time.</li>
-  <li><b>Your environment was recorded</b>Git remote, branch, commit, the diff of your uncommitted changes, and the installed packages the script actually imported.</li>
+  <li><b>Your environment was recorded</b>Git remote, branch, commit, the diff of your uncommitted changes, and the installed packages the script imported.</li>
   <li><b>Your stdout and stderr were captured</b>Streamed to the server, so the console tab is a live log you can read from your phone.</li>
-  <li><b>Your parameters were registered</b>Because you passed that dict through <code>task.connect</code>, they are now editable in the UI — which is what makes the run re-launchable.</li>
+  <li><b>Your parameters were registered</b>Because you passed that dict through <code>task.connect</code>, they are now editable in the UI, which is what makes the run re-launchable.</li>
 </ol>
 
 <div class="callout warn">
@@ -273,7 +273,7 @@ Open that link while the script is still running and you are watching the consol
     <li>Under Execution, find the git commit and the "uncommitted changes" section. Make an unrelated edit to the file, rerun, and look again.</li>
     <li>Under Configuration &rarr; Hyperparameters, confirm <code>n_estimators</code> and <code>max_depth</code> are listed with their values.</li>
   </ol>
-  <em>the uncommitted diff is the surprise. ClearML stores the patch of your dirty working tree so a run from an uncommitted state is still reproducible — which is enormously useful and, as Senior covers, a place secrets can leak if you are careless.</em>
+  <em>the uncommitted diff is the surprise. ClearML stores the patch of your dirty working tree so a run from an uncommitted state is still reproducible, which is enormously useful and, as Senior covers, a place secrets can leak if you are careless.</em>
 </div>
 
 ## What gets captured automatically, and what does not
@@ -337,7 +337,7 @@ task = Task.init(
     <li>Add an <code>argparse</code> flag, pass a value on the command line, and find it under Configuration &rarr; Hyperparameters &rarr; Args.</li>
     <li>Now move <code>Task.init</code> to the bottom of the imports, rerun, and compare what was captured.</li>
   </ol>
-  <em>the same curves with zero logging code — and, in step four, missing or partial scalars. That last experiment is worth doing once so the "init first" rule becomes muscle memory rather than a thing you read.</em>
+  <em>the same curves with zero logging code, and, in step four, missing or partial scalars. Run that last experiment once and the "init first" rule becomes muscle memory rather than a thing you read.</em>
 </div>
 
 ## Logging on purpose: the Logger
@@ -374,7 +374,7 @@ The `title` / `series` distinction is the one people get wrong, and it decides w
 | `title` | The name of the **plot** | One chart per title |
 | `series` | A **line within** that plot | Multiple lines on one chart |
 
-So `title="loss"` with `series="train"` and `series="val"` gives you one chart with two lines — which is what you want. Using `title="train_loss"` and `title="val_loss"` gives you two separate charts you cannot visually compare, which is not.
+So `title="loss"` with `series="train"` and `series="val"` gives you one chart with two lines, which is what you want. Using `title="train_loss"` and `title="val_loss"` gives you two separate charts you cannot visually compare, which is not.
 
 <div class="callout tip">
   <span class="ct"><code>report_single_value</code> is what shows up in comparison tables</span>
@@ -414,12 +414,12 @@ logger.report_single_value("params_millions", count_params(model) / 1e6)
     <li>Add two <code>report_single_value</code> calls and find them under the Scalars tab's single-value section.</li>
     <li>Report a matplotlib figure and confirm it appears under Plots, interactive rather than as a flat image.</li>
   </ol>
-  <em>a Scalars tab you can actually read. The title/series experiment in steps one and two takes two minutes and permanently fixes the most common ClearML plotting mistake.</em>
+  <em>a Scalars tab you can read. The title/series experiment in steps one and two takes two minutes and permanently fixes the most common ClearML plotting mistake.</em>
 </div>
 
 ## Hyperparameters: the editable surface of a task
 
-Parameters are not just a record. In ClearML they are the **editable surface of a task** — the thing you change when you clone a run and re-launch it. That is why how you register them matters more than it looks.
+Parameters are not just a record. In ClearML they are the **editable surface of a task**, the thing you change when you clone a run and re-launch it. That is why how you register them matters more than it looks.
 
 Three mechanisms, for three shapes of configuration:
 
@@ -467,7 +467,7 @@ train(lr=params["lr"])          # runs with 1e-3, no code change
     <li>Connect a dict of three hyperparameters and run the script.</li>
     <li>In the UI, open Configuration &rarr; Hyperparameters and confirm all three are there and editable.</li>
     <li>Add a YAML file with <code>connect_configuration</code> and find it under Configuration &rarr; Configuration Objects.</li>
-    <li>Deliberately read from your original literal instead of the returned dict, and note that nothing breaks <em>yet</em> — the failure only appears once an agent runs a clone.</li>
+    <li>Deliberately read from your original literal instead of the returned dict, and note that nothing breaks <em>yet</em>. The failure only appears once an agent runs a clone.</li>
   </ol>
   <em>a fully editable configuration surface. Step four is the trap: the bug is invisible locally and only surfaces when someone re-launches your task with different values, which is the worst possible time to find it.</em>
 </div>
@@ -491,7 +491,7 @@ task.upload_artifact("vocab", artifact_object=vocab_dict)
 task.upload_artifact("embeddings", artifact_object=embeddings)
 ```
 
-And reading them back from another script is the part that makes them useful:
+Reading them back from another script is the part that makes them useful:
 
 ```python consumer.py
 from clearml import Task
@@ -512,7 +512,7 @@ path = producer.artifacts["report"].get_local_copy()       # downloaded file pat
 
 <div class="callout warn">
   <span class="ct">Artifacts go to the file server by default, and it is not object storage</span>
-  Without an <code>output_uri</code>, everything you upload lands on the ClearML file server. That is fine for reports and dataframes and wrong for 40 GB of checkpoints — the hosted tier has a quota, and a self-hosted file server is a disk you have to manage. Point <code>output_uri</code> at S3 for anything large.
+  Without an <code>output_uri</code>, everything you upload lands on the ClearML file server. That is fine for reports and dataframes and wrong for 40 GB of checkpoints. The hosted tier has a quota, and a self-hosted file server is a disk you have to manage. Point <code>output_uri</code> at S3 for anything large.
 </div>
 
 ```python
@@ -524,12 +524,12 @@ task = Task.init(project_name="vision", task_name="run", output_uri="s3://my-buc
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
-    <li>Upload a small DataFrame as an artifact and open it in the UI's Artifacts tab — note the inline preview.</li>
+    <li>Upload a small DataFrame as an artifact and open it in the UI's Artifacts tab, then note the inline preview.</li>
     <li>Upload a folder and confirm it arrives as a single zip.</li>
     <li>Write a second script that fetches the task by name and calls <code>.get()</code> on the dataframe artifact.</li>
-    <li>Check the artifact's URL in the UI and see which server it actually landed on.</li>
+    <li>Check the artifact's URL in the UI and see which server it landed on.</li>
   </ol>
-  <em>a preview you can read without downloading, and — in step three — data flowing between two runs with no shared filesystem. That is the mechanism pipelines are built on, so it is worth doing by hand once before you meet the abstraction.</em>
+  <em>a preview you can read without downloading, and, in step three, data flowing between two runs with no shared filesystem. That is the mechanism pipelines are built on, so it is worth doing by hand once before you meet the abstraction.</em>
 </div>
 
 ## Models and the registry: weights with provenance
@@ -554,7 +554,7 @@ output_model.update_design(config_dict={"arch": "resnet18", "classes": 10})
 output_model.tags = ["baseline", "candidate"]
 ```
 
-And loading one back, which is the half that makes a registry a registry:
+Loading one back, which is the half that makes a registry a registry:
 
 ```python serve.py
 from clearml import InputModel
@@ -589,7 +589,7 @@ The lifecycle is deliberately simple at this level:
     <li>Tag it <code>candidate</code>, then write a script that loads it with <code>InputModel(..., tags=["candidate"])</code> and prints the local path.</li>
     <li>Publish it, then try to change its tags or weights.</li>
   </ol>
-  <em>a model whose provenance is one click from the weights, and a loader that names an intent rather than a path. Step four shows you what "published" actually enforces, which is worth knowing before you rely on it as a promotion gate.</em>
+  <em>a model whose provenance is one click from the weights, and a loader that names an intent rather than a path. Step four shows you what "published" enforces, which is worth knowing before you rely on it as a promotion gate.</em>
 </div>
 
 ## Datasets: immutable, incremental versions
@@ -625,7 +625,7 @@ path = Dataset.get(dataset_project="datasets", dataset_name="iris", alias="train
 df = pd.read_csv(f"{path}/train.csv")
 ```
 
-`get_local_copy()` downloads once and caches. Call it again on the same machine and it returns the cached path immediately. The `alias` argument is quietly important: it records the dataset id into the consuming task's parameters, so the experiment's Configuration tab names the exact data version it used.
+`get_local_copy()` downloads once and caches. Call it again on the same machine and it returns the cached path immediately. The `alias` argument is important: it records the dataset id into the consuming task's parameters, so the experiment's Configuration tab names the exact data version it used.
 
 Versions are **incremental** rather than full copies, which is what makes them cheap:
 
@@ -662,8 +662,8 @@ child.finalize()
 | Compare versions | `Dataset.squash`, or the UI's version tree |
 
 <div class="callout warn">
-  <span class="ct">A finalized dataset cannot be changed — and that is the feature</span>
-  Once you call <code>finalize()</code>, that version is sealed. To change anything you create a child version. This is deliberate: an experiment that says "trained on iris 1.1.0" is worthless if 1.1.0 can be edited afterwards. If you find yourself wanting to mutate a finalized version, what you actually want is a new child.
+  <span class="ct">A finalized dataset cannot be changed, and that is the feature</span>
+  Once you call <code>finalize()</code>, that version is sealed. To change anything you create a child version. This is deliberate: an experiment that says "trained on iris 1.1.0" is worthless if 1.1.0 can be edited afterwards. If you find yourself wanting to mutate a finalized version, what you want is a new child.
 </div>
 
 <div class="callout tip">
@@ -679,7 +679,7 @@ child.finalize()
     <li>Fetch it in a training script with an <code>alias</code>, then check the training task's Configuration tab for the recorded dataset id.</li>
     <li>Run the same fetch twice and compare the wall-clock time.</li>
   </ol>
-  <em>a delta upload rather than a full copy, an instant second fetch from cache, and — the important one — a training task that records exactly which data version it read. That recorded id is the difference between "trained on the customer data" and a reproducible claim.</em>
+  <em>a delta upload rather than a full copy, an instant second fetch from cache, and, the important one, a training task that records which data version it read. That recorded id is the difference between "trained on the customer data" and a reproducible claim.</em>
 </div>
 
 ## Comparing experiments: table, chart, and code
@@ -702,9 +702,9 @@ The compare view has three tabs, and each answers a different question:
   <div class="guide-compare-col good">
     <h4>What you use it for</h4>
     <ul>
-      <li><b>Details</b> — a diff of hyperparameters, packages, and even the code</li>
-      <li><b>Scalars</b> — all runs' curves overlaid on one chart</li>
-      <li><b>Plots</b> — side-by-side confusion matrices and custom figures</li>
+      <li><b>Details</b>: a diff of hyperparameters, packages, and even the code</li>
+      <li><b>Scalars</b>: all runs' curves overlaid on one chart</li>
+      <li><b>Plots</b>: side-by-side confusion matrices and custom figures</li>
     </ul>
   </div>
   <div class="guide-compare-col bad">
@@ -737,8 +737,8 @@ print("best:", best.id, best.name)
 ```
 
 <div class="callout tip">
-  <span class="ct">Tags are your only real organisation tool — use them from day one</span>
-  Projects are folders; tags are cross-cutting. <code>baseline</code>, <code>ablation</code>, <code>broken</code>, <code>paper-v2</code>, <code>candidate</code> — these are what make a table of four hundred runs navigable a month later. Add them in code with <code>task.add_tags([...])</code> so they are never forgotten.
+  <span class="ct">Tags are your only real organisation tool: use them from day one</span>
+  Projects are folders; tags are cross-cutting. <code>baseline</code>, <code>ablation</code>, <code>broken</code>, <code>paper-v2</code>, <code>candidate</code>. These are what make a table of four hundred runs navigable a month later. Add them in code with <code>task.add_tags([...])</code> so they are never forgotten.
 </div>
 
 <div class="guide-try">
@@ -754,7 +754,7 @@ print("best:", best.id, best.name)
 
 ## Agents and queues: running a task elsewhere
 
-Everything so far worked with no worker anywhere. This section is the second half of ClearML: taking a recorded run and executing it somewhere else.
+Everything so far worked with no worker anywhere. The second half of ClearML takes a recorded run and executes it somewhere else.
 
 An **agent** is a process that watches a **queue**. When a task is enqueued, the agent claims it, rebuilds its environment from the recorded packages, clones the recorded git commit, applies the recorded diff, and runs the recorded entry point.
 
@@ -783,12 +783,12 @@ clearml-agent daemon --queue gpu --docker nvidia/cuda:12.1.0-runtime-ubuntu22.04
   <div class="node">AGENT<small>rebuilds and runs</small></div>
 </div>
 
-The everyday loop, and it is genuinely this short:
+The everyday loop, and it is this short:
 
 <ol class="guide-steps">
   <li><b>Right-click a completed task → Clone</b>You get an identical task in <code>draft</code> status. The original is untouched; a completed task is read-only.</li>
   <li><b>Edit whatever you want</b>Hyperparameters, the docker image, the git branch, even the entry-point arguments. All editable while in draft.</li>
-  <li><b>Enqueue it, choosing a queue</b>The task moves to <code>queued</code>. If no agent watches that queue it simply waits, which is a normal state and not an error.</li>
+  <li><b>Enqueue it, choosing a queue</b>The task moves to <code>queued</code>. If no agent watches that queue it waits, which is a normal state and not an error.</li>
   <li><b>The agent picks it up</b>Creates a virtualenv (or container), installs the recorded packages, clones the commit, applies the diff, runs the script.</li>
   <li><b>Watch it in the Console tab</b>Identical experience to a local run, on hardware you never logged into.</li>
 </ol>
@@ -835,7 +835,7 @@ Run that on your laptop and it takes two seconds: it registers the task, uploads
     <li>Add <code>task.execute_remotely(queue_name="default")</code> to your script and run it. Note how fast the local process exits.</li>
     <li>Now enqueue a task whose commit you have not pushed, and read the failure.</li>
   </ol>
-  <em>a run you launched without touching a terminal on the executing machine. Running the agent on your own laptop first is the trick that makes this concrete — you can watch both halves at once, and step five teaches you the one error you will otherwise spend an hour on.</em>
+  <em>a run you launched without touching a terminal on the executing machine. Running the agent on your own laptop first is the trick that makes this concrete. You can watch both halves at once, and step five teaches you the one error you will otherwise spend an hour on.</em>
 </div>
 
 ## Your first pipeline: tasks that create tasks
@@ -874,7 +874,7 @@ if __name__ == "__main__":
     main()
 ```
 
-Three things in there are worth reading twice. **Each component becomes its own task** with its own console log, metrics, and artifacts. **`execution_queue` is per component**, so the CPU preprocessing and the GPU training run on different hardware without you orchestrating anything. And **the graph is inferred from the data flow** — `train` depends on `prepare` because it consumes its return value, not because you declared an edge.
+Three things in there matter. **Each component becomes its own task** with its own console log, metrics, and artifacts. **`execution_queue` is per component**, so the CPU preprocessing and the GPU training run on different hardware without you orchestrating anything. **The graph is inferred from the data flow**: `train` depends on `prepare` because it consumes its return value, not because you declared an edge.
 
 | Style | Use when |
 |---|---|
@@ -882,7 +882,7 @@ Three things in there are worth reading twice. **Each component becomes its own 
 | `PipelineController` with `add_function_step` | You want explicit steps and parameters |
 | `PipelineController` with `add_step` | Steps are **existing tasks** you clone by id or name |
 
-The last one is the one that shows what ClearML is really doing:
+The last one is the one that shows what ClearML is doing:
 
 ```python controller.py
 from clearml import PipelineController
@@ -901,7 +901,7 @@ pipe.add_step(
 pipe.start(queue="services")
 ```
 
-A pipeline step here is literally "clone this existing task, override these parameters, run it". Nothing new is invented — it is the clone-and-enqueue loop from the previous section, expressed as a graph.
+A pipeline step here is literally "clone this existing task, override these parameters, run it". Nothing new is invented. It is the clone-and-enqueue loop from the previous section, expressed as a graph.
 
 <div class="callout tip">
   <span class="ct"><code>run_locally()</code> first, always</span>
@@ -916,7 +916,7 @@ A pipeline step here is literally "clone this existing task, override these para
     <li>Open the pipeline task's Results &rarr; Pipeline tab and read the DAG it drew.</li>
     <li>Rerun the pipeline unchanged and watch the <code>cache=True</code> component get skipped.</li>
   </ol>
-  <em>a DAG you never drew and, in step four, a skipped step. Caching keys on the component's code and inputs, so an unchanged step is reused — which is what makes iterating on the last step of a long pipeline bearable.</em>
+  <em>a DAG you never drew and, in step four, a skipped step. Caching keys on the component's code and inputs, so an unchanged step is reused, which is what makes iterating on the last step of a long pipeline bearable.</em>
 </div>
 
 ## Reading a failed task, in order
@@ -954,19 +954,19 @@ t.mark_stopped()                           # abort a stuck run
 ```
 
 <div class="guide-try">
-  <span class="ct">Try it — cause each failure on purpose</span>
+  <span class="ct">Try it: cause each failure on purpose</span>
   <ol>
     <li>Move <code>Task.init</code> below your framework imports and confirm the scalars go missing.</li>
     <li>Enqueue a task to a queue name that does not exist and watch it sit in <code>queued</code>.</li>
     <li>Import a package inside a function only, then run the task on an agent and read the <code>ImportError</code>.</li>
     <li>For each one, get to the diagnosis using only the UI tabs in the order above.</li>
   </ol>
-  <em>three recognisable failures, two of which are silent rather than loud. The lazy-import one in step three is the sneakiest: it works perfectly on your machine and fails only on the agent, because only your machine already had the package.</em>
+  <em>three recognisable failures, two of which are silent rather than loud. The lazy-import one in step three is the sneakiest: it works on your machine and fails only on the agent, because only your machine already had the package.</em>
 </div>
 
 ## Putting it all together
 
-Everything above in one project. Nothing here is new — read it as a whole and you should be able to justify every line.
+Everything above in one project. Nothing here is new. Read it as a whole and you should be able to justify every line.
 
 ```text project layout
 .
@@ -1094,9 +1094,9 @@ Eleven decisions in there are the whole lesson of this page:
 | Weights registered as a model, with a tag | Models and the registry |
 
 <div class="guide-try">
-  <span class="ct">Try it — the one that matters</span>
+  <span class="ct">Try it: the one that matters</span>
   <ol>
-    <li>Take this structure into a project you actually work on, adapting the training body to your own code.</li>
+    <li>Take this structure into a project you work on, adapting the training body to your own code.</li>
     <li>Get one tracked run green locally, with scalars, a single value, an artifact, and a registered model.</li>
     <li>Version your input data as a ClearML Dataset and consume it with an <code>alias</code>.</li>
     <li>Start an agent, then clone your run in the UI, change one hyperparameter, and enqueue it. Do not touch the terminal on the executing machine.</li>
@@ -1107,24 +1107,24 @@ Eleven decisions in there are the whole lesson of this page:
 
 ## What you can now do, and what comes next
 
-You can track an experiment with two lines, log metrics and artifacts deliberately, register and query models, version datasets incrementally, compare dozens of runs in a table and in code, clone a run and re-launch it on other hardware without SSH, chain runs into a cached pipeline, and diagnose a failed task in a fixed order. That is a working practitioner's toolkit — enough to own the experiment-tracking and reproducibility story on a real project.
+You can track an experiment with two lines, log metrics and artifacts deliberately, register and query models, version datasets incrementally, compare dozens of runs in a table and in code, clone a run and re-launch it on other hardware without SSH, chain runs into a cached pipeline, and diagnose a failed task in a fixed order. That is a working practitioner's toolkit, enough to own the experiment-tracking and reproducibility story on a real project.
 
 | Can you… | |
 |---|---|
-| Say what a Task actually is? | One recorded, re-executable run |
+| Say what a Task is? | One recorded, re-executable run |
 | Name the four parts of ClearML? | SDK, API/web/file server, agent, queue |
 | Say why `Task.init` goes first? | It patches frameworks at import time |
 | List what is captured automatically? | Code, diff, packages, args, TB metrics, models, console |
 | Explain `title` versus `series`? | One chart per title, one line per series |
 | Say when to use `report_single_value`? | Facts about the run, for comparison columns |
 | Explain why `connect` is bidirectional? | Local upload; on an agent, download and override |
-| Say where artifacts go by default? | The file server — set `output_uri` for anything large |
+| Say where artifacts go by default? | The file server: set `output_uri` for anything large |
 | Name the two dataset fetch modes? | `get_local_copy` cached, `get_mutable_local_copy` fresh |
 | Say what an agent does with a queued task? | Rebuilds env, clones commit, applies diff, runs it |
 | Explain what `execute_remotely` does? | Registers and enqueues, then exits locally |
 | Name the first tab to open on a failure? | Console, then Execution |
 
-**Mid-level takes every one of those topics further** — hyperparameter optimisation with `HyperParameterOptimizer` and Optuna, task types and the services queue, agent modes and caching in depth, docker mode and `clearml-task` for launching unmodified code, remote debugging with `clearml-session`, dataset internals and squashing, the model registry as a promotion workflow, ClearML Serving, autoscalers, reports, and the CI patterns that make a training run a pull-request check.
+**Mid-level takes every one of those topics further:** hyperparameter optimisation with `HyperParameterOptimizer` and Optuna, task types and the services queue, agent modes and caching in depth, docker mode and `clearml-task` for launching unmodified code, remote debugging with `clearml-session`, dataset internals and squashing, the model registry as a promotion workflow, ClearML Serving, autoscalers, reports, and the CI patterns that make a training run a pull-request check.
 
 **Senior then covers what you own when ClearML is your team's platform**: the self-hosted deployment and its three data stores, the access and credential model, multi-tenancy across teams, storage cost and retention, Elasticsearch and MongoDB scaling, upgrade and backup procedure, audit and lineage for regulated work, GPU fleet economics, incident playbooks, and where ClearML stops and a feature store, a data warehouse, or a dedicated serving stack begins.
 

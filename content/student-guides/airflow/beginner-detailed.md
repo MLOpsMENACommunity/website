@@ -1,6 +1,6 @@
-This is part one of three. It covers **everything you need to do real work with Airflow** — not a teaser. By the end you can write a DAG, schedule it, pass data between tasks, retry failures sensibly, connect to a database, backfill history, and read the interface well enough to debug a red run. Mid-level and Senior take the same topics further; nothing here is thrown away.
+This is part one of three. It covers **everything you need to do real work with Airflow**, not a teaser. By the end you can write a DAG, schedule it, pass data between tasks, retry failures sensibly, connect to a database, backfill history, and read the interface well enough to debug a red run. Mid-level and Senior take the same topics further; nothing here is thrown away.
 
-Each section ends with a **Try it** task. Do them as you go — they take a few minutes each, and these concepts only stick once you have watched your own DAG turn green, then deliberately red.
+Each section ends with a **Try it** task. Do them as you go. They take a few minutes each, and these concepts only stick once you have watched your own DAG turn green, then deliberately red.
 
 ## What Airflow is, and the problem it solves
 
@@ -16,33 +16,33 @@ Airflow is a platform for **writing, scheduling, and monitoring workflows in Pyt
   <div class="node">UI<small>green or red</small></div>
 </div>
 
-That is genuinely the whole idea. The reason it matters is what it replaces.
+The diagram is the whole idea. Compare it to what came before.
 
 Before this, a data pipeline was a chain of cron jobs. `0 2 * * * /opt/etl/extract.sh` at 2am, then `0 3 * * * /opt/etl/transform.sh` at 3am, and a hope that extract finished within the hour. When it did not, transform ran on yesterday's data and nobody noticed until a dashboard looked wrong on Thursday. There was no dependency graph, no retry, no history, and no answer to "did last Tuesday's run succeed?" other than grepping logs on whichever box happened to have them.
 
 **Airflow replaces the hope with a dependency graph.** Transform does not run at 3am; it runs when extract has succeeded. If extract fails, transform does not run at all, and you get told.
 
-Two consequences of the design shape everything else in this guide, so notice them now rather than discovering them later.
+Two consequences of the design explain most of what follows. Notice them now rather than discovering them later.
 
-**Workflows are Python files.** That means your pipeline is versioned, reviewed, and diffed like any other code — and it also means Airflow *executes* your file to discover the DAG, which has consequences for performance and safety that we come back to repeatedly.
+**Workflows are Python files.** That means your pipeline is versioned, reviewed, and diffed like any other code, and it also means Airflow *executes* your file to discover the DAG, which has consequences for performance and safety that we come back to repeatedly.
 
 **Airflow is an orchestrator, not a compute engine.** It decides *what* runs and *when*, and it is deliberately bad at processing data itself. A task that loads a 40 GB dataframe into the worker's memory is a misuse; a task that tells Spark or BigQuery or dbt to do that work is correct. This distinction separates people who have operated Airflow from people who have only read about it.
 
-What people actually use it for:
+What people use it for:
 
 <div class="cards">
-  <div class="card"><div class="icon">🔄</div><h4>ETL and ELT</h4><p>Extract from sources, load into a warehouse, transform — on a schedule, in dependency order, with retries.</p></div>
+  <div class="card"><div class="icon">🔄</div><h4>ETL and ELT</h4><p>Extract from sources, load into a warehouse, transform. All on a schedule, in dependency order, with retries.</p></div>
   <div class="card"><div class="icon">🤖</div><h4>ML pipelines</h4><p>Feature builds, scheduled retraining, batch inference, and the checks that gate a model release.</p></div>
   <div class="card"><div class="icon">📊</div><h4>Reporting</h4><p>Nightly aggregations that must complete before people arrive, with alerting when they do not.</p></div>
   <div class="card"><div class="icon">🧹</div><h4>Operational chores</h4><p>Backups, cleanups, data-quality checks, and anything currently living in a forgotten crontab.</p></div>
 </div>
 
-You need remarkably little to follow along: Python, Docker, and a terminal. The official Docker Compose setup gets you a working Airflow in about five minutes, and a DAG with three `EmptyOperator` tasks is enough to learn the whole scheduling model.
+You need little to follow along: Python, Docker, and a terminal. The official Docker Compose setup gets you a working Airflow in about five minutes, and a DAG with three `EmptyOperator` tasks is enough to learn the whole scheduling model.
 
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
-    <li>Find a scheduled job you or your team depend on — a cron entry, a Jenkins job, a scheduled notebook.</li>
+    <li>Find a scheduled job you or your team depend on: a cron entry, a Jenkins job, a scheduled notebook.</li>
     <li>Write down what happens if it fails at 2am. Who finds out, and how long does it take?</li>
     <li>Write down what happens to the job that runs after it.</li>
   </ol>
@@ -64,7 +64,7 @@ You will hit error messages that only make sense if you know which component is 
 <div class="guide-arch" style="--arch-cols:3">
   <div class="arch-lane" style="--lane-cols:1">
     <span class="arch-label">what you write</span>
-    <div class="arch-node" data-kind="entry"><b><code>dags/</code> — plain Python files</b><small>Re-parsed every ~30s. The scheduler <em>executes</em> each file to find DAG objects</small></div>
+    <div class="arch-node" data-kind="entry"><b><code>dags/</code>: plain Python files</b><small>Re-parsed every ~30s. The scheduler <em>executes</em> each file to find DAG objects</small></div>
   </div>
   <i class="arch-edge" data-dir="down"></i>
   <i class="arch-edge" data-dir="down"></i>
@@ -84,14 +84,14 @@ You will hit error messages that only make sense if you know which component is 
     <div class="arch-node" data-kind="worker"><b>Worker</b><small>Runs your task code. Failures and OOM kills happen here</small></div>
     <div class="arch-node" data-kind="external"><b>Triggerer</b><small>Deferred tasks. Ignore it until Mid level</small></div>
   </div>
-  <p class="arch-note"><b>Two facts to carry forward:</b> the scheduler executes your DAG files continuously, so slow top-level code slows the entire scheduler — and the database, not the file, records what happened. When the UI shows a task your file no longer defines, both are correct; they answer different questions.</p>
+  <p class="arch-note"><b>Two facts to carry forward:</b> the scheduler executes your DAG files continuously, so slow top-level code slows the entire scheduler, and the database, not the file, records what happened. When the UI shows a task your file no longer defines, both are correct; they answer different questions.</p>
 </div>
 
 Two things about this picture matter immediately.
 
-**The scheduler re-reads your DAG files continuously.** By default every thirty seconds it scans the folder for changes, and it *executes* each file to find DAG objects. Slow top-level code therefore slows down the whole scheduler, which is the single most common cause of "why is Airflow so sluggish" — and the reason for a rule we will state properly in a moment.
+**The scheduler re-reads your DAG files continuously.** By default every thirty seconds it scans the folder for changes, and it *executes* each file to find DAG objects. Slow top-level code therefore slows down the whole scheduler, which is the single most common cause of "why is Airflow so sluggish", and the reason for a rule we will state properly in a moment.
 
-**The metadata database is the source of truth, not your DAG file.** The file says what *should* exist; the database records what *did* happen. When the UI shows a task as failed and your file no longer contains that task, both are correct — they are answering different questions.
+**The metadata database is the source of truth, not your DAG file.** The file says what *should* exist; the database records what *did* happen. When the UI shows a task as failed and your file no longer contains that task, both are correct. They are answering different questions.
 
 There is a sixth component you will meet at Mid level, the **triggerer**, which handles deferred tasks. Ignore it for now.
 
@@ -100,10 +100,10 @@ There is a sixth component you will meet at Mid level, the **triggerer**, which 
   <ol>
     <li>Get Airflow running: download the official <code>docker-compose.yaml</code> and run <code>docker compose up -d</code>.</li>
     <li>Run <code>docker compose ps</code> and match each container to a row in the table above.</li>
-    <li>Open <code>localhost:8080</code> and log in. Note that the scheduler is a separate container from the webserver.</li>
+    <li>Open <code>localhost:8080</code> and log in. The scheduler is a separate container from the webserver.</li>
     <li>Stop just the webserver: <code>docker compose stop airflow-webserver</code>. Wait a minute, then start it again and check whether any scheduled runs were missed.</li>
   </ol>
-  <em>the UI disappears but the scheduler keeps working — runs continue while you cannot see them. That separation is worth proving to yourself, because it reframes the webserver as a window rather than the engine.</em>
+  <em>the UI disappears but the scheduler keeps working. Runs continue while you cannot see them. Prove that to yourself once and the webserver stops looking like the engine.</em>
 </div>
 
 ## Your first DAG, line by line
@@ -145,9 +145,9 @@ Now let me walk through every line, because this small file contains the entire 
 
 `with DAG(...) as dag:` creates the DAG object. Everything defined inside the block is attached to it automatically, which is why you rarely see `dag=dag` on each task in modern code.
 
-`dag_id="hello_world"` is the unique identifier. It appears in the UI, in the CLI, and in the database — so renaming it creates a *new* DAG and abandons the old one's history.
+`dag_id="hello_world"` is the unique identifier. It appears in the UI, in the CLI, and in the database, so renaming it creates a *new* DAG and abandons the old one's history.
 
-`start_date=datetime(2024, 1, 1)` is when the schedule begins. Not "when I wrote this" — the date from which Airflow considers intervals to exist. This is the single most misunderstood parameter in Airflow and it gets its own section shortly.
+`start_date=datetime(2024, 1, 1)` is the date from which Airflow considers intervals to exist, not the day you wrote the file. It is the single most misunderstood parameter in Airflow and it gets its own section shortly.
 
 `schedule="@daily"` is how often it runs. A cron string, a preset like this, or `None` for manual-only.
 
@@ -155,15 +155,15 @@ Now let me walk through every line, because this small file contains the entire 
 
 `tags=["tutorial"]` groups DAGs in the UI. Free, and worth using from the first DAG.
 
-`EmptyOperator` does nothing. It exists as a marker — a clean entry or exit point in a graph — and it is genuinely useful.
+`EmptyOperator` does nothing. It exists as a marker, a clean entry or exit point in a graph, and it is useful.
 
 `BashOperator` runs a shell command on the worker.
 
-And `start >> say_hello >> show_date` sets the dependencies. That `>>` is Airflow's bitshift operator, overloaded to mean "then".
+`start >> say_hello >> show_date` sets the dependencies. That `>>` is Airflow's bitshift operator, overloaded to mean "then".
 
 <div class="callout note">
   <span class="ct">A DAG is a directed acyclic graph</span>
-  Directed: dependencies point one way. Acyclic: no loops, so a task cannot eventually depend on itself. Airflow enforces this — a cycle is an import error, not a runtime surprise. That guarantee is what lets the scheduler always compute an execution order.
+  Directed: dependencies point one way. Acyclic: no loops, so a task cannot eventually depend on itself. Airflow enforces this: a cycle is an import error, not a runtime surprise. That guarantee is what lets the scheduler always compute an execution order.
 </div>
 
 <div class="guide-try">
@@ -172,7 +172,7 @@ And `start >> say_hello >> show_date` sets the dependencies. That `>>` is Airflo
     <li>Create the DAG above, wait for it to appear, unpause it, and watch the graph turn green.</li>
     <li>Click into <code>say_hello</code> and read the log. Find your echoed line.</li>
     <li>Add a fourth task and put it in parallel: <code>start &gt;&gt; [say_hello, show_date]</code>.</li>
-    <li>Now create a cycle on purpose — <code>show_date &gt;&gt; say_hello</code> as well — and read the error Airflow gives you.</li>
+    <li>Now create a cycle on purpose, <code>show_date &gt;&gt; say_hello</code> as well, and read the error Airflow gives you.</li>
   </ol>
   <em>a green run, a readable log, and a parallel branch. The deliberate cycle produces an import error in the UI rather than a broken run, which is the acyclic guarantee doing its job.</em>
 </div>
@@ -183,24 +183,24 @@ Three words that get used loosely and mean different things.
 
 | Term | Is |
 |---|---|
-| **Operator** | A class describing *a kind of work* — `BashOperator`, `PythonOperator` |
+| **Operator** | A class describing *a kind of work*: `BashOperator`, `PythonOperator` |
 | **Task** | An instance of an operator inside a DAG, with a `task_id` |
 | **Task instance** | One specific run of that task for one specific interval |
 
 So `BashOperator` is the operator, `say_hello` is the task, and "`say_hello` for 2024-05-01" is the task instance. The UI shows task instances; your file defines tasks.
 
-The operators you will actually use early:
+The operators you will use early:
 
 | Operator | Runs |
 |---|---|
-| `EmptyOperator` | Nothing — a graph marker |
+| `EmptyOperator` | Nothing: a graph marker |
 | `BashOperator` | A shell command |
 | `PythonOperator` | A Python callable |
 | `SQLExecuteQueryOperator` | SQL against a connection |
 | `DockerOperator` / `KubernetesPodOperator` | A container |
 | Provider operators | S3, BigQuery, Postgres, Slack, dbt, and hundreds more |
 
-And dependencies have four shapes worth knowing:
+Dependencies have four shapes worth knowing:
 
 ```python
 a >> b                      # a, then b
@@ -266,11 +266,11 @@ def etl_pipeline():
 etl_pipeline()
 ```
 
-Read the last line inside the function: `load(transform(extract()))`. That single expression does two things at once — it declares the dependency chain **and** passes the return values along it. No `>>`, no manual data passing.
+Read the last line inside the function: `load(transform(extract()))`. That single expression does two things at once. It declares the dependency chain **and** passes the return values along it. No `>>`, no manual data passing.
 
 <div class="guide-compare">
   <div class="guide-compare-col good">
-    <h4>TaskFlow — for Python work</h4>
+    <h4>TaskFlow: for Python work</h4>
     <ul>
       <li>Dependencies inferred from function calls</li>
       <li>Return values passed automatically</li>
@@ -279,7 +279,7 @@ Read the last line inside the function: `load(transform(extract()))`. That singl
     </ul>
   </div>
   <div class="guide-compare-col bad">
-    <h4>Classic operators — for everything else</h4>
+    <h4>Classic operators: for everything else</h4>
     <ul>
       <li>Explicit <code>&gt;&gt;</code> dependencies</li>
       <li>Data passed manually through XCom</li>
@@ -289,7 +289,7 @@ Read the last line inside the function: `load(transform(extract()))`. That singl
   </div>
 </div>
 
-They mix freely in one DAG, which is what you will actually do:
+They mix freely in one DAG, which is what you will do:
 
 ```python
     raw = extract()                                    # TaskFlow task
@@ -299,7 +299,7 @@ They mix freely in one DAG, which is what you will actually do:
 
 <div class="callout tip">
   <span class="ct">Use TaskFlow for Python, operators for systems</span>
-  If the work is Python you wrote, TaskFlow is shorter and clearer. If the work is "run this SQL", "start this Spark job", "wait for this file", use the provider operator built for it — reimplementing an operator inside a <code>@task</code> is a common beginner instinct and almost always the wrong trade.
+  If the work is Python you wrote, TaskFlow is shorter and clearer. If the work is "run this SQL", "start this Spark job", "wait for this file", use the provider operator built for it. Reimplementing an operator inside a <code>@task</code> is a common beginner instinct and almost always the wrong trade.
 </div>
 
 <div class="guide-try">
@@ -310,20 +310,20 @@ They mix freely in one DAG, which is what you will actually do:
     <li>Add a classic <code>BashOperator</code> after <code>load</code> and wire it with <code>&gt;&gt;</code>.</li>
     <li>Now break the chain: call <code>transform(extract())</code> but never use its result, and see what the Graph view does.</li>
   </ol>
-  <em>a dependency graph inferred purely from function calls, and a mixed DAG where both styles coexist. Step four shows the flip side — a task whose result nobody consumes still runs, because the call itself created it.</em>
+  <em>a dependency graph inferred from function calls, and a mixed DAG where both styles coexist. Step four shows the flip side: a task whose result nobody consumes still runs, because the call itself created it.</em>
 </div>
 
 ## Scheduling: the interval model, precisely
 
-This is where almost everyone gets confused, and it is worth slowing down because every later concept depends on it.
+This is where almost everyone gets confused. Slow down: every later concept depends on it.
 
-**Airflow schedules intervals, not moments.** A `@daily` DAG with `start_date=2024-05-01` produces a run for the interval covering 1 May — and that run starts **at the end of the interval**, just after midnight on 2 May. The data for 1 May is only complete once 1 May is over.
+**Airflow schedules intervals, not moments.** A `@daily` DAG with `start_date=2024-05-01` produces a run for the interval covering 1 May, and that run starts **at the end of the interval**, just after midnight on 2 May. The data for 1 May is only complete once 1 May is over.
 
 <div class="guide-timeline">
   <div class="guide-timeline-item"><span>2024-05-01 00:00</span><strong>Interval starts</strong><small><code>data_interval_start</code>. Nothing runs yet.</small></div>
   <div class="guide-timeline-item"><span>2024-05-02 00:00</span><strong>Interval ends</strong><small><code>data_interval_end</code>. The run is now scheduled.</small></div>
   <div class="guide-timeline-item"><span>2024-05-02 00:00:05</span><strong>The run starts</strong><small>The scheduler creates the DAG run and queues its first tasks.</small></div>
-  <div class="guide-timeline-item"><span>2024-05-02 00:02</span><strong>Tasks complete</strong><small>Logical date is 2024-05-01 — the interval, not the wall clock.</small></div>
+  <div class="guide-timeline-item"><span>2024-05-02 00:02</span><strong>Tasks complete</strong><small>Logical date is 2024-05-01, the interval rather than the wall clock.</small></div>
 </div>
 
 The parameter values, in the order they cause trouble:
@@ -331,7 +331,7 @@ The parameter values, in the order they cause trouble:
 | Parameter | Means | Common mistake |
 |---|---|---|
 | `start_date` | The first interval Airflow considers | Setting it to "today" and wondering why nothing ran |
-| `schedule` | How often — cron, preset, timedelta, or `None` | Assuming it fires *at* the start of the interval |
+| `schedule` | How often: cron, preset, timedelta, or `None` | Assuming it fires *at* the start of the interval |
 | `catchup` | Whether to run every missed interval since `start_date` | Leaving it `True` with an old start date |
 | `end_date` | Stop scheduling after this | Rarely needed; useful for a migration |
 
@@ -346,7 +346,7 @@ schedule="@once"                     # exactly once
 
 <div class="callout warn">
   <span class="ct"><code>catchup=True</code> with an old start date will flood your cluster</span>
-  A DAG with <code>start_date=datetime(2022, 1, 1)</code>, <code>schedule="@daily"</code>, and <code>catchup=True</code> creates roughly <b>eight hundred</b> DAG runs the moment you unpause it. Default to <code>catchup=False</code> and backfill deliberately when you actually want history — there is a command for it, covered later.
+  A DAG with <code>start_date=datetime(2022, 1, 1)</code>, <code>schedule="@daily"</code>, and <code>catchup=True</code> creates roughly <b>eight hundred</b> DAG runs the moment you unpause it. Default to <code>catchup=False</code> and backfill deliberately when you want history. There is a command for it, covered later.
 </div>
 
 The other detail that costs people an afternoon: **use the interval, not `datetime.now()`**. A task that queries "yesterday" by calling `now()` produces different results on a rerun than it did originally, which destroys reproducibility. Airflow gives you the interval as a template variable.
@@ -360,7 +360,7 @@ BashOperator(
 
 | Variable | Value for the 1 May interval |
 |---|---|
-| `{{ ds }}` | `2024-05-01` — the logical date |
+| `{{ ds }}` | `2024-05-01`: the logical date |
 | `{{ ds_nodash }}` | `20240501` |
 | `{{ data_interval_start }}` | `2024-05-01T00:00:00+00:00` |
 | `{{ data_interval_end }}` | `2024-05-02T00:00:00+00:00` |
@@ -369,7 +369,7 @@ BashOperator(
 | `{{ ts }}` | The full logical timestamp |
 
 <div class="guide-try">
-  <span class="ct">Try it — the one that makes scheduling click</span>
+  <span class="ct">Try it: the one that makes scheduling click</span>
   <ol>
     <li>Create a <code>@daily</code> DAG with <code>start_date</code> three days ago and <code>catchup=True</code>. Unpause it and count the runs.</li>
     <li>Add a <code>BashOperator</code> running <code>echo "logical={{ ds }} now=$(date -I)"</code> and compare the two values in each run's log.</li>
@@ -427,11 +427,11 @@ with DAG(
 | `max_active_tasks` | DAG | Task-level concurrency within the DAG |
 | `depends_on_past` | Task | Only run if the previous interval's instance succeeded |
 
-`default_args` is applied to every task in the DAG, and any task can override an individual value. That pattern — sensible defaults at the DAG level, exceptions at the task level — is how real DAGs stay readable.
+`default_args` is applied to every task in the DAG, and any task can override an individual value. That pattern (sensible defaults at the DAG level, exceptions at the task level) is how real DAGs stay readable.
 
 <div class="callout warn">
   <span class="ct">Retries are only safe if your task is idempotent</span>
-  Running a task twice must produce the same result as running it once. A task that <code>INSERT</code>s rows will duplicate them on retry; a task that <code>DELETE</code>s the target partition and then inserts will not. Design for reruns and retries become free — otherwise every retry is a data-quality incident waiting to happen.
+  Running a task twice must produce the same result as running it once. A task that <code>INSERT</code>s rows will duplicate them on retry; a task that <code>DELETE</code>s the target partition and then inserts will not. Design for reruns and retries become free. Otherwise every retry is a data-quality incident waiting to happen.
 </div>
 
 `execution_timeout` deserves special mention because its absence is the classic outage: a task that hangs on a network read holds a worker slot indefinitely, and with `max_active_runs` unset the next intervals pile up behind it until the whole DAG is stuck. One `timedelta` prevents it.
@@ -440,7 +440,7 @@ with DAG(
   <span class="ct">Try it</span>
   <ol>
     <li>Add a task that fails: <code>bash_command="exit 1"</code>, with <code>retries=2</code> and <code>retry_delay=timedelta(seconds=10)</code>.</li>
-    <li>Watch the UI cycle through <code>up_for_retry</code> and read the log — all three attempts are there.</li>
+    <li>Watch the UI cycle through <code>up_for_retry</code> and read the log. All three attempts are there.</li>
     <li>Add <code>execution_timeout=timedelta(seconds=15)</code> to a task running <code>sleep 60</code> and watch it be killed.</li>
     <li>Now make the failing task succeed on its third attempt using a file-based counter, and confirm the DAG run turns green.</li>
   </ol>
@@ -449,7 +449,7 @@ with DAG(
 
 ## Passing data with XCom, and its limits
 
-Tasks are separate processes, often on separate machines. XCom — cross-communication — is how they pass small values.
+Tasks are separate processes, often on separate machines. XCom, cross-communication, is how they pass small values.
 
 ```python
 @task
@@ -474,7 +474,7 @@ def _report(**context):
     print(f"Processed {count} records")
 ```
 
-And in a template, `ti.xcom_pull` is available directly:
+In a template, `ti.xcom_pull` is available directly:
 
 ```python
 BashOperator(
@@ -485,7 +485,7 @@ BashOperator(
 
 <div class="callout warn">
   <span class="ct">XCom is for metadata, not data</span>
-  Every XCom value is serialised into the <b>metadata database</b>. A row count, a file path, a partition name, a model version — fine. A dataframe, a file's contents, a list of a million ids — not fine: you will bloat the database, slow every UI page, and eventually hit a size limit. The correct pattern is to write the data to object storage and pass the <b>path</b> through XCom.
+  Every XCom value is serialised into the <b>metadata database</b>. A row count, a file path, a partition name, a model version are all fine. A dataframe, a file's contents, a list of a million ids are not: you will bloat the database, slow every UI page, and eventually hit a size limit. The correct pattern is to write the data to object storage and pass the <b>path</b> through XCom.
 </div>
 
 <div class="guide-compare">
@@ -513,8 +513,8 @@ BashOperator(
   <span class="ct">Try it</span>
   <ol>
     <li>Write a TaskFlow DAG where <code>extract</code> returns a dict and <code>load</code> consumes it. Confirm it works.</li>
-    <li>Open the task instance details in the UI and find the <strong>XCom</strong> tab — read the stored value.</li>
-    <li>Now return a large object — <code>list(range(500_000))</code> — and observe the effect on the run and the XCom page.</li>
+    <li>Open the task instance details in the UI and find the <strong>XCom</strong> tab, then read the stored value.</li>
+    <li>Now return a large object, <code>list(range(500_000))</code>, and observe the effect on the run and the XCom page.</li>
     <li>Rewrite it properly: write the list to a file, return the path, and read the file in the next task.</li>
   </ol>
   <em>a visible XCom value in the UI, then a painfully slow one, then a clean version that passes a path. Doing the wrong version once makes the "metadata, not data" rule permanent.</em>
@@ -554,7 +554,7 @@ def count_rows():
     return hook.get_first("SELECT count(*) FROM events")[0]
 ```
 
-**Variables** hold configuration values that are not credentials — a bucket name, a threshold, a feature flag:
+**Variables** hold configuration values that are not credentials, like a bucket name, a threshold, or a feature flag:
 
 ```python
 from airflow.models import Variable
@@ -571,13 +571,13 @@ retries = Variable.get("max_retries", default_var=3)
 
 <div class="callout warn">
   <span class="ct">Never call <code>Variable.get()</code> at the top level of a DAG file</span>
-  Top-level code runs on <b>every parse</b> — every thirty seconds, for every DAG file. A <code>Variable.get()</code> up there is a database query on that schedule, and ten such DAGs will visibly degrade your scheduler. Use it inside a task, or use the template form <code>{{ var.value.data_bucket }}</code>, which is only resolved at run time.
+  Top-level code runs on <b>every parse</b>, every thirty seconds, for every DAG file. A <code>Variable.get()</code> up there is a database query on that schedule, and ten such DAGs will visibly degrade your scheduler. Use it inside a task, or use the template form <code>{{ var.value.data_bucket }}</code>, which is only resolved at run time.
 </div>
 
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
-    <li>Create a connection in the UI to any database you have — even the Airflow metadata Postgres will do for practice.</li>
+    <li>Create a connection in the UI to any database you have. Even the Airflow metadata Postgres will do for practice.</li>
     <li>Write a task that uses a Hook to run <code>SELECT 1</code> and returns the result.</li>
     <li>Create a Variable and read it two ways: with <code>Variable.get()</code> inside a task, and with <code>{{ var.value.name }}</code> in a Bash command.</li>
     <li>Now put <code>Variable.get()</code> at the top of the file, and watch the DAG-parse duration in <strong>Admin → DAG Processing</strong>.</li>
@@ -618,7 +618,7 @@ WHERE event_date BETWEEN '{{ macros.ds_add(ds, -params.lookback_days) }}'
                      AND '{{ ds }}';
 ```
 
-Note the shape of that SQL: a `DELETE` for the target partition followed by an `INSERT`. That is the **idempotent** pattern — rerun it as many times as you like and the result is identical, which is what makes retries and backfills safe.
+Note the shape of that SQL: a `DELETE` for the target partition followed by an `INSERT`. That is the **idempotent** pattern. Rerun it as many times as you like and the result is identical, which is what makes retries and backfills safe.
 
 Two things to know about templating:
 
@@ -628,7 +628,7 @@ Two things to know about templating:
 
 <div class="callout tip">
   <span class="ct">Check the rendered value before debugging your code</span>
-  A task instance's <strong>Rendered Template</strong> tab in the UI shows exactly what the field became after templating. Half of "my SQL is wrong" turns out to be a template that resolved differently than expected, and this tab answers it in one click.
+  A task instance's <strong>Rendered Template</strong> tab in the UI shows what the field became after templating. Half of "my SQL is wrong" turns out to be a template that resolved differently than expected, and this tab answers it in one click.
 </div>
 
 <div class="guide-try">
@@ -636,7 +636,7 @@ Two things to know about templating:
   <ol>
     <li>Write a task whose command includes <code>{{ ds }}</code>, <code>{{ ds_nodash }}</code>, and <code>{{ macros.ds_add(ds, -7) }}</code>.</li>
     <li>Run it, then open <strong>Rendered Template</strong> and compare against the log output.</li>
-    <li>Put <code>{{ ds }}</code> into a field that is <em>not</em> templated — <code>task_id</code>, for instance — and see the literal string appear.</li>
+    <li>Put <code>{{ ds }}</code> into a field that is <em>not</em> templated (<code>task_id</code>, for instance) and see the literal string appear.</li>
     <li>Write the idempotent SQL above against a scratch table, run it twice, and confirm the row count does not double.</li>
   </ol>
   <em>a rendered template you can read before the task runs, a literal <code>{{ ds }}</code> in an untemplated field, and SQL that is safe to rerun. That last property is the foundation everything else in Airflow relies on.</em>
@@ -644,7 +644,7 @@ Two things to know about templating:
 
 ## Sensors: waiting without wasting a worker
 
-Sometimes a task cannot start until something external exists — a file lands, a table is populated, an upstream team finishes. A **sensor** is an operator that waits.
+Sometimes a task cannot start until something external exists: a file lands, a table is populated, an upstream team finishes. A **sensor** is an operator that waits.
 
 ```python
 from airflow.providers.amazon.aws.sensors.s3 import S3KeySensor
@@ -670,7 +670,7 @@ The parameter that matters most is `mode`, and getting it wrong is one of the cl
 
 <div class="callout warn">
   <span class="ct">Sensors in <code>poke</code> mode can deadlock your cluster</span>
-  Ten sensors each waiting four hours in <code>poke</code> mode occupy ten worker slots for four hours. If you have sixteen slots, six real tasks can run and everything else queues — including the very upstream tasks the sensors are waiting for. Use <code>mode="reschedule"</code> for anything that might wait more than a couple of minutes, and <b>always set a <code>timeout</code></b>. Mid level covers deferrable operators, which are better still.
+  Ten sensors each waiting four hours in <code>poke</code> mode occupy ten worker slots for four hours. If you have sixteen slots, six real tasks can run and everything else queues, including the upstream tasks the sensors are waiting for. Use <code>mode="reschedule"</code> for anything that might wait more than a couple of minutes, and <b>always set a <code>timeout</code></b>. Mid level covers deferrable operators, which are better still.
 </div>
 
 Two more waiting patterns worth knowing now:
@@ -736,7 +736,7 @@ join = EmptyOperator(
 extract >> branch >> [full, incr] >> join
 ```
 
-The branching callable returns a `task_id` — or a list of them — and Airflow **skips** every other branch. That skipping is why the join task needs a trigger rule: by default a task requires *all* upstreams to have succeeded, and a skipped upstream is not a success.
+The branching callable returns a `task_id`, or a list of them, and Airflow **skips** every other branch. That skipping is why the join task needs a trigger rule: by default a task requires *all* upstreams to have succeeded, and a skipped upstream is not a success.
 
 | Trigger rule | Runs when |
 |---|---|
@@ -745,7 +745,7 @@ The branching callable returns a `task_id` — or a list of them — and Airflow
 | `one_success` | At least one upstream succeeded |
 | `one_failed` | At least one upstream failed |
 | `none_failed` | Nothing failed; skips are acceptable |
-| `none_failed_min_one_success` | Nothing failed and at least one ran — the branch-join rule |
+| `none_failed_min_one_success` | Nothing failed and at least one ran: the branch-join rule |
 | `all_skipped` | Every upstream was skipped |
 
 The TaskFlow equivalent is shorter:
@@ -756,7 +756,7 @@ def choose_path(count: int) -> str:
     return "full_reload" if count > 100_000 else "incremental_load"
 ```
 
-And `all_done` is the rule for cleanup tasks that must run regardless:
+`all_done` is the rule for cleanup tasks that must run regardless:
 
 ```python
 cleanup = BashOperator(
@@ -768,7 +768,7 @@ cleanup = BashOperator(
 
 <div class="callout warn">
   <span class="ct">A skipped task is not a failed task, and it is not a success either</span>
-  Skips propagate downstream. A join task with the default <code>all_success</code> rule after a branch will itself be skipped, silently, and the rest of your DAG with it. If a branch is followed by anything, the join needs an explicit trigger rule — this is the single most common branching bug.
+  Skips propagate downstream. A join task with the default <code>all_success</code> rule after a branch will itself be skipped, silently, and the rest of your DAG with it. If a branch is followed by anything, the join needs an explicit trigger rule. This is the single most common branching bug.
 </div>
 
 <div class="guide-try">
@@ -776,7 +776,7 @@ cleanup = BashOperator(
   <ol>
     <li>Build the branch above with a callable that picks based on a Variable you can change.</li>
     <li>Run it and confirm one branch is green and the other is pink (skipped).</li>
-    <li>Remove the <code>trigger_rule</code> from the join and rerun — watch the join get skipped too.</li>
+    <li>Remove the <code>trigger_rule</code> from the join and rerun, then watch the join get skipped too.</li>
     <li>Add a cleanup task with <code>ALL_DONE</code> and make an upstream task fail. Confirm cleanup still runs.</li>
   </ol>
   <em>a working branch, then the silent skip cascade when the trigger rule is missing, then a cleanup task that survives a failure. Steps three and four together cover most of what trigger rules are for.</em>
@@ -788,15 +788,15 @@ The interface is your primary debugging tool, and knowing which view answers whi
 
 | View | Answers |
 |---|---|
-| **Grid** | "What happened across the last N runs?" — the default, and the one to live in |
+| **Grid** | "What happened across the last N runs?" The default, and the one to live in |
 | **Graph** | "What is the dependency structure, and where did it stop?" |
-| **Gantt** | "Which task is the bottleneck?" — durations as a timeline |
-| **Calendar** | "Which days failed?" — a heatmap over months |
-| **Code** | "What is the scheduler actually running?" — the parsed source |
+| **Gantt** | "Which task is the bottleneck?" Durations as a timeline |
+| **Calendar** | "Which days failed?" A heatmap over months |
+| **Code** | "What is the scheduler running?" The parsed source |
 | **Task Instance → Logs** | "Why did it fail?" |
 | **Task Instance → Rendered Template** | "What did my template become?" |
 | **Task Instance → XCom** | "What did it pass downstream?" |
-| **Admin → DAG Processing** | "Why is the scheduler slow?" — parse times per file |
+| **Admin → DAG Processing** | "Why is the scheduler slow?" Parse times per file |
 
 The colours you need to recognise:
 
@@ -812,12 +812,12 @@ The colours you need to recognise:
 | Dark red `upstream_failed` | Never ran; an upstream failed |
 | White `none` | Not yet scheduled |
 
-And the four actions on a task instance that you will use constantly:
+The four actions on a task instance that you will use constantly:
 
 | Action | Does |
 |---|---|
-| **Clear** | Wipe the state so the scheduler reruns it — the main way to retry |
-| **Mark Success** | Force it green without running it — use sparingly, and never to hide a problem |
+| **Clear** | Wipe the state so the scheduler reruns it: the main way to retry |
+| **Mark Success** | Force it green without running it: use sparingly, and never to hide a problem |
 | **Mark Failed** | Force it red, stopping downstream work |
 | **Clear + Downstream** | Rerun this task and everything after it |
 
@@ -835,7 +835,7 @@ And the four actions on a task instance that you will use constantly:
     <li>Clear the failed task and watch it rerun. Then use <strong>Clear + Downstream</strong> on an earlier task.</li>
     <li>Open <strong>Admin → DAG Processing</strong> and note your DAG's parse duration.</li>
   </ol>
-  <em>a tour of every state you will meet, a Gantt chart naming your bottleneck, and a clear-and-rerun you performed yourself. The parse-duration number in step five is worth remembering — you will compare against it later.</em>
+  <em>a tour of every state you will meet, a Gantt chart naming your bottleneck, and a clear-and-rerun you performed yourself. The parse-duration number in step five is worth remembering. You will compare against it later.</em>
 </div>
 
 ## The CLI and backfills: running history on purpose
@@ -877,7 +877,7 @@ airflow tasks clear my_dag \
 
 Two commands deserve emphasis because they change how you work.
 
-**`airflow tasks test`** runs one task instance immediately, in the foreground, printing logs to your terminal — and it does **not** record state in the metadata database. It is the fastest possible feedback loop for debugging a task, and it works on any date.
+**`airflow tasks test`** runs one task instance immediately, in the foreground, printing logs to your terminal, and it does **not** record state in the metadata database. It is the fastest possible feedback loop for debugging a task, and it works on any date.
 
 **`airflow dags backfill`** creates runs for a historical range. It is how you populate a new DAG's history, or reprocess after fixing a bug. It only works properly if your tasks are idempotent, which is why that property keeps coming up.
 
@@ -890,7 +890,7 @@ Two commands deserve emphasis because they change how you work.
   <span class="ct">Try it</span>
   <ol>
     <li>Run <code>airflow tasks test my_dag my_task 2024-05-01</code> and watch the log stream to your terminal.</li>
-    <li>Confirm the UI shows no new task instance for that run — the test left no state.</li>
+    <li>Confirm the UI shows no new task instance for that run. The test left no state.</li>
     <li>Break the task's code and run <code>python dags/my_dag.py</code> to see the import error before deploying.</li>
     <li>Set <code>max_active_runs=1</code>, then backfill a five-day range and watch the runs execute one at a time.</li>
   </ol>
@@ -903,7 +903,7 @@ This is the single most important performance rule in Airflow, and it follows di
 
 <div class="guide-compare">
   <div class="guide-compare-col good">
-    <h4>Inside a task — runs when the task runs</h4>
+    <h4>Inside a task: runs when the task runs</h4>
     <ul>
       <li>Database queries</li>
       <li>API calls</li>
@@ -913,7 +913,7 @@ This is the single most important performance rule in Airflow, and it follows di
     </ul>
   </div>
   <div class="guide-compare-col bad">
-    <h4>At the top level — runs every parse</h4>
+    <h4>At the top level: runs every parse</h4>
     <ul>
       <li>Only: DAG definition and task wiring</li>
       <li>Only: cheap constants</li>
@@ -949,7 +949,7 @@ with DAG(...) as dag:
     process.expand(table=get_tables())             # dynamic mapping, Mid level
 ```
 
-The cost is easy to underestimate. A `Variable.get()` at the top level of one DAG is one query every thirty seconds — 2,880 a day. Across twenty DAG files that is 57,600 queries a day for values nobody read. An API call up there adds its latency to every parse cycle.
+The cost is easy to underestimate. A `Variable.get()` at the top level of one DAG is one query every thirty seconds, 2,880 a day. Across twenty DAG files that is 57,600 queries a day for values nobody read. An API call up there adds its latency to every parse cycle.
 
 ```bash
 # Measure it
@@ -961,7 +961,7 @@ The **Admin → DAG Processing** page shows the same thing in the UI: file name,
 
 <div class="callout tip">
   <span class="ct">The one-line test</span>
-  Ask of every line outside a task: <b>"do I want this to run every thirty seconds forever?"</b> If the answer is no, it belongs inside a task. That question resolves essentially every top-level-code question you will have.
+  Ask of every line outside a task: <b>"do I want this to run every thirty seconds forever?"</b> If the answer is no, it belongs inside a task. That question resolves every top-level-code question you will have.
 </div>
 
 <div class="guide-try">
@@ -978,7 +978,7 @@ The **Admin → DAG Processing** page shows the same thing in the UI: file name,
 
 ## Putting it all together
 
-Everything above in one DAG. Nothing here is new — read it as a whole and you should be able to justify every line.
+Everything above in one DAG. Nothing here is new. Read it as a whole and you should be able to justify every line.
 
 ```python dags/daily_events_pipeline.py
 """Daily events pipeline: land → validate → transform → publish → notify."""
@@ -1098,33 +1098,33 @@ Twelve decisions in there are the whole lesson of this page:
 | `retries` and `retry_exponential_backoff` in `default_args` | Retries and timeouts |
 | `execution_timeout` per task, `dagrun_timeout` per DAG | Retries and timeouts |
 | `max_active_runs=1` on a table-writing DAG | Retries and timeouts |
-| A row count through XCom, a path through XCom — never data | Passing data with XCom |
+| A row count through XCom, a path through XCom: never data | Passing data with XCom |
 | `PostgresHook` with a `conn_id`, no credentials in code | Connections and Variables |
 | SQL in a templated file, not a Python string | Templating and Jinja |
-| `DELETE` then `INSERT` — idempotent by construction | Templating and Jinja |
+| `DELETE` then `INSERT`: idempotent by construction | Templating and Jinja |
 | `mode="reschedule"` plus a `timeout` on the sensor | Sensors |
 | `TriggerRule.ALL_DONE` on cleanup | Branching and trigger rules |
 | No top-level queries, imports, or `Variable.get()` | Top-level code |
 
 <div class="guide-try">
-  <span class="ct">Try it — the one that matters</span>
+  <span class="ct">Try it: the one that matters</span>
   <ol>
     <li>Adapt this DAG to a real workflow of yours, even a small one, and get it green.</li>
     <li>Verify the important properties actively: run the transform twice and confirm the row count does not double; make the sensor time out and confirm it fails cleanly; make a task fail and confirm <code>cleanup</code> still runs.</li>
     <li>Backfill three historical days with <code>max_active_runs=1</code> and confirm each produces correct, non-duplicated output.</li>
     <li>Check <strong>Admin → DAG Processing</strong> and confirm the parse duration is well under a second.</li>
   </ol>
-  <em>a pipeline that is safe to retry, safe to backfill, cleans up after itself, and parses fast. Those four properties are what separate a DAG that works from one you can leave running unattended — and this exercise is worth more than the rest of the page combined.</em>
+  <em>a pipeline that is safe to retry, safe to backfill, cleans up after itself, and parses fast. Those four properties are what separate a DAG that works from one you can leave running unattended, and you will learn more building it than from a second pass over the page.</em>
 </div>
 
 ## What you can now do, and what comes next
 
-You can write a DAG in both styles, reason correctly about intervals and logical dates, set retries and timeouts that make a pipeline trustworthy, pass metadata between tasks without abusing the database, keep credentials out of your code, template dates and SQL, wait on external systems without deadlocking your workers, branch conditionally and handle the trigger rules that come with it, read every view in the UI, use the CLI for fast feedback and deliberate backfills, and keep the scheduler fast by understanding top-level code. That is a working practitioner's toolkit — enough to own real DAGs on a shared Airflow.
+You can write a DAG in both styles, reason correctly about intervals and logical dates, set retries and timeouts that make a pipeline trustworthy, pass metadata between tasks without abusing the database, keep credentials out of your code, template dates and SQL, wait on external systems without deadlocking your workers, branch conditionally and handle the trigger rules that come with it, read every view in the UI, use the CLI for fast feedback and deliberate backfills, and keep the scheduler fast by understanding top-level code. That is a working practitioner's toolkit, enough to own real DAGs on a shared Airflow.
 
 | Can you… | |
 |---|---|
 | Name the five core components? | Scheduler, executor, worker, metadata DB, webserver |
-| Say what Airflow is *not* for? | Processing data itself — it orchestrates |
+| Say what Airflow is *not* for? | Processing data itself. It orchestrates |
 | Explain why a `@daily` run starts after midnight? | It schedules intervals, and the interval must end |
 | Say what `catchup=True` does with an old start date? | Creates every missed run at once |
 | Give the reason to use `{{ ds }}` over `now()`? | Reruns and backfills must be reproducible |
@@ -1134,8 +1134,8 @@ You can write a DAG in both styles, reason correctly about intervals and logical
 | Say why a join after a branch needs a trigger rule? | Skips are neither success nor failure |
 | Explain what "clear" does? | Wipes state so the scheduler reruns it |
 | Give the top-level code rule? | Would you want this every thirty seconds? |
-| Say what makes a task safe to retry? | Idempotence — delete the partition, then write |
+| Say what makes a task safe to retry? | Idempotence: delete the partition, then write |
 
-**Mid-level takes every one of those topics further** — the executors and what each one costs, dynamic task mapping with `.expand()`, deferrable operators that replace sensors entirely, TaskGroups and DAG factories, datasets and data-aware scheduling, pools and priority weights for concurrency control, SLAs and callbacks, custom operators and hooks, testing DAGs properly, and the CI patterns that stop a broken DAG reaching production.
+**Mid-level takes every one of those topics further:** the executors and what each one costs, dynamic task mapping with `.expand()`, deferrable operators that replace sensors entirely, TaskGroups and DAG factories, datasets and data-aware scheduling, pools and priority weights for concurrency control, SLAs and callbacks, custom operators and hooks, testing DAGs properly, and the CI patterns that stop a broken DAG reaching production.
 
 **Senior then covers what you own when Airflow is your responsibility**: the security model and who can see which DAG, secrets backends so credentials never live in the metadata database, multi-tenancy and isolation between teams, scaling the scheduler and the database, cost control across executors, upgrade and migration strategy, observability and SLOs for a platform, incident playbooks for a stuck scheduler and a poisoned queue, and where Airflow stops and a streaming or in-warehouse tool begins.

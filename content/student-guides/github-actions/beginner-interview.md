@@ -4,7 +4,7 @@ Part one of three. A fast review of **everything in the Beginner Detailed track*
 
 > GitHub Actions is GitHub's built-in CI/CD and automation platform. You commit a YAML file to `.github/workflows/`, declare which repository events trigger it, and GitHub runs the work on virtual machines it creates and destroys per job. Because the pipeline lives in the repository, it is versioned and reviewed like any other code.
 
-Then add the sentence that shows you have used it: *"each job gets a fresh machine, so it starts empty — you check your own code out, and anything crossing a job boundary goes through artifacts or outputs."*
+Then add the sentence that shows you have used it: *"each job gets a fresh machine, so it starts empty. You check your own code out, and anything crossing a job boundary goes through artifacts or outputs."*
 
 ## The model
 
@@ -105,7 +105,7 @@ jobs:
 | Configured by | Arguments | The `with:` block |
 | For | Anything you already type in a terminal | Setup, caching, uploads, cloud logins |
 
-Mutually exclusive in one step — a favourite trick question. Steps also take options:
+Mutually exclusive in one step, a favourite trick question. Steps also take options:
 
 ```yaml
 - name: Test the backend
@@ -126,7 +126,7 @@ Mutually exclusive in one step — a favourite trick question. Steps also take o
 | `push` | Commits reach a branch or tag |
 | `pull_request` | A PR is opened, updated, reopened |
 | `workflow_dispatch` | Someone clicks **Run workflow** |
-| `schedule` | Cron matches — **UTC**, default branch only |
+| `schedule` | Cron matches: **UTC**, default branch only |
 | `release` | A release is published |
 | `issues` / `issue_comment` | Issue activity, for bots |
 
@@ -174,11 +174,11 @@ Narrowed by `branches`, `tags`, `paths`, `paths-ignore`, `types`.
 | Even after a failure | `if: always()` |
 | Only after a failure | `if: failure()` |
 
-Inside `if:` the `${{ }}` wrapper is **optional** — everywhere else it is required.
+Inside `if:` the `${{ }}` wrapper is **optional**; everywhere else it is required.
 
 <div class="callout warn">
   <span class="ct">The classic gotcha</span>
-  <code>github.ref</code> is the <b>full</b> ref — <code>refs/heads/main</code>, not <code>main</code>. Comparing it to <code>'main'</code> silently never matches, and this comes up in interviews as a "debug this" exercise.
+  <code>github.ref</code> is the <b>full</b> ref: <code>refs/heads/main</code>, not <code>main</code>. Comparing it to <code>'main'</code> never matches, and this comes up in interviews as a "debug this" exercise.
 </div>
 
 ## Environment variables and the special files
@@ -258,7 +258,7 @@ Three facts to state without prompting: **never echo a secret** (masking is a sa
 
 <div class="guide-compare">
   <div class="guide-compare-col good">
-    <h4>Artifact — data you need</h4>
+    <h4>Artifact: data you need</h4>
     <ul>
       <li>Reports, build output, logs</li>
       <li>Downloaded by a human or a later job</li>
@@ -266,7 +266,7 @@ Three facts to state without prompting: **never echo a secret** (masking is a sa
     </ul>
   </div>
   <div class="guide-compare-col bad">
-    <h4>Cache — a shortcut</h4>
+    <h4>Cache: a shortcut</h4>
     <ul>
       <li>Downloaded dependencies</li>
       <li>Reused by later runs</li>
@@ -338,7 +338,7 @@ jobs:
 | Cost | Free on public repos | Your hardware |
 | Pick it for | Almost everything | GPU, paid licence, private network |
 
-Ubuntu runners already have Git, Docker, Node, Python, and `gh` — so no, you do not install Docker first.
+Ubuntu runners already have Git, Docker, Node, Python, and `gh`, so no, you do not install Docker first.
 
 ## The four traps, and why they share one cause
 
@@ -381,19 +381,19 @@ if: github.ref == 'refs/heads/main'               # main only
 ## Common interview questions
 
 <ol class="guide-steps">
-  <li><b>Where do workflow files live, and what if the path is wrong?</b><code>.github/workflows/*.yml</code>. A wrong path means the file is inert — GitHub never reads it and reports no error, which is why "my workflow isn't running" is usually a path or trigger problem, not a broken workflow.</li>
+  <li><b>Where do workflow files live, and what if the path is wrong?</b><code>.github/workflows/*.yml</code>. A wrong path means the file is inert: GitHub never reads it and reports no error, which is why "my workflow isn't running" is usually a path or trigger problem, not a broken workflow.</li>
   <li><b>Why does <code>actions/checkout</code> exist? Isn't my code already there?</b>No. The runner boots empty. Checkout clones the repository at the triggering commit.</li>
-  <li><b>Do jobs run in order?</b>No — in parallel. <code>needs</code> creates ordering, and also gives the later job access to the earlier one's outputs.</li>
-  <li><b>How do you pass a file from one job to another? And a string?</b>A file needs an artifact — upload in one job, download in the other. A string uses a job <code>output</code> fed from <code>$GITHUB_OUTPUT</code> and read as <code>needs.build.outputs.version</code>.</li>
+  <li><b>Do jobs run in order?</b>No, in parallel. <code>needs</code> creates ordering, and also gives the later job access to the earlier one's outputs.</li>
+  <li><b>How do you pass a file from one job to another? A string?</b>A file needs an artifact: upload in one job, download in the other. A string uses a job <code>output</code> fed from <code>$GITHUB_OUTPUT</code> and read as <code>needs.build.outputs.version</code>.</li>
   <li><b>Cache versus artifact?</b>A cache speeds up recreating something and is safe to lose; an artifact preserves a result you cannot recreate. Caches are keyed and restored automatically; artifacts are named and downloaded.</li>
   <li><b>How do you keep the test report when tests fail?</b><code>if: always()</code> on the upload step. Without it the failed test stops the job before the upload runs.</li>
-  <li><b>Why did my variable disappear between steps? And why doesn't <code>cd</code> stick?</b>Both because each <code>run</code> is a fresh shell. Use <code>>> "$GITHUB_ENV"</code> for variables and <code>working-directory:</code> for the directory.</li>
-  <li><b>What does <code>@v4</code> mean, and would you use <code>@main</code>?</b>A Git ref — a moving major-version tag that receives patches. Never <code>@main</code> on someone else's action: that runs whatever is on their branch when your job starts, which is a remote-code-execution surface.</li>
-  <li><b>How do you make something run only on <code>main</code>?</b>A <code>branches: [main]</code> filter on the trigger, or <code>if: github.ref == 'refs/heads/main'</code> on the job — noting the value is the full ref.</li>
+  <li><b>Why did my variable disappear between steps? Why doesn't <code>cd</code> stick?</b>Both because each <code>run</code> is a fresh shell. Use <code>>> "$GITHUB_ENV"</code> for variables and <code>working-directory:</code> for the directory.</li>
+  <li><b>What does <code>@v4</code> mean, and would you use <code>@main</code>?</b>A Git ref, a moving major-version tag that receives patches. Never <code>@main</code> on someone else's action: that runs whatever is on their branch when your job starts, which is a remote-code-execution surface.</li>
+  <li><b>How do you make something run only on <code>main</code>?</b>A <code>branches: [main]</code> filter on the trigger, or <code>if: github.ref == 'refs/heads/main'</code> on the job, noting the value is the full ref.</li>
   <li><b>How do you trigger a workflow by hand, and can it take parameters?</b>Add <code>workflow_dispatch</code> to <code>on:</code>; a **Run workflow** button appears. Declare <code>inputs</code> with types (`string`, `boolean`, `choice`) and read them as <code>inputs.name</code>.</li>
-  <li><b>How do you test against several language versions?</b>A matrix. Axes multiply into parallel jobs, and <code>fail-fast: false</code> stops one failure cancelling the rest — which you want while diagnosing.</li>
-  <li><b>How do you handle secrets safely?</b>Store them in repository or environment secrets, read via <code>${{ secrets.NAME }}</code>, and pass them through <code>env</code> rather than into a command line. Never echo them. Note that fork pull requests deliberately receive none.</li>
-  <li><b>What is <code>GITHUB_TOKEN</code>?</b>A token minted automatically per job, scoped to that repository, expiring when the job ends. Use it for anything acting on the repository — commenting on a PR, pushing a tag, publishing to GitHub Packages.</li>
+  <li><b>How do you test against several language versions?</b>A matrix. Axes multiply into parallel jobs, and <code>fail-fast: false</code> stops one failure cancelling the rest, which you want while diagnosing.</li>
+  <li><b>How do you handle secrets safely?</b>Store them in repository or environment secrets, read via <code>${{ secrets.NAME }}</code>, and pass them through <code>env</code> rather than into a command line. Never echo them. Fork pull requests deliberately receive none.</li>
+  <li><b>What is <code>GITHUB_TOKEN</code>?</b>A token minted automatically per job, scoped to that repository, expiring when the job ends. Use it for anything acting on the repository: commenting on a PR, pushing a tag, publishing to GitHub Packages.</li>
   <li><b>How do you stop a runaway job?</b><code>timeout-minutes</code> on the job. The default ceiling is six hours, so a hung job otherwise consumes your allowance silently.</li>
   <li><b>Free or paid?</b>Unlimited minutes on public repositories. Private repositories get a monthly allowance; Windows and macOS minutes bill at a multiple of Linux.</li>
   <li><b>Walk me through debugging a red run.</b>Click the red job then the red step; read from the <em>top</em> of the failure, not the last line; reproduce the command locally to see whether the workflow is even implicated; print the values you are branching on; then re-run only the failed job, with debug logging if needed.</li>

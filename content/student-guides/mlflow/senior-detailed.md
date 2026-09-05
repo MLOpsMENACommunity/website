@@ -1,4 +1,4 @@
-This is part three of three. It closes the series by taking **every topic from Beginner and Mid one level further** — each one now has a security, scale, or ownership dimension — and adds the work you own when MLflow is your team's platform rather than your tool.
+This is part three of three. It closes the series by taking **every topic from Beginner and Mid one level further** (each one now has a security, scale, or ownership dimension) and adds the work you own when MLflow is your team's platform rather than your tool.
 
 Up to this point the questions have been about making a model reproduce and deploy. From here they are different: who can move an alias into production, whether a model from eighteen months ago can still be rebuilt and proven, what the artifact store costs and who pays for it, which component breaks first when the team triples, what happens when the backend database fills up on a Friday night, and where MLflow stops being the right tool.
 
@@ -18,7 +18,7 @@ Up to this point the questions have been about making a model reproduce and depl
 | Serving | Authentication, isolation, resource limits, and rollback drills |
 | CI | Credential scoping, fork trust, and who may write to the registry |
 | Debugging | Incident playbooks: lost server, unreadable artifacts, unrebuildable model |
-| — **new** — | Auth & multi-tenancy · backup/restore · cost governance · platform ownership · where MLflow ends |
+| **new** | Auth & multi-tenancy · backup/restore · cost governance · platform ownership · where MLflow ends |
 
 I am starting with the trust model, because every other decision in this track depends on it.
 
@@ -26,11 +26,11 @@ I am starting with the trust model, because every other decision in this track d
 
 The sentence that reframes MLflow security: **moving an alias changes production, and by default nothing stops anyone with tracking credentials from doing it.**
 
-That is the inverse of the usual worry. People arrive asking "who can see the experiments?" The sharper question is "who can make a model live?"
+Most teams worry about the inverse and arrive asking "who can see the experiments?" The sharper question is "who can make a model live?"
 
 <div class="guide-arch" style="--arch-cols:3">
   <div class="arch-lane" style="--lane-cols:3">
-    <span class="arch-label">write paths — ranked by blast radius, not by frequency</span>
+    <span class="arch-label">write paths: ranked by blast radius, not by frequency</span>
     <div class="arch-node"><b>Create runs, log models</b><small>Researchers. Harmless: a run is a record</small></div>
     <div class="arch-node" data-kind="worker"><b>Register a version</b><small>Immutable, numbered, linked to its run</small></div>
     <div class="arch-node" data-kind="danger"><b>Move an alias</b><small><b>This is a production deploy.</b> One call, no review, no record by default</small></div>
@@ -47,10 +47,10 @@ That is the inverse of the usual worry. People arrive asking "who can see the ex
   <i class="arch-edge" data-dir="down"></i>
   <i class="arch-edge" data-dir="down" data-flow="optional"></i>
   <i class="arch-edge" data-dir="down"></i>
-  <div class="arch-node" data-kind="danger"><b>Coarse authorisation</b><small>Per-experiment and per-model permissions — not roles, and unauthenticated by default</small></div>
+  <div class="arch-node" data-kind="danger"><b>Coarse authorisation</b><small>Per-experiment and per-model permissions, not roles, and unauthenticated by default</small></div>
   <div class="arch-node" data-kind="danger"><b>Clients touch storage directly</b><small>Everyone needs bucket credentials unless you enable proxied access</small></div>
   <div class="arch-node" data-kind="danger"><b>A pickle is executable</b><small>Loading a model runs code, in whatever runs your batch job</small></div>
-  <p class="arch-note"><b>The dangerous default:</b> an unauthenticated server reachable from the office network, whose aliases drive production serving. Anyone who can reach it can promote any version — including one they logged themselves — with nothing recording who did it. Auth in front, alias writes restricted to a gated job, and an audit tag on every promotion.</p>
+  <p class="arch-note"><b>The dangerous default:</b> an unauthenticated server reachable from the office network, whose aliases drive production serving. Anyone who can reach it can promote any version, including one they logged themselves, with nothing recording who did it. Auth in front, alias writes restricted to a gated job, and an audit tag on every promotion.</p>
 </div>
 
 | Actor | Needs | Must not have |
@@ -64,18 +64,18 @@ That is the inverse of the usual worry. People arrive asking "who can see the ex
 
 Three properties of MLflow's design make this sharper than it looks:
 
-**Open-source MLflow has coarse authorisation.** The basic auth plugin gives per-experiment and per-registered-model permissions, and that is genuinely useful — but it is not rich RBAC, and a plain unauthenticated server gives everyone everything. Say this plainly rather than discovering it in a security review.
+**Open-source MLflow has coarse authorisation.** The basic auth plugin gives per-experiment and per-registered-model permissions, and that is useful, but it is not rich RBAC, and a plain unauthenticated server gives everyone everything. Say this plainly rather than discovering it in a security review.
 
-**Clients touch object storage directly.** By default the tracking server returns an artifact URI and the client reads and writes it. That means every user and every CI job needs bucket credentials, which is a much wider credential distribution than people expect — and it is why proxied artifact access matters so much at this level.
+**Clients touch object storage directly.** By default the tracking server returns an artifact URI and the client reads and writes it. That means every user and every CI job needs bucket credentials, which is a much wider credential distribution than people expect, and it is why proxied artifact access matters so much at this level.
 
 **A pickle is executable.** Loading a model executes code: the unpickling itself, plus any module a custom pyfunc imports. A model artifact from an untrusted source is a code-execution vector in whatever runs your batch job.
 
 <div class="callout warn">
   <span class="ct">The most dangerous default configuration</span>
-  An unauthenticated tracking server, reachable from the office network, with a registry whose aliases drive production serving. Anyone who can reach it can promote any model version — including one they logged themselves — with no record of who did it. Put auth in front of it, restrict alias changes to a gated job, and make sure the promotion path leaves a trail.
+  An unauthenticated tracking server, reachable from the office network, with a registry whose aliases drive production serving. Anyone who can reach it can promote any model version, including one they logged themselves, with no record of who did it. Put auth in front of it, restrict alias changes to a gated job, and make sure the promotion path leaves a trail.
 </div>
 
-The access shape that actually works:
+The access shape that works:
 
 ```text separation by credential and by path
 Tracking server (behind TLS + auth)
@@ -99,7 +99,7 @@ Artifact store  s3://ml-artifacts/
     <li>Check whether clients hold object-store credentials directly, and how many principals that is.</li>
     <li>Try to answer "who promoted the current champion, and when?" from the data you have today.</li>
   </ol>
-  <em>step four is usually unanswerable, which is the finding. If promotion is a human clicking in a UI, there is no approval trail — and that is the gap to close before anything else on this page.</em>
+  <em>step four is usually unanswerable, which is the finding. If promotion is a human clicking in a UI, there is no approval trail, and that is the gap to close before anything else on this page.</em>
 </div>
 
 ## Authentication, authorisation, and proxied artifacts
@@ -161,7 +161,7 @@ auth.create_registered_model_permission(name="churn-classifier", username="amina
       <li>Every user and CI job needs bucket credentials</li>
       <li>Bucket policy, not MLflow, decides who reads what</li>
       <li>No central audit of artifact access</li>
-      <li>Faster for very large artifacts, and simpler to scale</li>
+      <li>Faster for large artifacts, and simpler to scale</li>
     </ul>
   </div>
 </div>
@@ -170,7 +170,7 @@ auth.create_registered_model_permission(name="churn-classifier", username="amina
 
 <div class="callout warn">
   <span class="ct">Proxied artifacts move the bottleneck onto the tracking server</span>
-  Every model upload and download now flows through it, so a team pushing multi-gigabyte artifacts turns the server into a throughput problem and a single point of failure. It is usually the right trade for the credential story — but size the server for it, and consider direct access for genuinely large artifacts with tight bucket policies instead.
+  Every model upload and download now flows through it, so a team pushing multi-gigabyte artifacts turns the server into a throughput problem and a single point of failure. It is usually the right trade for the credential story, but size the server for it, and consider direct access for large artifacts with tight bucket policies instead.
 </div>
 
 <div class="guide-try">
@@ -184,7 +184,7 @@ auth.create_registered_model_permission(name="churn-classifier", username="amina
   <em>step three is the one that changes your credential inventory: a client that needs only a tracking token is a much smaller blast radius. Step four is the cost of that, measured rather than assumed.</em>
 </div>
 
-## Self-hosting: what you actually own
+## Self-hosting: what you own
 
 Beginner ran `mlflow server` on a laptop. A shared deployment has four moving parts and each has its own failure mode.
 
@@ -200,8 +200,8 @@ Beginner ran `mlflow server` on a laptop. A shared deployment has four moving pa
 
 | Component | Holds | If it dies | Grows with |
 |---|---|---|---|
-| **Reverse proxy** | Nothing | No access; the store is intact | — |
-| **Tracking server** | Nothing — stateless | Restart or scale out horizontally | — |
+| **Reverse proxy** | Nothing | No access; the store is intact | - |
+| **Tracking server** | Nothing: stateless | Restart or scale out horizontally | - |
 | **Backend database** | Runs, params, metrics, tags, registry | Everything stops. This is the system of record | Metric points × runs |
 | **Artifact store** | Models, plots, reports | Models unreadable; metadata survives | Artifact volume × retention |
 
@@ -216,7 +216,7 @@ mlflow server \
   --gunicorn-opts "--timeout 120 --graceful-timeout 30 --max-requests 2000"
 ```
 
-```yaml docker-compose.yml — the parts that matter
+```yaml docker-compose.yml: the parts that matter
 services:
   db:
     image: postgres:16
@@ -260,19 +260,19 @@ Non-negotiables for a server anyone else depends on:
     <li>Check whether your server image tag is pinned. If it says <code>latest</code>, that is a scheduled surprise.</li>
     <li>Confirm the backend is Postgres or MySQL and that bucket versioning is enabled.</li>
     <li>Run two concurrent training scripts logging heavily and watch database connections and latency.</li>
-    <li>Kill the tracking server mid-run and observe what the client does — and what the run's final status is.</li>
+    <li>Kill the tracking server mid-run and observe what the client does, and what the run's final status is.</li>
   </ol>
   <em>step four is worth knowing before it happens: a killed server leaves runs stuck in <code>RUNNING</code> with the tail of their metrics lost, and the client's error depends on where it was. Recognising that state saves a confused hour later.</em>
 </div>
 
 ## Backup, restore, and upgrades
 
-The question is not whether you have backups. It is whether you have restored one.
+Having backups is easy. Having restored one is the part that counts.
 
 A complete MLflow backup has **two** parts, and both are required for a usable system:
 
 <ol class="guide-steps">
-  <li><b>The backend database</b><code>pg_dump</code> of the MLflow database — and the auth database too, if you use the basic-auth plugin. This is the system of record: runs, metrics, registry, aliases.</li>
+  <li><b>The backend database</b><code>pg_dump</code> of the MLflow database, and the auth database too, if you use the basic-auth plugin. This is the system of record: runs, metrics, registry, aliases.</li>
   <li><b>The artifact bucket</b>With versioning enabled, plus a replication or lifecycle policy. Without it, a restored database is a catalogue pointing at nothing.</li>
 </ol>
 
@@ -309,7 +309,7 @@ Upgrades run schema migrations, so they follow the same discipline:
 | Step | Detail |
 |---|---|
 | Read the release notes for every version you skip | Migrations are cumulative; some are one-way |
-| Back up the database first | An interrupted migration is exactly why |
+| Back up the database first | An interrupted migration is why |
 | Run `mlflow db upgrade` deliberately | Do not let a container restart migrate for you |
 | Pin the target tag | So the change is a decision, not an accident |
 | Upgrade the server before the clients | Newer clients send fields older servers reject |
@@ -330,7 +330,7 @@ mlflow db upgrade postgresql://mlflow:pass@db.internal/mlflow
     <li>Take both backups today. Note the sizes and how long each takes.</li>
     <li>Restore onto a scratch host and run the five verification steps in order.</li>
     <li>Specifically confirm that <code>models:/name@champion</code> resolves and downloads.</li>
-    <li>Write down your measured RTO — from "the server is gone" to "a client logged a run" — and tell your team the number.</li>
+    <li>Write down your measured RTO, from "the server is gone" to "a client logged a run", and tell your team the number.</li>
   </ol>
   <em>a real recovery time instead of an assumed one. Step three is the one that fails most often, because artifact configuration is the part nobody thinks of as being part of the database backup.</em>
 </div>
@@ -345,7 +345,7 @@ What the open-source server gives you:
 |---|---|---|
 | Structure | Experiment naming conventions: `team/project/purpose` | Convention only |
 | Authorisation | Basic-auth plugin: per-experiment and per-model permissions | Coarse; users and permissions, not roles and groups |
-| Storage isolation | An artifact prefix per team, with its own lifecycle | Enforced by bucket policy, not MLflow — unless proxied |
+| Storage isolation | An artifact prefix per team, with its own lifecycle | Enforced by bucket policy, not MLflow, unless proxied |
 | Attribution | Mandatory tags: `team`, `cost_centre`, `origin` | Convention, but auditable and searchable |
 | Registry hygiene | Naming convention plus per-model permissions | No folders; the name *is* the namespace |
 | Hard isolation | **A separate server and database per tenant** | Real operational duplication |
@@ -362,7 +362,7 @@ artifacts:
   s3://ml-artifacts/fraud/…
 ```
 
-```python platform/mlflow_wrapper.py — where conventions become defaults
+```python platform/mlflow_wrapper.py: where conventions become defaults
 import os
 import mlflow
 
@@ -434,12 +434,12 @@ s3://ml-artifacts/<team>/registry/    no expiry — a registered model's artifac
 
 <div class="callout warn">
   <span class="ct">A lifecycle rule can delete a registered model's artifact</span>
-  The registry stores a <em>pointer</em>. Expiring the object behind a registered version leaves an entry that resolves and then fails to download, and it will be discovered by a batch job at 3am. Keep registry-referenced artifacts out of expiry rules — ideally in their own prefix — and verify before enabling any rule.
+  The registry stores a <em>pointer</em>. Expiring the object behind a registered version leaves an entry that resolves and then fails to download, and it will be discovered by a batch job at 3am. Keep registry-referenced artifacts out of expiry rules, ideally in their own prefix, and verify before enabling any rule.
 </div>
 
 Retention on the metadata side is `mlflow gc`, and it needs saying precisely: `delete_run` is a **soft** delete that only changes lifecycle stage. Nothing is reclaimed until garbage collection runs.
 
-```python platform/retention.py — scheduled, dry-run gated
+```python platform/retention.py: scheduled, dry-run gated
 import os
 from datetime import datetime, timedelta
 import mlflow
@@ -489,7 +489,7 @@ mlflow gc --backend-store-uri postgresql://mlflow:pass@db/mlflow --older-than 30
     <li>Run the retention script in dry-run mode and read the list, plus what it would free.</li>
     <li>Check whether any lifecycle rule could expire an artifact a registered version points at.</li>
   </ol>
-  <em>step four is the one that prevents an incident. A rule that quietly deletes the champion's weights produces a failure with no obvious cause, discovered by a scheduled job rather than by a person.</em>
+  <em>step four is the one that prevents an incident. A rule that deletes the champion's weights produces a failure with no obvious cause, discovered by a scheduled job rather than by a person.</em>
 </div>
 
 ## Scale: which component breaks first
@@ -499,7 +499,7 @@ Growth arrives in four dimensions, and each breaks something different. Knowing 
 <div class="guide-timeline">
   <div class="guide-timeline-item"><span>1</span><strong>Metric write rate</strong><small>Per-batch logging from many concurrent runs. Database write pressure; slow logging, then slow UI.</small></div>
   <div class="guide-timeline-item"><span>2</span><strong>Run count</strong><small>Hundreds of thousands of runs. <code>search_runs</code> and the experiment table get slow.</small></div>
-  <div class="guide-timeline-item"><span>3</span><strong>Artifact volume</strong><small>Storage cost, and — if proxied — tracking-server throughput.</small></div>
+  <div class="guide-timeline-item"><span>3</span><strong>Artifact volume</strong><small>Storage cost, and, if proxied, tracking-server throughput.</small></div>
   <div class="guide-timeline-item"><span>4</span><strong>Concurrent clients</strong><small>Worker saturation. Scale the server out; it is stateless.</small></div>
 </div>
 
@@ -540,15 +540,15 @@ grouped = frame.groupby("tags.model")
 
 <div class="callout warn">
   <span class="ct">The backend database is the single point of failure</span>
-  MLflow's server is stateless and trivially replaceable; the database is not. When it is full, slow, or locked, logging fails, the UI fails, and the registry — including alias resolution for production serving — fails with it. Monitor its disk and connections as your primary platform alert, and make sure production serving caches the resolved model rather than resolving an alias on every request.
+  MLflow's server is stateless and trivially replaceable; the database is not. When it is full, slow, or locked, logging fails, the UI fails, and the registry, including alias resolution for production serving, fails with it. Monitor its disk and connections as your primary platform alert, and make sure production serving caches the resolved model rather than resolving an alias on every request.
 </div>
 
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
     <li>Find your highest-writing run and count its metric points. Compare against a per-epoch equivalent.</li>
-    <li>Count runs per experiment and identify what is actually filling the database — usually CI and sweeps.</li>
-    <li>Take the database offline for one minute and see exactly what fails, including whether serving keeps working.</li>
+    <li>Count runs per experiment and identify what is filling the database, usually CI and sweeps.</li>
+    <li>Take the database offline for one minute and see what fails, including whether serving keeps working.</li>
     <li>Add <code>--workers</code> and measure concurrent client throughput before and after.</li>
   </ol>
   <em>step three is the important drill: if your serving path resolves <code>@champion</code> on every request, a database blip becomes a production outage. Caching the resolved model at startup is a one-line change that removes that coupling.</em>
@@ -556,7 +556,7 @@ grouped = frame.groupby("tags.model")
 
 ## Reproducibility that survives eighteen months
 
-MLflow records the commit, the params, and the model's pip dependencies. That is necessary and not sufficient — and the gaps are specific.
+MLflow records the commit, the params, and the model's pip dependencies. That is necessary and not sufficient, and the gaps are specific.
 
 | Layer | Recorded by MLflow | How to close the gap |
 |---|---|---|
@@ -587,9 +587,9 @@ with mlflow.start_run(run_name=name, tags={"git_clean": str(is_clean())}) as run
     )
 ```
 
-And the part that makes it a claim rather than a hope — a scheduled rebuild of the current champion:
+The part that makes it a claim rather than a hope is a scheduled rebuild of the current champion:
 
-```python platform/rebuild_check.py — weekly
+```python platform/rebuild_check.py (weekly)
 import mlflow
 from mlflow import MlflowClient
 
@@ -615,8 +615,8 @@ with mlflow.start_run(run_name=f"rebuild check v{champion.version}",
 ```
 
 <div class="callout warn">
-  <span class="ct">MLflow will happily record an unreproducible run</span>
-  A dirty tree, an unversioned data path, an unpinned base image — none of these produce a warning, and the run looks exactly as trustworthy as a good one. That is why the checks have to be yours: refuse to register from a dirty tree, require a dataset input, and run a weekly rebuild. The first time that rebuild runs, it will fail, and that failure is the point.
+  <span class="ct">MLflow will record an unreproducible run</span>
+  A dirty tree, an unversioned data path, an unpinned base image: none of these produce a warning, and the run looks as trustworthy as a good one. That is why the checks have to be yours: refuse to register from a dirty tree, require a dataset input, and run a weekly rebuild. The first time that rebuild runs, it will fail, and that failure is the point.
 </div>
 
 <div class="guide-try">
@@ -639,10 +639,10 @@ MLflow has no built-in approval workflow, so the trail has to be constructed. Th
 <ol class="guide-steps">
   <li><b>Permissions</b>Researchers get <code>EDIT</code> on experiments and <code>READ</code> on registered models. Only a CI service account has <code>EDIT</code> on the model, so only CI can move an alias.</li>
   <li><b>A gated workflow</b>Promotion runs from a protected branch with required review, so the human approval is a pull-request approval with a named reviewer.</li>
-  <li><b>Version tags as the audit record</b>Who, when, on what data, against which baseline, with which thresholds — written onto the model version by the promotion job.</li>
+  <li><b>Version tags as the audit record</b>Who, when, on what data, against which baseline, with which thresholds, written onto the model version by the promotion job.</li>
 </ol>
 
-```python platform/promote.py — the audit record is the point
+```python platform/promote.py: the audit record is the point
 import os, json, datetime as dt
 import mlflow
 from mlflow import MlflowClient
@@ -709,14 +709,14 @@ client.set_registered_model_alias(NAME, "champion", candidate.version)
     <li>Add the dirty-tree refusal and try to promote a model trained from uncommitted code.</li>
     <li>Ask someone to reconstruct the last promotion decision from the registry alone, without asking you.</li>
   </ol>
-  <em>step four is the real test. If they can answer what data, what baseline, what thresholds, and who approved it, you have an audit trail. If they have to ask you, you have institutional memory — which is not the same thing.</em>
+  <em>step four is the real test. If they can answer what data, what baseline, what thresholds, and who approved it, you have an audit trail. If they have to ask you, you have institutional memory, which is not the same thing.</em>
 </div>
 
 ## Lineage, audit, and erasure
 
 The audit chain runs model → version → run → code, data, and configuration. It only exists if each link was recorded, and one script proves whether it was.
 
-```python platform/lineage.py — generated, not narrated
+```python platform/lineage.py: generated, not narrated
 import json
 from mlflow import MlflowClient
 
@@ -755,18 +755,18 @@ def lineage(model_name: str, alias: str = "champion") -> dict:
 
 | Location | May contain personal data | Deletable |
 |---|---|---|
-| Params and tags | Rarely — unless someone logged an identifier | Yes, but params are immutable; delete the run |
-| Metrics | No | — |
-| Artifacts: predictions, reports | **Often** — scored records with identifiers | Yes, per artifact |
+| Params and tags | Rarely, unless someone logged an identifier | Yes, but params are immutable; delete the run |
+| Metrics | No | - |
+| Artifacts: predictions, reports | **Often**: scored records with identifiers | Yes, per artifact |
 | `input_example` inside a model | **Yes**, if autologged from real data | Relog the model without it |
-| Traces (GenAI) | **Yes** — prompts and responses verbatim | Delete traces; decide retention up front |
+| Traces (GenAI) | **Yes**: prompts and responses verbatim | Delete traces; decide retention up front |
 | Dataset profiles | Schema and statistics, not rows | Usually fine |
-| Model weights | Learned from the data; sometimes extractable | Effectively no — retraining is the remedy |
+| Model weights | Learned from the data; sometimes extractable | Effectively no: retraining is the remedy |
 | Database backups | Everything, historically | Only by expiring backups |
 
 <div class="callout warn">
   <span class="ct">Two MLflow-specific places personal data hides</span>
-  <code>log_input_examples=True</code> embeds real training rows inside a model artifact you might publish or share. And GenAI traces store prompts and responses verbatim, which on production traffic means user messages. Both are default-adjacent settings that quietly create copies nobody remembers during an erasure request. Turn off input examples, and decide trace redaction and retention before enabling tracing on real traffic.
+  <code>log_input_examples=True</code> embeds real training rows inside a model artifact you might publish or share. GenAI traces store prompts and responses verbatim, which on production traffic means user messages. Both are default-adjacent settings that create copies nobody remembers during an erasure request. Turn off input examples, and decide trace redaction and retention before enabling tracing on real traffic.
 </div>
 
 <div class="guide-try">
@@ -777,7 +777,7 @@ def lineage(model_name: str, alias: str = "champion") -> dict:
     <li>Search your artifacts for prediction files containing identifiers, and for embedded input examples.</li>
     <li>Write down what you would do, and how long it would take, if an erasure request arrived tomorrow.</li>
   </ol>
-  <em>most teams find a complete code chain, a missing data chain, and no approval record. Step three is the uncomfortable one: scored predictions with customer identifiers are extremely common as artifacts, and nobody classifies them as data.</em>
+  <em>most teams find a complete code chain, a missing data chain, and no approval record. Step three is the uncomfortable one: scored predictions with customer identifiers are common as artifacts, and nobody classifies them as data.</em>
 </div>
 
 ## Serving in production, and the supply chain
@@ -810,7 +810,7 @@ LOGGER.info("serving %s version %s", MODEL, version.version)   # in every log li
 The supply-chain question is the one people miss. **Loading a model executes code.**
 
 <ol class="guide-steps">
-  <li><b>Unpickling runs code</b>A pickle is a program. A malicious or tampered artifact executes in whatever process loads it — your batch job, your serving pod.</li>
+  <li><b>Unpickling runs code</b>A pickle is a program. A malicious or tampered artifact executes in whatever process loads it: your batch job, your serving pod.</li>
   <li><b>`code_paths` ships arbitrary modules</b>Whatever was copied in runs at load time. That is the feature, and it is also the risk.</li>
   <li><b>Inferred dependencies install from an index</b>A serving environment build resolves packages at deploy time unless pinned by hash, which is a dependency-confusion surface.</li>
   <li><b>The artifact store is the trust boundary</b>Anyone who can write to it can replace the bytes behind a registered version.</li>
@@ -827,7 +827,7 @@ The supply-chain question is the one people miss. **Loading a model executes cod
 
 <div class="callout warn">
   <span class="ct">A registry version is immutable metadata pointing at mutable bytes</span>
-  MLflow will not let you change version 7, but nothing in MLflow stops someone with bucket write access from replacing the object version 7 points at. Every consumer would then load different weights with no error and no record. Write-restrict the artifact prefix, enable versioning, and prefer proxied access — that combination is what makes "version 7" mean something.
+  MLflow will not let you change version 7, but nothing in MLflow stops someone with bucket write access from replacing the object version 7 points at. Every consumer would then load different weights with no error and no record. Write-restrict the artifact prefix, enable versioning, and prefer proxied access. That combination is what makes "version 7" mean something.
 </div>
 
 <div class="guide-try">
@@ -848,18 +848,18 @@ Four incidents you should be able to work through without improvising.
 **The tracking server is gone.**
 
 <ol class="guide-steps">
-  <li><b>Serving keeps working if it cached its model</b>Confirm that first — it decides whether this is an outage or an inconvenience.</li>
+  <li><b>Serving keeps working if it cached its model</b>Confirm that first. It decides whether this is an outage or an inconvenience.</li>
   <li><b>Stand up the same pinned image</b>A different version runs schema migrations on top of an incident.</li>
   <li><b>Point it at the existing database</b>The server is stateless; if the database survived, you are minutes away.</li>
   <li><b>Verify in order</b>Login → a known run's metrics → alias resolution → a model download → a new run logging.</li>
   <li><b>Reconcile</b>Runs interrupted mid-flight are stuck in <code>RUNNING</code>; close them and note the metric tail that was lost.</li>
 </ol>
 
-**The backend database is full or corrupted.** Everything stops: logging, the UI, and alias resolution. Free space or fail over to a replica, then fix the cause — usually per-batch metric writes or no retention. Prevention: a disk alert and `mlflow gc` on a schedule.
+**The backend database is full or corrupted.** Everything stops: logging, the UI, and alias resolution. Free space or fail over to a replica, then fix the cause, usually per-batch metric writes or no retention. Prevention: a disk alert and `mlflow gc` on a schedule.
 
-**A model version's artifacts are unreadable.** Check bucket versioning for a delete marker or an overwrite; check whether a lifecycle rule expired it; check whether the artifact root changed after the run was created. Roll `champion` back to `previous` while you investigate — that is what `previous` is for.
+**A model version's artifacts are unreadable.** Check bucket versioning for a delete marker or an overwrite; check whether a lifecycle rule expired it; check whether the artifact root changed after the run was created. Roll `champion` back to `previous` while you investigate. That is what `previous` is for.
 
-**Someone promoted a model that should not be live.** Move `champion` to `previous` immediately. Then read the version's `promotion_audit` tag to establish what happened, and fix the permission that allowed it — if a researcher could move the alias, this is an access-control finding rather than a mistake.
+**Someone promoted a model that should not be live.** Move `champion` to `previous` immediately. Then read the version's `promotion_audit` tag to establish what happened, and fix the permission that allowed it. If a researcher could move the alias, this is an access-control finding rather than a mistake.
 
 | Incident | First action | Prevention |
 |---|---|---|
@@ -892,18 +892,18 @@ Knowing the boundaries is a senior skill, and naming them is a strong interview 
 
 | Need | MLflow | Better tool |
 |---|---|---|
-| Executing and scheduling work | **Nothing** — no agent, no queue, no retries | Airflow, Dagster, Prefect, Argo, or a CI system |
+| Executing and scheduling work | **Nothing**: no agent, no queue, no retries | Airflow, Dagster, Prefect, Argo, or a CI system |
 | Data versioning with real immutability | Lineage annotation only | DVC, LakeFS, Delta/Iceberg time travel |
 | Point-in-time feature serving, online/offline parity | Not its job | Feast, Tecton, or a warehouse-backed store |
 | High-scale, low-latency serving with autoscaling | A scoring server and a container | KServe, Seldon, Triton, or a managed endpoint |
 | Fine-grained RBAC, groups, SSO-mapped roles | Coarse per-experiment and per-model permissions | A managed MLflow, or a gateway plus a separate server per tenant |
 | Production monitoring and drift as a product | Metrics you log yourself | Evidently, a dedicated monitoring platform |
 | Data quality contracts | No opinion | Great Expectations, dbt tests, Soda |
-| Hyperparameter search | No optimiser of its own | Optuna, Ray Tune — then log to MLflow |
+| Hyperparameter search | No optimiser of its own | Optuna, Ray Tune: then log to MLflow |
 
 <div class="callout tip">
   <span class="ct">The honest summary</span>
-  MLflow is strongest as the <b>standard for tracking and model packaging</b>: a widely-supported artifact format, a registry with aliases, and a UI everyone already knows. It is deliberately not an orchestrator, not a data-versioning system, and not a serving platform. That narrowness is why it composes well with whatever you already run — and it means a complete stack always includes other tools, which is worth saying out loud rather than stretching MLflow over everything.
+  MLflow is strongest as the <b>standard for tracking and model packaging</b>: a widely-supported artifact format, a registry with aliases, and a UI everyone already knows. It is deliberately not an orchestrator, not a data-versioning system, and not a serving platform. That narrowness is why it composes well with whatever you already run, and it means a complete stack always includes other tools, which is worth saying out loud rather than stretching MLflow over everything.
 </div>
 
 <div class="guide-try">
@@ -913,7 +913,7 @@ Knowing the boundaries is a senior skill, and naming them is a strong interview 
     <li>Find one place where MLflow is being stretched past its shape, and name the cost.</li>
     <li>Find one place where a second tool duplicates something MLflow already does well, and name that cost too.</li>
   </ol>
-  <em>most stacks have one of each. Being able to argue both directions — where to lean on MLflow more, and where to stop — is what distinguishes a senior answer from a preference.</em>
+  <em>most stacks have one of each. Being able to argue both directions (where to lean on MLflow more, and where to stop) is what distinguishes a senior answer from a preference.</em>
 </div>
 
 ## Running MLflow as a platform
@@ -922,10 +922,10 @@ When MLflow is shared infrastructure, your job changes from using it to operatin
 
 <div class="cards">
   <div class="card"><div class="icon">📊</div><h4>Publish the numbers</h4><p>Runs and storage by team, database size, rebuild-check result. Visible without anyone asking.</p></div>
-  <div class="card"><div class="icon">🧱</div><h4>Ship a wrapper, not a wiki</h4><p>Experiment path, tags, registered name, serving requirements — all defaults nobody has to remember.</p></div>
+  <div class="card"><div class="icon">🧱</div><h4>Ship a wrapper, not a wiki</h4><p>Experiment path, tags, registered name, serving requirements: all defaults nobody has to remember.</p></div>
   <div class="card"><div class="icon">🔁</div><h4>Own the upgrade cadence</h4><p>A tested window with a database backup and a rollback, not an emergency migration mid-sprint.</p></div>
   <div class="card"><div class="icon">🚨</div><h4>Alert on the platform</h4><p>Database disk and connections, server 5xx, artifact-store errors. Not on users' failed runs.</p></div>
-  <div class="card"><div class="icon">📕</div><h4>Four runbooks, testable</h4><p>Server lost, database full, artifacts unreadable, wrong model promoted — validated by an outsider.</p></div>
+  <div class="card"><div class="icon">📕</div><h4>Four runbooks, testable</h4><p>Server lost, database full, artifacts unreadable, wrong model promoted, all validated by an outsider.</p></div>
 </div>
 
 The monitoring set that matters, in priority order and deliberately short:
@@ -936,11 +936,11 @@ The monitoring set that matters, in priority order and deliberately short:
   <li><b>Tracking server 5xx rate</b>Clients see hangs and failed logging; often a worker or timeout problem.</li>
   <li><b>Artifact-store error rate</b>Credential expiry and policy changes show up here first, as failed model uploads.</li>
   <li><b>Rebuild check failing</b>Reproducibility has regressed and nothing else would have told you.</li>
-  <li><b>Artifact storage growth versus budget</b>Weekly, broken down by prefix — before finance notices.</li>
+  <li><b>Artifact storage growth versus budget</b>Weekly, broken down by prefix, before finance notices.</li>
   <li><b>Alias changes</b>Any movement of a production alias, notified to a channel. Cheap, and it makes promotion visible.</li>
 </ol>
 
-```python platform/report.py — a weekly job, itself a tracked run
+```python platform/report.py: a weekly job, itself a tracked run
 import mlflow
 from mlflow import MlflowClient
 
@@ -966,7 +966,7 @@ mlflow.end_run()
 
 <div class="callout warn">
   <span class="ct">Never page the platform team on a user's failed run</span>
-  A failed training run belongs to its author, who already has the link. Paging on it trains everyone to ignore the channel, and then the alerts that matter — database disk, artifact-store errors — get lost in the noise.
+  A failed training run belongs to its author, who already has the link. Paging on it trains everyone to ignore the channel, and then the alerts that matter (database disk, artifact-store errors) get lost in the noise.
 </div>
 
 <div class="guide-try">
@@ -977,12 +977,12 @@ mlflow.end_run()
     <li>Publish one weekly report with runs and storage by team and the rebuild result.</li>
     <li>Ask someone outside the platform team to follow one runbook and note where they get stuck.</li>
   </ol>
-  <em>the alias-change notification in step two is the cheapest governance win available: it makes every production change visible to the team without any process, and it very often reveals promotions nobody knew about.</em>
+  <em>the alias-change notification in step two is the cheapest governance win available: it makes every production change visible to the team without any process, and it often reveals promotions nobody knew about.</em>
 </div>
 
 ## The review checklist
 
-Run this against any MLflow setup — yours or someone else's. It finds something every time.
+Run this against any MLflow setup, yours or someone else's. It finds something every time.
 
 | Area | Check |
 |---|---|
@@ -996,7 +996,7 @@ Run this against any MLflow setup — yours or someone else's. It finds somethin
 | **Retention** | Scheduled, dry-run gated, exempting registry-referenced runs? Is `mlflow gc` running? |
 | **Logging discipline** | Per epoch rather than per batch? No queries in loops? |
 | **Reproducibility** | Dirty-tree guard? Dataset input required? Explicit serving requirements? |
-| **Rebuild check** | Weekly, against the champion, with a tolerance — and currently green? |
+| **Rebuild check** | Weekly, against the champion, with a tolerance, and currently green? |
 | **Lineage** | Code, data, config, and approval for the champion in one command? |
 | **Promotion** | Threshold-gated, relative to the baseline, with an audit tag and a reviewer? |
 | **Rollback** | Is `previous` set at every promotion? Has the rollback been rehearsed? |
@@ -1015,7 +1015,7 @@ Run this against any MLflow setup — yours or someone else's. It finds somethin
     <li>Fix the top three this week and re-run.</li>
     <li>Then run it against a colleague's project, which is where you learn how much of this is convention rather than enforcement.</li>
   </ol>
-  <em>nobody passes on the first attempt. The two that matter disproportionately are unrestricted alias permissions and an untested restore — one lets anyone change production, the other means a bad day becomes a permanent loss.</em>
+  <em>nobody passes on the first attempt. The two that matter disproportionately are unrestricted alias permissions and an untested restore: one lets anyone change production, the other means a bad day becomes a permanent loss.</em>
 </div>
 
 ## The complete picture
@@ -1051,7 +1051,7 @@ Everything from all three levels in one platform. Read it as a whole; you should
     └── wrong-model-promoted.md
 ```
 
-```python platform/mlflow_wrapper.py — conventions as defaults
+```python platform/mlflow_wrapper.py: conventions as defaults
 import os, subprocess
 import mlflow
 
@@ -1083,7 +1083,7 @@ def log_model(pyfunc_model, *, project: str, signature, dataset_logged: bool, **
     )
 ```
 
-```python src/train.py — the researcher-facing surface stays small
+```python src/train.py: the researcher-facing surface stays small
 import mlflow, mlflow.data
 from platform.mlflow_wrapper import start_run, log_model
 from src.model import ChurnModel
@@ -1103,7 +1103,7 @@ with start_run("churn", "research", f"rf {PARTITION}", promotable=True) as run:
     print(info.model_uri)
 ```
 
-```bash the platform's scheduled work — all of it tracked runs
+```bash the platform's scheduled work: all of it tracked runs
 python platform/retention.py        # daily, dry-run gated, registry-aware
 python platform/rebuild_check.py    # weekly — reproducibility as a monitored property
 python platform/report.py           # weekly — runs and storage by team, alias inventory
@@ -1134,7 +1134,7 @@ Eighteen decisions in there span the whole series:
 | A weekly rebuild check, so reproducibility is monitored | Senior |
 
 <div class="guide-try">
-  <span class="ct">Try it — the one that matters</span>
+  <span class="ct">Try it: the one that matters</span>
   <ol>
     <li>Write the wrapper for your own team and migrate one project onto it. Measure how much researcher-facing code disappeared.</li>
     <li>Restrict alias changes to a CI service account and move promotion into a reviewed workflow.</li>
@@ -1142,7 +1142,7 @@ Eighteen decisions in there span the whole series:
     <li>Schedule the rebuild check and let it fail. Fix the unpinned layer it finds, then keep it green for a month.</li>
     <li>Run the review checklist and publish the results, including what you are not going to fix and why.</li>
   </ol>
-  <em>step five is the senior deliverable. A checklist with honest, argued exceptions is worth more than a green one, because it shows the trade-offs were deliberate — and it gives whoever inherits the platform a map instead of a mystery.</em>
+  <em>step five is the senior deliverable. A checklist with honest, argued exceptions beats a green one, because it shows the trade-offs were deliberate, and it gives whoever inherits the platform a map instead of a mystery.</em>
 </div>
 
 ## Where the series leaves you
@@ -1151,15 +1151,15 @@ Across three levels you have gone from a handful of logging calls to owning a pl
 
 | The question a senior gets asked | The answer this series gives |
 |---|---|
-| "Can you reproduce the model we shipped in March?" | Clone its run: commit, params, dataset digest, image digest, and lock file are recorded — and the weekly rebuild check already proved it |
-| "Who can put a model into production?" | Whoever can move an alias. Here are the permissions, the gated workflow, and the audit tag |
+| "Can you reproduce the model we shipped in March?" | Clone its run: commit, params, dataset digest, image digest, and lock file are recorded, and the weekly rebuild check already proved it |
+| "Who can put a model into production?" | Whoever can move an alias: the permissions, the gated workflow, and the audit tag |
 | "What does this platform cost?" | Artifact storage and database growth, broken down by team and published weekly |
-| "What breaks first if the team triples?" | The backend database, on metric write rate then run count. Here is the retention and capacity plan |
-| "If the server dies, how long until we are back?" | A measured RTO from a restore we ran last quarter — and serving stays up, because it caches its model |
+| "What breaks first if the team triples?" | The backend database, on metric write rate then run count, with a retention and capacity plan to match |
+| "If the server dies, how long until we are back?" | A measured RTO from a restore we ran last quarter, and serving stays up, because it caches its model |
 | "Prove this model is what we think it is" | One command producing code, data, configuration, and the timestamped approval |
-| "Should we use MLflow for X?" | Here is where it is strongest, here is where it stops, and here is what owns the rest |
+| "Should we use MLflow for X?" | Where it is strongest, where it stops, and what owns the rest |
 
-The through-line of all three levels is a single idea: **a model is only useful if something other than its author can load it, and only trustworthy if something other than its author's memory explains it.** Everything else — signatures, aliases, pinned environments, audit tags, backups, rebuild checks — exists to keep that true as the number of models, people, and months grows.
+The through-line of all three levels is a single idea: **a model is only useful if something other than its author can load it, and only trustworthy if something other than its author's memory explains it.** Everything else (signatures, aliases, pinned environments, audit tags, backups, rebuild checks) exists to keep that true as the number of models, people, and months grows.
 
 
 

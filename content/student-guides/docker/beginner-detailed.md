@@ -1,10 +1,10 @@
-This is part one of three. It covers **everything you need to do real work with Docker** — not a teaser. By the end you can build an image, run and debug a container, keep data alive, wire two services together, and hand a colleague one command that starts your whole project. Mid-level and Senior take the same topics further; nothing here is thrown away.
+This is part one of three. It covers **everything you need to do real work with Docker**, not a teaser. By the end you can build an image, run and debug a container, keep data alive, wire two services together, and hand a colleague one command that starts your whole project. Mid-level and Senior take the same topics further; nothing here is thrown away.
 
-Each section ends with a **Try it** task. Do them as you go — they take a few minutes each, and these concepts only stick once you have watched your own container start, crash, and start again properly.
+Each section ends with a **Try it** task. Do them as you go. They take a few minutes each, and these concepts only stick once you have watched your own container start, crash, and start again properly.
 
 ## What Docker is, and the problem it solves
 
-Docker packages an application **together with the environment it needs to run** — the language runtime, the libraries, the system packages, the configuration — into a single file called an image. You can then run that image as a container on any machine that has Docker, and it behaves the same way.
+Docker packages an application **together with the environment it needs to run** (the language runtime, the libraries, the system packages, the configuration) into a single file called an image. You can then run that image as a container on any machine that has Docker, and it behaves the same way.
 
 <div class="flow">
   <div class="node">DOCKERFILE<small>a recipe</small></div>
@@ -16,28 +16,28 @@ Docker packages an application **together with the environment it needs to run**
   <div class="node">ANYWHERE<small>laptop, CI, server</small></div>
 </div>
 
-That is genuinely the whole idea. The reason it matters is what it replaces.
+The diagram is the whole idea. Compare it to what came before.
 
-Before containers, getting a project running meant a page of setup instructions: install this version of Python, install these system libraries, set these environment variables, start Postgres, create a database. Every developer executed those steps slightly differently, so every developer's machine was slightly different. Then the server was different again — a different distribution, a different libc, an older OpenSSL — and code that passed every test locally failed in production for reasons nobody could reproduce.
+Before containers, getting a project running meant a page of setup instructions: install this version of Python, install these system libraries, set these environment variables, start Postgres, create a database. Every developer executed those steps slightly differently, so every developer's machine was slightly different. Then the server was different again (a different distribution, a different libc, an older OpenSSL) and code that passed every test locally failed in production for reasons nobody could reproduce.
 
-**"It works on my machine" is not a joke about carelessness. It is a description of a real, structural problem**: the environment was never part of the thing you tested. Docker makes it part of the thing you ship.
+**"It works on my machine" describes a real, structural problem rather than a careless developer**: the environment was never part of the thing you tested. Docker makes it part of the thing you ship.
 
-Two consequences of that design shape everything else in this guide, so notice them now rather than discovering them later.
+Two consequences of that design explain most of what follows. Notice them now rather than discovering them later.
 
 **The environment is described in a file you commit.** Your `Dockerfile` sits next to your source code, so it is versioned, branched, reviewed, and diffed like any other code. When the build breaks, `git log` tells you who changed the environment and why. This sounds administrative; in practice it is the single biggest reason teams stop being afraid of their deployment.
 
-**A container is disposable.** You do not repair a container, you delete it and start a new one from the image. That is what makes containers safe to experiment with — and it is also the biggest source of confusion for newcomers, because anything you wrote inside the container disappears with it. We will come back to that repeatedly.
+**A container is disposable.** You do not repair a container, you delete it and start a new one from the image. That is what makes containers safe to experiment with, and it is also the biggest source of confusion for newcomers, because anything you wrote inside the container disappears with it. We will come back to that repeatedly.
 
-What people actually use it for:
+What people use it for:
 
 <div class="cards">
   <div class="card"><div class="icon">💻</div><h4>One-command development</h4><p>A new team member clones the repository, runs one command, and has the app plus its database running.</p></div>
-  <div class="card"><div class="icon">🧪</div><h4>Honest CI</h4><p>Tests run in the same image that will run in production, so a pass actually means something.</p></div>
+  <div class="card"><div class="icon">🧪</div><h4>Honest CI</h4><p>Tests run in the same image that will run in production, so a pass means something.</p></div>
   <div class="card"><div class="icon">🚀</div><h4>Predictable deploys</h4><p>The artifact that passed CI is byte-for-byte the artifact that ships. No rebuild, no drift.</p></div>
   <div class="card"><div class="icon">🧰</div><h4>Disposable tools</h4><p>Run Postgres, Redis, or a specific Python version for ten minutes and leave nothing installed behind.</p></div>
 </div>
 
-You need remarkably little to follow along: Docker installed, a terminal, and any small project. A brand-new folder with a three-line web app is genuinely the best place to experiment, because a failed build costs you nothing.
+You need little to follow along: Docker installed, a terminal, and any small project. A brand-new folder with a three-line web app is the best place to experiment, because a failed build costs you nothing.
 
 <div class="guide-try">
   <span class="ct">Try it</span>
@@ -51,7 +51,7 @@ You need remarkably little to follow along: Docker installed, a terminal, and an
 
 ## Container versus virtual machine
 
-This is the most common interview opener and the most common source of wrong mental models, so it is worth getting straight before anything else.
+This is the most common interview opener and the most common source of wrong mental models, so get it straight before anything else.
 
 <div class="guide-compare">
   <div class="guide-compare-col good">
@@ -70,26 +70,26 @@ This is the most common interview opener and the most common source of wrong men
       <li>Ships a whole guest kernel and OS</li>
       <li>Starts in tens of seconds</li>
       <li>Gigabytes</li>
-      <li>Isolation from a hypervisor — stronger</li>
+      <li>Isolation from a hypervisor: stronger</li>
       <li>Run a handful on a laptop</li>
     </ul>
   </div>
 </div>
 
-Here is the sentence to keep: **a container is a process on your machine with a restricted view of the filesystem, the network, and the process table.** It is not a small computer. There is no second operating system booting inside it, which is exactly why it starts in the time it takes to start any other program.
+Keep this sentence: **a container is a process on your machine with a restricted view of the filesystem, the network, and the process table.** It is not a small computer. There is no second operating system booting inside it, which is why it starts in the time it takes to start any other program.
 
-That restricted view is convincing enough to be confusing. Inside a container, `ls /` shows a different filesystem, `ps aux` shows only the container's own processes, and `hostname` returns something unfamiliar. None of that is emulation — the Linux kernel is simply showing that process a different picture. Senior level covers precisely how, because the security consequences matter. For now, the practical takeaways are:
+That restricted view is convincing enough to be confusing. Inside a container, `ls /` shows a different filesystem, `ps aux` shows only the container's own processes, and `hostname` returns something unfamiliar. None of that is emulation. The Linux kernel is showing that process a different picture. Senior level covers how, because the security consequences matter. For now, the practical takeaways are:
 
 | Because a container… | You get |
 |---|---|
 | Shares the host kernel | Startup in milliseconds, tiny memory overhead |
 | Has no guest OS | Images measured in megabytes, not gigabytes |
 | Is just a process | `docker stats` looks like a process monitor, because it is |
-| Uses kernel-level isolation | Weaker separation than a VM — real, but not a security boundary for untrusted code |
+| Uses kernel-level isolation | Weaker separation than a VM: real, but not a security boundary for untrusted code |
 
 <div class="callout note">
   <span class="ct">Docker on macOS and Windows does use a VM</span>
-  Containers are a Linux kernel feature, so on a Mac or a Windows machine Docker Desktop quietly runs a small Linux virtual machine and your containers live inside it. This is why file access to mounted host folders is slower there than on Linux, and it explains a class of platform-specific surprises covered in the Tips &amp; Tricks section.
+  Containers are a Linux kernel feature, so on a Mac or a Windows machine Docker Desktop runs a small Linux virtual machine and your containers live inside it. This is why file access to mounted host folders is slower there than on Linux, and it explains a class of platform-specific surprises covered in the Tips &amp; Tricks section.
 </div>
 
 <div class="guide-try">
@@ -104,7 +104,7 @@ That restricted view is convincing enough to be confusing. Inside a container, `
 
 ## Image, container, registry: the three nouns
 
-Three words that get used interchangeably in conversation and mean very different things in practice.
+Three words that get used interchangeably in conversation and mean different things in practice.
 
 | | Image | Container | Registry |
 |---|---|---|---|
@@ -122,17 +122,17 @@ That one command exercises all three ideas: Docker looks for the `hello-world` i
 
 <div class="callout note">
   <span class="ct">One image, many containers</span>
-  <code>docker run -d nginx</code> three times gives you three independent containers from one image. They share the image's read-only layers on disk — so the third costs almost no extra space — and each gets its own thin writable layer for anything it changes.
+  <code>docker run -d nginx</code> three times gives you three independent containers from one image. They share the image's read-only layers on disk, so the third costs almost no extra space, and each gets its own thin writable layer for anything it changes.
 </div>
 
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
-    <li>Run <code>docker run hello-world</code> and read the output it prints — it describes exactly the steps above.</li>
+    <li>Run <code>docker run hello-world</code> and read the output it prints. It describes exactly the steps above.</li>
     <li>Run it a second time and notice that nothing is downloaded, because the image is now local.</li>
     <li>Run <code>docker images</code> to see the image, and <code>docker ps -a</code> to see both containers you created.</li>
   </ol>
-  <em>one image and two containers. Two containers from one run command each, both stopped, both still taking up a little disk until you remove them — which is the first hint that stopped containers do not disappear on their own.</em>
+  <em>one image and two containers. Two containers from one run command each, both stopped, both still taking up a little disk until you remove them, which is the first hint that stopped containers do not disappear on their own.</em>
 </div>
 
 ## Check your setup: client, daemon, registry
@@ -147,18 +147,18 @@ docker run hello-world  # end-to-end proof: pull, create, run
 
 `docker version` printing a **Client** section but failing on **Server** is the single most common setup problem, and it has one meaning: the Docker daemon is not running. Start Docker Desktop, or on Linux `sudo systemctl start docker`.
 
-It is worth knowing the shape of what you just installed, because it explains several error messages:
+Know the shape of what you just installed, because it explains several error messages:
 
 <div class="guide-arch" style="--arch-cols:3">
   <div class="arch-lane" style="--lane-cols:1">
     <span class="arch-label">your machine</span>
-    <div class="arch-node" data-kind="entry"><b><code>docker</code> CLI</b><small>A thin client. Sends every request over a socket — it builds nothing itself</small></div>
+    <div class="arch-node" data-kind="entry"><b><code>docker</code> CLI</b><small>A thin client. Sends every request over a socket. It builds nothing itself</small></div>
   </div>
   <i class="arch-edge" data-dir="down"></i>
   <i class="arch-edge" data-dir="down"></i>
   <i class="arch-edge" data-dir="down"></i>
   <div class="arch-lane" style="--lane-cols:3">
-    <span class="arch-label">dockerd — the daemon does the work</span>
+    <span class="arch-label">dockerd: the daemon does the work</span>
     <div class="arch-node" data-kind="worker"><b>Builder</b><small>Receives the build context, runs each instruction, writes layers</small></div>
     <div class="arch-node" data-kind="worker"><b>Runtime</b><small>Creates namespaces and cgroups, starts your process</small></div>
     <div class="arch-node" data-kind="store"><b>Storage</b><small>Images, layers, volumes, under the Docker root directory</small></div>
@@ -168,17 +168,17 @@ It is worth knowing the shape of what you just installed, because it explains se
   <i class="arch-edge" data-dir="down" data-flow="optional"></i>
   <div class="arch-node"><b>Image layers</b><small>Read-only, shared between containers</small></div>
   <div class="arch-node"><b>Container</b><small>One process, plus a thin writable layer</small></div>
-  <div class="arch-node" data-kind="external"><b>Registry</b><small>Docker Hub, GHCR, ECR — pulled on demand</small></div>
+  <div class="arch-node" data-kind="external"><b>Registry</b><small>Docker Hub, GHCR, ECR: pulled on demand</small></div>
   <p class="arch-note"><b>Why this matters:</b> the daemon must be running for any command to work; the build context is uploaded <b>to</b> the daemon, which is why its size affects build speed; and on Linux the socket is root-owned, which is why commands need <code>sudo</code> until your user joins the <code>docker</code> group.</p>
 </div>
 
-The `docker` command you type is only a client. It sends your request over a socket to a background service — the **daemon** — which builds images, starts containers, and manages storage. This matters in three practical ways: the daemon needs to be running for any command to work, files are sent *to* the daemon at build time (which is why build context size affects speed), and on Linux the socket is root-owned, which is why Docker commands need `sudo` until your user is added to the `docker` group.
+The `docker` command you type is only a client. It sends your request over a socket to a background service, the **daemon**, which builds images, starts containers, and manages storage. This matters in three practical ways: the daemon needs to be running for any command to work, files are sent *to* the daemon at build time (which is why build context size affects speed), and on Linux the socket is root-owned, which is why Docker commands need `sudo` until your user is added to the `docker` group.
 
 | Symptom | Means |
 |---|---|
 | `Cannot connect to the Docker daemon` | The daemon is not running |
 | `permission denied … /var/run/docker.sock` | Your user is not in the `docker` group |
-| `no space left on device` | Docker's storage area is full — see the cleanup section |
+| `no space left on device` | Docker's storage area is full: see the cleanup section |
 
 <div class="guide-try">
   <span class="ct">Try it</span>
@@ -214,7 +214,7 @@ docker stop web
 docker rm web
 ```
 
-Open `http://localhost:8080` after the first command and nginx is serving a page — with nothing installed on your machine, no configuration file edited, and nothing to uninstall afterwards.
+Open `http://localhost:8080` after the first command and nginx is serving a page, with nothing installed on your machine, no configuration file edited, and nothing to uninstall afterwards.
 
 Read that first command flag by flag, because each one answers a question you will keep asking:
 
@@ -226,11 +226,11 @@ Read that first command flag by flag, because each one answers a question you wi
 | `--name web` | Name it, instead of accepting a random one like `nostalgic_bardeen` |
 | `nginx` | The image. No tag means `nginx:latest` |
 
-Without `-d` the container runs in the foreground and your terminal shows its output until you press Ctrl+C. That is often what you want while developing, and always what you want the first time you run something new — you get to see it fail.
+Without `-d` the container runs in the foreground and your terminal shows its output until you press Ctrl+C. That is often what you want while developing, and always what you want the first time you run something new. You get to see it fail.
 
 <div class="callout tip">
   <span class="ct">Use <code>--rm</code> for anything throwaway</span>
-  <code>docker run --rm -it python:3.11 python</code> gives you a Python 3.11 REPL and leaves nothing behind. Without <code>--rm</code>, every experiment leaves a stopped container behind until <code>docker ps -a</code> becomes a wall of text and your disk quietly fills.
+  <code>docker run --rm -it python:3.11 python</code> gives you a Python 3.11 REPL and leaves nothing behind. Without <code>--rm</code>, every experiment leaves a stopped container behind until <code>docker ps -a</code> becomes a wall of text and your disk fills.
 </div>
 
 <div class="guide-try">
@@ -241,10 +241,10 @@ Without `-d` the container runs in the foreground and your terminal shows its ou
     <li>Now run <code>docker run --rm -it python:3.11 python</code>, print <code>import sys; sys.version</code>, and exit.</li>
     <li>Run <code>docker ps -a</code> and confirm the Python container is not listed.</li>
   </ol>
-  <em>a working web server you never installed, a Python version you do not have on your machine, and — thanks to <code>--rm</code> — no leftovers from the second experiment. That contrast between the nginx container you had to remove and the Python one that cleaned itself up is the habit to take away.</em>
+  <em>a working web server you never installed, a Python version you do not have on your machine, and, thanks to <code>--rm</code>, no leftovers from the second experiment. That contrast between the nginx container you had to remove and the Python one that cleaned itself up is the habit to take away.</em>
 </div>
 
-## The commands you will actually use, by verb
+## The commands you will use, by verb
 
 There are hundreds of Docker subcommands. In day-to-day work you use about fifteen.
 
@@ -266,11 +266,11 @@ There are hundreds of Docker subcommands. In day-to-day work you use about fifte
 | `docker system df` | How much disk Docker is using |
 | `docker system prune` | Reclaim space from unused objects |
 
-And the `docker run` flags worth memorising early:
+The `docker run` flags worth memorising early:
 
 | Flag | Means |
 |---|---|
-| `-d` | Detached — run in the background |
+| `-d` | Detached: run in the background |
 | `-it` | Interactive + TTY, so you get a usable shell |
 | `-p 8080:80` | Publish host port 8080 → container port 80 |
 | `--name web` | Give it a name instead of a random one |
@@ -279,10 +279,10 @@ And the `docker run` flags worth memorising early:
 | `--env-file .env` | Set many environment variables from a file |
 | `-v name:/path` | Mount a volume or a host folder |
 | `-w /app` | Set the working directory |
-| `--entrypoint sh` | Replace the image's entrypoint — the debugging escape hatch |
+| `--entrypoint sh` | Replace the image's entrypoint: the debugging escape hatch |
 | `--restart unless-stopped` | Restart it automatically after a crash or reboot |
 
-Two of those deserve a note now because they save real time. `docker exec -it NAME sh` only works on a **running** container; if the container has already exited there is nothing to exec into, and you want `--entrypoint sh` instead. And `docker inspect` is the answer to almost every "but I set that" argument — it shows the container's configuration after every default, image setting, and command-line override has been resolved.
+Two of those deserve a note now because they save real time. `docker exec -it NAME sh` only works on a **running** container; if the container has already exited there is nothing to exec into, and you want `--entrypoint sh` instead. `docker inspect` is the answer to almost every "but I set that" argument. It shows the container's configuration after every default, image setting, and command-line override has been resolved.
 
 <div class="guide-try">
   <span class="ct">Try it</span>
@@ -292,7 +292,7 @@ Two of those deserve a note now because they save real time. `docker exec -it NA
     <li>Now get the same answers as one line each: <code>docker inspect web --format '{{.Config.Image}}'</code> and <code>docker inspect web --format '{{json .NetworkSettings.Ports}}'</code>.</li>
     <li>Run <code>docker stats --no-stream</code> and note the memory the container is using.</li>
   </ol>
-  <em>a wall of JSON, then the same facts as single lines. <code>--format</code> is the difference between <code>inspect</code> being unusable and being the first tool you reach for — the Tips section has a set worth keeping in your shell history.</em>
+  <em>a wall of JSON, then the same facts as single lines. <code>--format</code> is the difference between <code>inspect</code> being unusable and being the first tool you reach for. The Tips section has a set worth keeping in your shell history.</em>
 </div>
 
 ## The container lifecycle, state by state
@@ -307,7 +307,7 @@ A container moves through a small number of states, and most beginner confusion 
   <div class="guide-timeline-item"><span>gone</span><strong><code>docker rm</code></strong><small>The writable layer is deleted. Anything not in a volume is lost forever.</small></div>
 </div>
 
-The rule that explains most surprises: **a container lives exactly as long as its main process.** Not "as long as you want it to", and not "until you stop it" — as long as process number one inside it keeps running.
+The rule that explains most surprises: **a container lives as long as its main process.** Not as long as you want it to, and not until you stop it. It lives as long as process number one inside it keeps running.
 
 ```bash
 docker run ubuntu                 # exits immediately
@@ -318,25 +318,25 @@ docker run --rm alpine echo hi    # prints "hi", exits, removes itself
 
 <div class="callout warn">
   <span class="ct"><code>docker run ubuntu</code> exiting instantly is not a bug</span>
-  Ubuntu's default command is a shell. A shell with no terminal attached has nothing to read, so it finishes immediately — and when the main process finishes, the container is done. Adding <code>-it</code> attaches a terminal and gives the shell something to wait for. A container is not a machine you log into; it is one process with a restricted view.
+  Ubuntu's default command is a shell. A shell with no terminal attached has nothing to read, so it finishes immediately, and when the main process finishes, the container is done. Adding <code>-it</code> attaches a terminal and gives the shell something to wait for. A container is not a machine you log into; it is one process with a restricted view.
 </div>
 
-An **exited** container still exists. Its filesystem, its logs, and its exit code are all still there, which is exactly what you need in order to debug it — and it is why `docker ps -a` fills up with corpses if you never use `--rm`.
+An **exited** container still exists. Its filesystem, its logs, and its exit code are all still there, which is what you need in order to debug it, and it is why `docker ps -a` fills up with corpses if you never use `--rm`.
 
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
     <li>Run <code>docker run --name ghost ubuntu</code>. Confirm it is not in <code>docker ps</code> but is in <code>docker ps -a</code>.</li>
     <li>Read its exit code from the STATUS column, then run <code>docker logs ghost</code>.</li>
-    <li>Run <code>docker start ghost</code> — the same container starts again and exits again.</li>
+    <li>Run <code>docker start ghost</code>. The same container starts again and exits again.</li>
     <li>Now run <code>docker run --name alive -it ubuntu bash</code>, type <code>sleep 30</code>, and from a second terminal run <code>docker stop alive</code> and watch what happens in the first.</li>
   </ol>
-  <em>the first container exits instantly with code 0 — it succeeded, it simply had nothing to do. The second survives because <code>-it</code> gave the shell a terminal, and <code>docker stop</code> visibly ends it. Those two runs together explain about a third of all "my container won't stay up" questions.</em>
+  <em>the first container exits instantly with code 0. It succeeded, it had nothing to do. The second survives because <code>-it</code> gave the shell a terminal, and <code>docker stop</code> visibly ends it. Those two runs together explain about a third of all "my container won't stay up" questions.</em>
 </div>
 
 ## Images, tags, and registries
 
-An image reference has three parts, and Docker fills in the ones you leave out — which is where surprises come from.
+An image reference has three parts, and Docker fills in the ones you leave out, which is where surprises come from.
 
 ```text
 ghcr.io/my-org/myapp:1.4.2
@@ -362,7 +362,7 @@ docker rmi nginx:1.27            # delete a local image
 
 <div class="callout warn">
   <span class="ct"><code>:latest</code> does not mean "the newest version"</span>
-  It is just the tag Docker assumes when you do not give one, and it points at whatever the publisher last pushed under that name. It can move under you between two builds an hour apart. Pin a real tag in every <code>FROM</code> line and in every deployment — <code>nginx:1.27</code>, not <code>nginx</code> — so that "what is running?" always has an answer. Mid-level shows why even a version tag is not fully immutable, and what is.
+  It is just the tag Docker assumes when you do not give one, and it points at whatever the publisher last pushed under that name. It can move under you between two builds an hour apart. Pin a real tag in every <code>FROM</code> line and in every deployment (<code>nginx:1.27</code>, not <code>nginx</code>) so that "what is running?" always has an answer. Mid-level shows why even a version tag is not fully immutable, and what is.
 </div>
 
 Choosing a base image is your first real decision, and the sensible default is narrower than people expect:
@@ -371,7 +371,7 @@ Choosing a base image is your first real decision, and the sensible default is n
 |---|---|---|
 | `python:3.11` | ~1 GB | You need compilers and headers; fine for experiments |
 | `python:3.11-slim` | ~150 MB | The sensible default for most applications |
-| `python:3.11-alpine` | ~50 MB | Size really matters *and* you have tested it |
+| `python:3.11-alpine` | ~50 MB | Size matters *and* you have tested it |
 | `ubuntu:22.04` | ~78 MB | You want a general-purpose OS and will install everything yourself |
 
 <div class="callout tip">
@@ -387,7 +387,7 @@ Choosing a base image is your first real decision, and the sensible default is n
     <li>Run <code>docker run --rm python:3.11-slim python -c "print('works')"</code> and then the same on the alpine tag.</li>
     <li>Try <code>docker run --rm python:3.11-alpine bash</code> and note the error.</li>
   </ol>
-  <em>roughly 1 GB, 150 MB, and 50 MB for the same Python version — and the Alpine image has no <code>bash</code> at all, only <code>sh</code>. That error is the one you will hit again the first time you try to <code>exec</code> into a slim image.</em>
+  <em>roughly 1 GB, 150 MB, and 50 MB for the same Python version, and the Alpine image has no <code>bash</code> at all, only <code>sh</code>. That error is the one you will hit again the first time you try to <code>exec</code> into a slim image.</em>
 </div>
 
 ## Writing a Dockerfile
@@ -422,17 +422,17 @@ Let me walk through every line, because this small file contains the entire conc
 
 `WORKDIR /app` sets the working directory for every instruction after it, and for the container at run time. It creates the directory if it does not exist, which is why you rarely need `mkdir`.
 
-`COPY requirements.txt .` copies from the **build context** (your project folder) into the image at the current `WORKDIR`. Note it copies *into the image*, permanently — this is a build-time action, and the file is baked in.
+`COPY requirements.txt .` copies from the **build context** (your project folder) into the image at the current `WORKDIR`. Note it copies *into the image*, permanently. This is a build-time action, and the file is baked in.
 
 `RUN pip install …` executes a command **while building** and saves the result as part of the image. The installed packages are now in the image forever. This is the instruction people misuse most, and the next section explains why.
 
-`COPY . .` copies everything else. It comes after the install deliberately — that ordering is the single biggest speed lever available to you, and it has its own section below.
+`COPY . .` copies everything else. It comes after the install deliberately. That ordering is the single biggest speed lever available to you, and it has its own section below.
 
 `EXPOSE 8000` is documentation. It publishes nothing at all.
 
-`CMD [...]` is the default command run when a container starts. Not during the build — at run time, every time.
+`CMD [...]` is the default command run when a container starts. It runs at run time, every time, never during the build.
 
-And the `-t myapp:1.0` in the build command is the tag you are giving the result, in `name:tag` form. Skip it and you get an untagged image identified only by a hash, which is how "dangling" images accumulate.
+The `-t myapp:1.0` in the build command is the tag you are giving the result, in `name:tag` form. Skip it and you get an untagged image identified only by a hash, which is how "dangling" images accumulate.
 
 <div class="callout warn">
   <span class="ct">The two mistakes everyone makes here</span>
@@ -444,11 +444,11 @@ And the `-t myapp:1.0` in the build command is the tag you are giving the result
   <span class="ct">Try it</span>
   <ol>
     <li>Create a folder with three files: a one-line <code>requirements.txt</code> containing <code>fastapi[standard]</code>, an <code>app.py</code> with a single route, and the Dockerfile above.</li>
-    <li>Run <code>docker build -t myapp:1.0 .</code> and read the output — every line is one instruction, and Docker tells you what it is doing.</li>
+    <li>Run <code>docker build -t myapp:1.0 .</code> and read the output. Every line is one instruction, and Docker tells you what it is doing.</li>
     <li>Run it: <code>docker run -d -p 8000:8000 --name myapp myapp:1.0</code>, then visit <code>localhost:8000</code>.</li>
     <li>Now break it deliberately: change <code>CMD</code> to <code>RUN</code> on the last line and rebuild. Cancel it with Ctrl+C after ten seconds.</li>
   </ol>
-  <em>a working image you built, and then a build that hangs forever because you asked Docker to run a web server as a build step. Causing that hang on purpose is worth the sixty seconds — it makes the build-time versus run-time distinction permanent.</em>
+  <em>a working image you built, and then a build that hangs forever because you asked Docker to run a web server as a build step. Causing that hang on purpose is worth the sixty seconds. It makes the build-time versus run-time distinction permanent.</em>
 </div>
 
 ## The Dockerfile instructions worth knowing
@@ -457,24 +457,24 @@ There are about eighteen instructions. These are the ones that appear in real Do
 
 | Instruction | Runs at | Does |
 |---|---|---|
-| `FROM` | — | Sets the base image. Always first |
+| `FROM` | - | Sets the base image. Always first |
 | `WORKDIR` | Build + run | Sets the working directory for what follows |
 | `COPY src dst` | Build | Copies from the build context into the image |
 | `ADD` | Build | Like `COPY`, but also unpacks archives and fetches URLs |
 | `RUN` | **Build** | Executes a command and saves the result as a layer |
 | `ENV KEY=value` | Build + run | Sets an environment variable in the image |
 | `ARG KEY=value` | **Build only** | A variable you can pass with `--build-arg` |
-| `EXPOSE` | — | Documents a port. `-p` publishes |
+| `EXPOSE` | - | Documents a port. `-p` publishes |
 | `USER` | Run | Switches the user for what follows |
 | `VOLUME` | Run | Declares a path as a mount point |
 | `CMD` | **Run** | Default command, overridable by `docker run img args` |
 | `ENTRYPOINT` | Run | The fixed executable; `CMD` becomes its arguments |
 | `HEALTHCHECK` | Run | How Docker decides whether the container is healthy |
-| `LABEL` | — | Metadata: maintainer, source repository, version |
+| `LABEL` | - | Metadata: maintainer, source repository, version |
 
 Three of them are worth extra words now, because they are commonly confused.
 
-**`COPY` versus `ADD`.** They look interchangeable. `ADD` additionally auto-extracts local tar archives and can download a URL — behaviour that is convenient once and surprising thereafter. Use `COPY` always, and reach for `ADD` only when you specifically want tar extraction.
+**`COPY` versus `ADD`.** They look interchangeable. `ADD` additionally auto-extracts local tar archives and can download a URL, behaviour that is convenient once and surprising thereafter. Use `COPY` always, and reach for `ADD` only when you specifically want tar extraction.
 
 **`ENV` versus `ARG`.** `ARG` exists only during the build; `ENV` persists into the running container. Both are visible to anyone who can pull the image, so neither is a place for a secret.
 
@@ -486,7 +486,7 @@ ENV LOG_LEVEL=info             # a default, present at run time and overridable 
 ENV PYTHONUNBUFFERED=1         # makes Python flush stdout, so docker logs works properly
 ```
 
-`PYTHONUNBUFFERED=1` deserves a special mention. Python buffers stdout when it is not a terminal, so in a container your log lines can sit in a buffer for a long time and `docker logs` looks empty while the app is clearly working. One `ENV` line removes an entire class of confusion.
+`PYTHONUNBUFFERED=1` deserves a special mention. Python buffers stdout when it is not a terminal, so in a container your log lines can sit in a buffer for a long time and `docker logs` looks empty while the app is working. One `ENV` line removes an entire class of confusion.
 
 **`LABEL`** costs nothing and answers "where did this image come from?" six months later:
 
@@ -510,7 +510,7 @@ LABEL org.opencontainers.image.description="Checkout API"
 
 This is the single biggest speed lever a beginner can pull, and it takes one minute to apply.
 
-Every instruction in a Dockerfile produces a **layer** — a record of what changed in the filesystem. An image is those layers stacked on top of each other, read-only. A container adds one thin writable layer on top of the stack.
+Every instruction in a Dockerfile produces a **layer**, a record of what changed in the filesystem. An image is those layers stacked on top of each other, read-only. A container adds one thin writable layer on top of the stack.
 
 <div class="flow">
   <div class="node">FROM<small>base layers</small></div>
@@ -528,19 +528,19 @@ Now the consequence. Your source code changes constantly; your dependency list b
 
 <div class="guide-compare">
   <div class="guide-compare-col good">
-    <h4>Fast — dependencies first</h4>
+    <h4>Fast: dependencies first</h4>
     <ul>
       <li><code>COPY requirements.txt .</code></li>
       <li><code>RUN pip install …</code></li>
-      <li><code>COPY . .</code></li>
+      <li><code>COPY. .</code></li>
       <li>Editing source reuses the cached install</li>
       <li>Rebuild: a couple of seconds</li>
     </ul>
   </div>
   <div class="guide-compare-col bad">
-    <h4>Slow — everything first</h4>
+    <h4>Slow: everything first</h4>
     <ul>
-      <li><code>COPY . .</code></li>
+      <li><code>COPY. .</code></li>
       <li><code>RUN pip install …</code></li>
       <li>Any source edit invalidates the install layer</li>
       <li>Every build reinstalls everything</li>
@@ -563,7 +563,7 @@ RUN apt-get update \
 ```
 
 <div class="callout warn">
-  <span class="ct">Layers are additive — deleting does not shrink</span>
+  <span class="ct">Layers are additive: deleting does not shrink</span>
   A file added in one layer and deleted in a later one is <b>still in the image</b>, and still readable by anyone who can pull it. This is why <code>COPY .env .</code> followed by <code>RUN rm .env</code> does not remove the secret; it just hides it from a casual look. Mid and Senior levels return to this, because it is the mechanism behind most leaked credentials in images.
 </div>
 
@@ -578,18 +578,18 @@ docker image inspect myapp:1.0 --format '{{.Size}}'
   <span class="ct">Try it</span>
   <ol>
     <li>Build your image, then change one character in <code>app.py</code> and build again. Time it.</li>
-    <li>Now swap the order: put <code>COPY . .</code> <em>before</em> the <code>pip install</code> line. Build, edit one character, build again. Time it.</li>
+    <li>Now swap the order: put <code>COPY. .</code> <em>before</em> the <code>pip install</code> line. Build, edit one character, build again. Time it.</li>
     <li>Put the ordering back, then run <code>docker history myapp:1.0</code> and find the biggest layer.</li>
-    <li>Watch the build output for the words <code>CACHED</code> — that is Docker telling you which layers it skipped.</li>
+    <li>Watch the build output for the words <code>CACHED</code>. That is Docker telling you which layers it skipped.</li>
   </ol>
   <em>a rebuild that takes a second or two in one ordering and a full reinstall in the other. Seeing <code>CACHED</code> disappear from your build output the moment you move one line is the clearest possible demonstration of why layer order is a design decision.</em>
 </div>
 
 ## The build context and `.dockerignore`
 
-When you run `docker build -t myapp .`, that trailing dot is not "the Dockerfile" — it is the **build context**, the directory that gets packaged up and sent to the Docker daemon before the build even starts.
+When you run `docker build -t myapp .`, that trailing dot sets the **build context** rather than naming the Dockerfile: it is the directory that gets packaged up and sent to the Docker daemon before the build even starts.
 
-That has two consequences people discover the hard way. First, it is slow if the folder is large: `.git`, `node_modules`, a virtualenv, build output, and datasets all get transferred. Second, and more seriously, **anything in the context can end up in the image** — including the `.env` file you never meant to ship.
+That has two consequences people discover the hard way. First, it is slow if the folder is large: `.git`, `node_modules`, a virtualenv, build output, and datasets all get transferred. Second, and more seriously, **anything in the context can end up in the image**, including the `.env` file you never meant to ship.
 
 `.dockerignore` fixes both. It sits next to your Dockerfile and uses the same syntax as `.gitignore`.
 
@@ -628,8 +628,8 @@ coverage
 Write this **before your first build**, not after your first slow build. It is the cheapest file in your project.
 
 <div class="callout tip">
-  <span class="ct">Confirm what actually landed in the image</span>
-  <code>docker run --rm myapp:1.0 ls -la /app</code> lists what is really there. This one command settles both "is my file missing because of <code>.dockerignore</code>?" and "did I accidentally ship <code>.env</code>?" — and it is much faster than reasoning about it.
+  <span class="ct">Confirm what landed in the image</span>
+  <code>docker run --rm myapp:1.0 ls -la /app</code> lists what is there. This one command settles both "is my file missing because of <code>.dockerignore</code>?" and "did I accidentally ship <code>.env</code>?", and it is much faster than reasoning about it.
 </div>
 
 <div class="guide-try">
@@ -640,12 +640,12 @@ Write this **before your first build**, not after your first slow build. It is t
     <li>Add <code>big.bin</code> to <code>.dockerignore</code> and rebuild.</li>
     <li>Run <code>docker run --rm myapp:1.0 ls -la /app</code> and confirm <code>big.bin</code> is not inside.</li>
   </ol>
-  <em>the context jumps by 200 MB and the build visibly slows, then returns to normal once the file is ignored. That "transferring context" line is worth glancing at on every build — it is an early warning that something large has crept into your project.</em>
+  <em>the context jumps by 200 MB and the build visibly slows, then returns to normal once the file is ignored. That "transferring context" line is worth glancing at on every build. It is an early warning that something large has crept into your project.</em>
 </div>
 
 ## `CMD` versus `ENTRYPOINT`
 
-Both describe what runs when the container starts, and the difference between them is a favourite interview question because it reveals whether you have actually shipped an image.
+Both describe what runs when the container starts, and the difference between them is a favourite interview question because it reveals whether you have shipped an image.
 
 | | `CMD` | `ENTRYPOINT` |
 |---|---|---|
@@ -668,7 +668,7 @@ CMD ["--host", "0.0.0.0", "--port", "8000"]
 
 The pairing in the second example is the pattern worth copying for a real service: `ENTRYPOINT` names the program, `CMD` supplies arguments a user might reasonably want to override.
 
-There is a second, less obvious distinction that matters more than the first one — **exec form versus shell form**.
+There is a second, less obvious distinction that matters more than the first one: **exec form versus shell form**.
 
 ```dockerfile
 CMD ["node", "server.js"]     # exec form (a JSON array): your process is PID 1
@@ -677,7 +677,7 @@ CMD node server.js            # shell form: PID 1 is /bin/sh, which runs your pr
 
 <div class="callout warn">
   <span class="ct">Always use the exec form (a JSON array)</span>
-  With the shell form, process 1 inside the container is <code>/bin/sh</code>, and it does <b>not</b> pass signals on to your application. So <code>docker stop</code> sends <code>SIGTERM</code>, your app never sees it, and ten seconds later Docker kills the container hard — mid-request, mid-transaction. Note the syntax detail too: the array uses <b>double quotes</b>, because it is JSON. Single quotes are a build error.
+  With the shell form, process 1 inside the container is <code>/bin/sh</code>, and it does <b>not</b> pass signals on to your application. So <code>docker stop</code> sends <code>SIGTERM</code>, your app never sees it, and ten seconds later Docker kills the container hard, mid-request, mid-transaction. Note the syntax detail too: the array uses <b>double quotes</b>, because it is JSON. Single quotes are a build error.
 </div>
 
 `--entrypoint` on `docker run` overrides `ENTRYPOINT`, which is the single most useful debugging flag in Docker:
@@ -693,7 +693,7 @@ docker run -it --entrypoint sh myapp:1.0     # skip the app, get a shell, look a
     <li>Change it to <code>ENTRYPOINT ["echo"]</code> plus <code>CMD ["default"]</code>. Run both ways again.</li>
     <li>Now run <code>docker run -it --entrypoint sh yourimage</code> and confirm you get a shell instead of the echo.</li>
   </ol>
-  <em>with <code>CMD</code> alone your argument replaces everything; with <code>ENTRYPOINT</code> it is appended to <code>echo</code>. And <code>--entrypoint sh</code> bypasses both — remember that flag, it is how you get inside an image that crashes on startup.</em>
+  <em>with <code>CMD</code> alone your argument replaces everything; with <code>ENTRYPOINT</code> it is appended to <code>echo</code>. <code>--entrypoint sh</code> bypasses both. Remember that flag; it is how you get inside an image that crashes on startup.</em>
 </div>
 
 ## Ports and publishing
@@ -703,7 +703,7 @@ A container has its own network namespace, which means its ports are its own. No
 <div class="flow">
   <div class="node">YOUR BROWSER<small>localhost:8080</small></div>
   <span class="arrow">&rarr;</span>
-  <div class="node">-p 8080:80<small>host : container</small></div>
+  <div class="node">-p 8080:80<small>host: container</small></div>
   <span class="arrow">&rarr;</span>
   <div class="node">CONTAINER<small>nginx on 80</small></div>
 </div>
@@ -716,13 +716,13 @@ docker run -d -P nginx                    # publish every EXPOSEd port to random
 docker port web                            # what is actually mapped
 ```
 
-The order is **host first, container second**. Getting it backwards is a classic, and the error it produces is not obvious — you get a container that appears to run but refuses connections.
+The order is **host first, container second**. Getting it backwards is a classic, and the error it produces is not obvious. You get a container that appears to run but refuses connections.
 
 Two rules cover almost every port problem you will hit:
 
 **Inside a container, your app must listen on `0.0.0.0`.** Not `127.0.0.1`, and not `localhost`. Binding to loopback inside a container means "reachable only from inside this container", so `-p` appears to do nothing at all. Most frameworks default to loopback, which is why nearly every containerised app command has a `--host 0.0.0.0` in it.
 
-**One host port can only be used once.** `bind: address already in use` means something else — often a previous container you forgot to remove — already has it. `docker ps` then `docker rm -f` clears it.
+**One host port can only be used once.** `bind: address already in use` means something else, often a previous container you forgot to remove, already has it. `docker ps` then `docker rm -f` clears it.
 
 <div class="callout warn">
   <span class="ct">The most common "port mapping doesn't work" cause</span>
@@ -771,18 +771,18 @@ The mechanisms and where each one belongs:
   Both are recorded in image metadata and readable with <code>docker history</code> by anyone who can pull the image. A password passed as a build argument is in that history forever, and deleting the file in a later layer does not help. At this level the rule is simple: <b>secrets arrive at run time, never at build time.</b> Senior level covers the proper build-time mechanism.
 </div>
 
-Precedence, most specific first: `-e` on the command line beats `--env-file`, which beats `ENV` in the Dockerfile. That layering is exactly what makes one image work everywhere.
+Precedence, most specific first: `-e` on the command line beats `--env-file`, which beats `ENV` in the Dockerfile. That layering is what makes one image work everywhere.
 
 <div class="guide-try">
   <span class="ct">Try it</span>
   <ol>
     <li>Add <code>ENV LOG_LEVEL=info</code> to your Dockerfile and rebuild.</li>
-    <li>Run <code>docker run --rm myapp:1.0 env | grep LOG_LEVEL</code> — the baked default.</li>
+    <li>Run <code>docker run --rm myapp:1.0 env | grep LOG_LEVEL</code> to see the baked default.</li>
     <li>Run it again with <code>-e LOG_LEVEL=debug</code> and confirm the override wins.</li>
     <li>Write a <code>local.env</code> with three variables, run with <code>--env-file local.env</code>, and confirm all three arrived.</li>
-    <li>Now check whether a build argument is really invisible: add <code>ARG DEMO_TOKEN=abc</code>, rebuild, and run <code>docker history --no-trunc myapp:1.0 | grep DEMO_TOKEN</code>.</li>
+    <li>Now check whether a build argument is invisible: add <code>ARG DEMO_TOKEN=abc</code>, rebuild, and run <code>docker history --no-trunc myapp:1.0 | grep DEMO_TOKEN</code>.</li>
   </ol>
-  <em>the override behaves as expected — and the last step finds your build argument sitting in the image history in plain text. Seeing that yourself is far more persuasive than being told "don't put secrets in <code>ARG</code>".</em>
+  <em>the override behaves as expected, and the last step finds your build argument sitting in the image history in plain text. Seeing that yourself is far more persuasive than being told "don't put secrets in <code>ARG</code>".</em>
 </div>
 
 ## Logs, and getting inside a container
@@ -809,7 +809,7 @@ docker exec -u root -it web sh   # as root, when you need to install a debug too
 
 <div class="callout tip">
   <span class="ct">If <code>bash</code> is not found, use <code>sh</code></span>
-  Slim and Alpine images frequently have no bash. <code>docker exec -it NAME sh</code> works nearly everywhere. If an image has no shell at all — a distroless or scratch image — you cannot exec into it, and that is deliberate rather than broken.
+  Slim and Alpine images frequently have no bash. <code>docker exec -it NAME sh</code> works nearly everywhere. If an image has no shell at all, a distroless or scratch image, you cannot exec into it, and that is deliberate rather than broken.
 </div>
 
 Three more commands complete the toolkit:
@@ -826,7 +826,7 @@ docker cp web:/etc/nginx/nginx.conf ./     # copy a file out to look at it prope
     <li>Start your app and run <code>docker logs -f NAME</code> in one terminal while you hit the endpoint from another.</li>
     <li>Get a shell inside it and explore: <code>ls -la /app</code>, <code>env</code>, <code>ps aux</code>, <code>cat</code> a config file.</li>
     <li>Change your app to write a log line to a file instead of stdout, rebuild, and confirm <code>docker logs</code> is now empty.</li>
-    <li>Copy that file out with <code>docker cp</code> to prove the lines really were written.</li>
+    <li>Copy that file out with <code>docker cp</code> to prove the lines were written.</li>
   </ol>
   <em>live log streaming, then a container whose logs are invisible to Docker even though the app is working fine. That contrast is the argument for stdout logging, and you now have it first-hand.</em>
 </div>
@@ -876,27 +876,27 @@ docker volume rm pgdata          # only works if no container is using it
   </div>
 </div>
 
-The distinction is worth stating plainly because it decides real outcomes: a **named volume** is storage Docker created and manages, referenced by a name; a **bind mount** is a path on your machine grafted into the container. Named volumes survive `docker rm`, move with your project, and get sensible permissions. Bind mounts are for when you *want* the host's actual files — chiefly so your editor and the container see the same source code.
+A **named volume** is storage Docker created and manages, referenced by a name; a **bind mount** is a path on your machine grafted into the container. That difference decides real outcomes. Named volumes survive `docker rm`, move with your project, and get sensible permissions. Bind mounts are for when you *want* the host's actual files, chiefly so your editor and the container see the same source code.
 
 <div class="callout warn">
   <span class="ct">A bind mount hides whatever was already there</span>
-  Mounting your project folder over <code>/app</code> replaces the image's <code>/app</code> entirely, including anything installed there during the build. For Node projects this is the notorious <code>node_modules</code> disappearance. The fix is an anonymous volume over the subdirectory — the Tips section shows it.
+  Mounting your project folder over <code>/app</code> replaces the image's <code>/app</code> entirely, including anything installed there during the build. For Node projects this is the notorious <code>node_modules</code> disappearance. The fix is an anonymous volume over the subdirectory, which the Tips section shows.
 </div>
 
 <div class="guide-try">
-  <span class="ct">Try it — the one that makes it stick</span>
+  <span class="ct">Try it: the one that makes it stick</span>
   <ol>
     <li>Run Postgres with <strong>no</strong> volume, create a table with <code>docker exec</code>, then <code>docker rm -f</code> it and start it again. Look for your table.</li>
     <li>Now run it with <code>-v pgdata:/var/lib/postgresql/data</code>, create the table again, remove the container, and start a new one with the same volume.</li>
     <li>Run <code>docker volume ls</code> and <code>docker volume inspect pgdata</code>.</li>
     <li>Finally, bind-mount your source into your app container and edit a file on your host while it is running.</li>
   </ol>
-  <em>the table is gone in the first case and present in the second, from a completely different container. Destroying your own data once, deliberately, is the fastest way to never do it accidentally.</em>
+  <em>the table is gone in the first case and present in the second, from a different container. Destroying your own data once, deliberately, is the fastest way to never do it accidentally.</em>
 </div>
 
 ## Networking: how containers find each other
 
-One container is rarely enough. As soon as you have an app and a database, they need to talk — and the way they find each other surprises everyone once.
+One container is rarely enough. As soon as you have an app and a database, they need to talk, and the way they find each other surprises everyone once.
 
 ```bash
 docker network create appnet
@@ -915,7 +915,7 @@ The connection string says **`db`**, not `localhost`. On a network you created, 
 | `host` | No network isolation at all; the container uses the host's stack |
 | `none` | No networking |
 
-The important row is the first two. If you never create a network, your containers land on the default bridge, where names do not resolve and you are left using IP addresses. Creating a network is one command and it is why Compose — which does it for you — feels so much easier.
+The important row is the first two. If you never create a network, your containers land on the default bridge, where names do not resolve and you are left using IP addresses. Creating a network is one command and it is why Compose, which does it for you, feels so much easier.
 
 <div class="callout warn">
   <span class="ct">Inside a container, <code>localhost</code> means <em>that container</em></span>
@@ -930,7 +930,7 @@ The important row is the first two. If you never create a network, your containe
     <li>From inside the app container, try <code>wget -qO- http://localhost:5432</code> and then <code>wget -qO- http://db:5432</code>.</li>
     <li>Run <code>docker network inspect appnet</code> and find both containers listed.</li>
   </ol>
-  <em>name resolution fails on the default bridge and works on your own network. And <code>localhost</code> from inside the app container reaches nothing, because it means the app container itself — the single most valuable networking fact at this level.</em>
+  <em>name resolution fails on the default bridge and works on your own network. <code>localhost</code> from inside the app container reaches nothing, because it means the app container itself. That is the single most valuable networking fact at this level.</em>
 </div>
 
 ## Do not run as root
@@ -956,11 +956,11 @@ EXPOSE 8000
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
-Two details in there are deliberate. `USER` comes **after** the installs, because `pip install` into system directories needs the privileges you are about to drop. And the id is numeric rather than a name, because that form is unambiguous to tooling and to orchestrators.
+Two details in there are deliberate. `USER` comes **after** the installs, because `pip install` into system directories needs the privileges you are about to drop. The id is numeric rather than a name, because that form is unambiguous to tooling and to orchestrators.
 
 <div class="callout warn">
   <span class="ct">Root in a container is root on the host kernel</span>
-  There is no hypervisor between them. If a process escapes its container — through a kernel bug, a careless mount, or an over-permissive flag — it lands on the host with whatever privileges it had inside. That is why "it's only a container" is not a security argument, and why these two lines matter more than their length suggests. Senior level covers the full picture.
+  There is no hypervisor between them. If a process escapes its container (through a kernel bug, a careless mount, or an over-permissive flag) it lands on the host with whatever privileges it had inside. That is why "it's only a container" is not a security argument, and why these two lines matter more than their length suggests. Senior level covers the full picture.
 </div>
 
 Order matters, and getting it wrong produces permission errors that look mysterious:
@@ -1028,19 +1028,19 @@ Every key in that file maps to something you already know:
 | `environment:` / `env_file:` | `-e` / `--env-file` |
 | `volumes:` | `-v` |
 | `restart:` | `--restart` |
-| `depends_on:` | Nothing — Compose adds startup ordering |
+| `depends_on:` | Nothing: Compose adds startup ordering |
 | The service name | `--name`, **and** the DNS hostname |
 
-Two things Compose gives you for free are worth calling out. It **creates a network** and puts every service on it, so `api` reaches the database at the hostname `db` with no configuration at all. And it makes the whole stack one unit: `up`, `down`, `logs`, and `ps` operate on all of it.
+Two things Compose gives you for free are worth calling out. It **creates a network** and puts every service on it, so `api` reaches the database at the hostname `db` with no configuration at all. It makes the whole stack one unit: `up`, `down`, `logs`, and `ps` operate on all of it.
 
 <div class="callout warn">
   <span class="ct"><code>depends_on</code> waits for <em>started</em>, not <em>ready</em></span>
-  It waits for the database container to start, not for Postgres inside it to accept connections — and those are several seconds apart. So your app's first query fails on a cold start, intermittently, in a way that looks like a bug in your code. Mid-level fixes this properly with health checks; for now, know that the gap exists and that retrying the connection in your app is the right instinct.
+  It waits for the database container to start, not for Postgres inside it to accept connections, and those are several seconds apart. So your app's first query fails on a cold start, intermittently, in a way that looks like a bug in your code. Mid-level fixes this properly with health checks; for now, know that the gap exists and that retrying the connection in your app is the right instinct.
 </div>
 
 <div class="callout tip">
   <span class="ct">Use Compose even for a single service</span>
-  A <code>compose.yaml</code> documents the ports, environment, and volumes that would otherwise live only in your shell history. "How do I run this?" becomes <code>docker compose up</code> — which is also the answer you want in your README.
+  A <code>compose.yaml</code> documents the ports, environment, and volumes that would otherwise live only in your shell history. "How do I run this?" becomes <code>docker compose up</code>, which is also the answer you want in your README.
 </div>
 
 <div class="guide-try">
@@ -1049,7 +1049,7 @@ Two things Compose gives you for free are worth calling out. It **creates a netw
     <li>Write the <code>compose.yaml</code> above for your app and run <code>docker compose up</code> in the foreground so you can read both services' logs interleaved.</li>
     <li>Stop it with Ctrl+C, then start it detached with <code>-d</code> and use <code>docker compose ps</code> and <code>docker compose logs -f api</code>.</li>
     <li>Run <code>docker compose exec api sh</code> and from inside it try to reach the database by name.</li>
-    <li>Run <code>docker compose down</code>, then <code>docker volume ls</code> — the volume is still there. Now <code>docker compose down -v</code> and check again.</li>
+    <li>Run <code>docker compose down</code>, then <code>docker volume ls</code>. The volume is still there. Now <code>docker compose down -v</code> and check again.</li>
   </ol>
   <em>two services started by one command, reachable from each other by name, and a volume that survives <code>down</code> but not <code>down -v</code>. That last distinction is worth burning in: <code>-v</code> is how people delete their local database by accident.</em>
 </div>
@@ -1087,19 +1087,19 @@ docker inspect NAME --format '{{range .Config.Env}}{{println .}}{{end}}'
 </div>
 
 <div class="guide-try">
-  <span class="ct">Try it — cause each failure on purpose</span>
+  <span class="ct">Try it: cause each failure on purpose</span>
   <ol>
     <li>Produce a <b>127</b>: change <code>CMD</code> to a binary that does not exist, rebuild, run, and read the exit code.</li>
     <li>Produce a <b>1</b>: make your app raise an exception on startup.</li>
     <li>Produce a <b>137</b>: run with <code>-m 16m</code> so it is killed by the memory limit, then confirm with the <code>OOMKilled</code> format string.</li>
     <li>For each one, get to the answer using the steps above rather than by remembering what you broke.</li>
   </ol>
-  <em>three recognisable failures and three distinct exit codes. Having produced them deliberately, you will recognise each instantly when it happens for real — which is the difference between a five-minute fix and a lost afternoon.</em>
+  <em>three recognisable failures and three distinct exit codes. Having produced them deliberately, you will recognise each instantly when it happens for real, which is the difference between a five-minute fix and a lost afternoon.</em>
 </div>
 
 ## Keeping your machine clean: prune and reclaim
 
-Docker accumulates. Images you pulled once, containers you forgot to remove, build cache, and volumes from projects you stopped last spring — and then one day a build fails with `no space left on device`.
+Docker accumulates. Images you pulled once, containers you forgot to remove, build cache, and volumes from projects you stopped last spring, and then one day a build fails with `no space left on device`.
 
 ```bash
 docker system df                 # what is using space, by category
@@ -1112,14 +1112,14 @@ docker builder prune             # remove build cache
 docker system prune              # containers, networks, dangling images, build cache
 ```
 
-Start with `docker system df`. It tells you which category is actually large, so you can stop guessing. Usually it is either the build cache or images.
+Start with `docker system df`. It tells you which category is large, so you can stop guessing. Usually it is either the build cache or images.
 
 <div class="callout warn">
   <span class="ct"><code>--volumes</code> deletes your data</span>
   <code>docker system prune -a --volumes</code> removes unused volumes, and "unused" includes the database of a project you are not running right now. Run <code>docker volume ls</code> and look at the list before you type it. This is the one Docker command that can lose work you cannot get back.
 </div>
 
-Worth understanding: a **dangling** image is one with no tag, usually because you rebuilt the same tag and the old image lost its name. Those are safe to remove. `docker image prune -a` is more aggressive — it removes every image not used by a container, which means re-pulling next time.
+Worth understanding: a **dangling** image is one with no tag, usually because you rebuilt the same tag and the old image lost its name. Those are safe to remove. `docker image prune -a` is more aggressive. It removes every image not used by a container, which means re-pulling next time.
 
 <div class="guide-try">
   <span class="ct">Try it</span>
@@ -1134,7 +1134,7 @@ Worth understanding: a **dangling** image is one with no tag, usually because yo
 
 ## Putting it all together
 
-Everything above, in one project. Nothing here is new — read it as a whole and you should recognise every line and be able to say why it is there.
+Everything above, in one project. Nothing here is new. Read it as a whole and you should recognise every line and be able to say why it is there.
 
 ```text .dockerignore
 .git
@@ -1230,26 +1230,26 @@ Ten decisions in there are the whole lesson of this page, and each maps to a sec
 | Named volume for Postgres | The data outlives the container |
 
 <div class="guide-try">
-  <span class="ct">Try it — the one that matters</span>
+  <span class="ct">Try it: the one that matters</span>
   <ol>
-    <li>Take this setup into a project you actually wrote, adapting the base image and commands to your language.</li>
+    <li>Take this setup into a project you wrote, adapting the base image and commands to your language.</li>
     <li>Get it running with <code>docker compose up -d --build</code>, then confirm from inside the api container that it can reach <code>db</code>.</li>
     <li>Verify three things deliberately: <code>docker run --rm yourimage id</code> shows a non-root uid; a source edit rebuilds in seconds; and <code>docker compose down</code> followed by <code>up</code> keeps your database contents.</li>
     <li>Write a three-line "Running locally" section in your README that is just the commands above.</li>
   </ol>
-  <em>a containerised project on real code, with cached rebuilds, a non-root process, and data that survives. This exercise is worth more than the rest of the page combined — and the README section is what makes it useful to somebody other than you.</em>
+  <em>a containerised project on real code, with cached rebuilds, a non-root process, and data that survives. Build it once and the page turns into reference material, and the README section is what makes it useful to somebody other than you.</em>
 </div>
 
 ## What you can now do, and what comes next
 
-You can explain what a container is and is not, build an image from a Dockerfile, order it so rebuilds are fast, publish ports correctly, configure one image for several environments, keep data in volumes, connect containers by name, run as a non-root user, start a multi-service stack with Compose, debug a container that refuses to start, and keep your disk under control. That is a working practitioner's toolkit — enough to containerise real projects and own the Dockerfiles in a repository.
+You can explain what a container is and is not, build an image from a Dockerfile, order it so rebuilds are fast, publish ports correctly, configure one image for several environments, keep data in volumes, connect containers by name, run as a non-root user, start a multi-service stack with Compose, debug a container that refuses to start, and keep your disk under control. That is a working practitioner's toolkit, enough to containerise real projects and own the Dockerfiles in a repository.
 
 | Can you… | |
 |---|---|
 | Explain a container versus a VM? | Shared kernel, a process with a restricted view |
 | Explain an image versus a container? | Read-only template versus running instance |
 | Say why `docker run ubuntu` exits at once? | The main process finished |
-| Say what `EXPOSE` does? | Documents — `-p` publishes |
+| Say what `EXPOSE` does? | Documents: `-p` publishes |
 | Order a Dockerfile for fast rebuilds? | Dependency manifest before source |
 | Say why deleting a file in a later layer is not enough? | Layers are additive |
 | Fix "the published port refuses connections"? | Listen on `0.0.0.0` |
@@ -1259,6 +1259,6 @@ You can explain what a container is and is not, build an image from a Dockerfile
 | Read a container's real configuration? | `docker inspect --format` |
 | Start an app plus its database with one command? | `docker compose up -d` |
 
-**Mid-level takes every one of those topics further** — the layer cache's exact rules and how to make it work in CI, multi-stage builds that cut image size by an order of magnitude, network drivers and DNS in depth, volume backup and permission handling, Compose with health checks and per-environment override files, signals and graceful shutdown, registries and immutable tags, and debugging with `docker diff`, `docker events`, and a network sidecar.
+**Mid-level takes every one of those topics further:** the layer cache's exact rules and how to make it work in CI, multi-stage builds that cut image size by an order of magnitude, network drivers and DNS in depth, volume backup and permission handling, Compose with health checks and per-environment override files, signals and graceful shutdown, registries and immutable tags, and debugging with `docker diff`, `docker events`, and a network sidecar.
 
-**Senior then covers what you own when containers are your responsibility**: what namespaces, cgroups, and capabilities actually give you, hardening an image so an escape is bounded, keeping secrets out of layers with BuildKit mounts, supply-chain controls including SBOMs, scanning, signing, and provenance, multi-architecture builds, resource limits and the OOM killer, GPU and machine-learning images, where Docker stops and an orchestrator begins, and debugging production while it is on fire.
+**Senior then covers what you own when containers are your responsibility**: what namespaces, cgroups, and capabilities give you, hardening an image so an escape is bounded, keeping secrets out of layers with BuildKit mounts, supply-chain controls including SBOMs, scanning, signing, and provenance, multi-architecture builds, resource limits and the OOM killer, GPU and machine-learning images, where Docker stops and an orchestrator begins, and debugging production while it is on fire.
