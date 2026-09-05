@@ -81,9 +81,7 @@ export const leads: (Member & { axis: number })[] = [
     name: 'Khadija Ahaidous',
     role: 'AI Research Lead',
     initials: 'KA',
-    // TODO: no photo supplied yet — drop one at /public/team/khadija-ahaidous.jpg
-    // and set the path here.
-    photo: '',
+    photo: '/team/khadija-ahaidous.jpg',
     // TODO: replace with Khadija's own bio — this describes the role.
     bio: 'Leads the community\'s research direction — the papers we read, the work we publish, and the academic mentoring that goes with them.',
     linkedin: 'https://www.linkedin.com/in/khadijaahaidous',
