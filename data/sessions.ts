@@ -33,6 +33,34 @@ export type Session = {
 
 export const sessions: Session[] = [
   {
+    // Lesson 3 of The MLOps Practitioner. The course page derives its own
+    // "next session" panel from `course.recordings` in data/mlops-practitioner.ts;
+    // this entry is what puts the same lesson in /sessions and on the home page.
+    // If the date moves, it moves in both files.
+    slug: 'mlops-practitioner-3-inference-serving',
+    title: 'The MLOps Practitioner — Session 3',
+    subtitle: 'Inference, Serving & Release Strategies',
+    speaker: 'Aya Nasser Salama',
+    speakerRole: 'Founder of MLOps MENA Community and Senior MLOps Engineer',
+    startsAt: '2026-09-06T19:00:00+03:00',
+    durationMinutes: 90,
+    topics: [
+      'Orchestration with Apache Airflow',
+      'Why inference patterns matter',
+      'Three inference patterns',
+      'What model serving is',
+      'FastAPI',
+      'BentoML',
+      'TensorRT + Triton',
+      'ONNX Runtime + OpenVINO',
+      'vLLM',
+      'Load testing with Locust',
+      'Release strategies',
+    ],
+    registerUrl: 'https://zomra.io/courses/the-mlops-practitioner',
+    note: 'Lesson 3 of the five-lesson MLOps Practitioner course. Lessons 1 and 2 are already on YouTube if you are catching up.',
+  },
+  {
     slug: 'docker-deep-dive',
     title: 'Docker Deep Dive',
     subtitle: 'Docker: Building the Foundation for MLOps — Day 1',

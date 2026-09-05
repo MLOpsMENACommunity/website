@@ -81,6 +81,24 @@ type SessionCopy = Pick<Session, 'subtitle' | 'speakerRole'> & {
 }
 
 export const sessionsAr: Record<string, SessionCopy> = {
+  'mlops-practitioner-3-inference-serving': {
+    subtitle: 'الاستدلال والتقديم واستراتيجيات الإصدار',
+    speakerRole: 'مؤسِّسة مجتمع MLOps MENA ومهندسة MLOps أولى',
+    note: 'الدرس الثالث من دورة The MLOps Practitioner المكوّنة من خمسة دروس. الدرسان الأول والثاني متاحان على يوتيوب إن كنت تلحق بالركب.',
+    topics: [
+      'التنسيق باستخدام Apache Airflow',
+      'لماذا تهمّ أنماط الاستدلال',
+      'أنماط الاستدلال الثلاثة',
+      'ما هو تقديم النماذج',
+      'FastAPI',
+      'BentoML',
+      'TensorRT + Triton',
+      'ONNX Runtime + OpenVINO',
+      'vLLM',
+      'اختبار الحِمل باستخدام Locust',
+      'استراتيجيات الإصدار',
+    ],
+  },
   'docker-deep-dive': {
     subtitle: 'Docker: أساس البناء لـ MLOps — اليوم الأول',
     speakerRole: 'مدرّب · خبرة أكثر من 3 سنوات',
