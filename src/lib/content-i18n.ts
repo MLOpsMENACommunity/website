@@ -494,6 +494,16 @@ export const teamSummaryAr = 'مؤسِّسة، ومديران للمجتمع، �
 
 /** Keyed by ExternalArticle.id — a title is editorial and will change. */
 export const articlesAr: Record<string, { title: string; description: string }> = {
+  'tokenization-how-llms-turn-text-something-can-process-mlops-mena': {
+    title: 'التقطيع إلى رموز: كيف يحوّل النموذج اللغوي النص إلى شيء يستطيع معالجته',
+    description:
+      'تكتب جملة وتفترض أن النموذج يستقبلها كما كتبتها. هذا لا يحدث. ما الذي يجري على النص فعليًا قبل أن يراه النموذج أصلًا.',
+  },
+  'introduction-large-language-models-understanding-foundation': {
+    title: 'مقدّمة في النماذج اللغوية الكبيرة: أساس الذكاء الاصطناعي الحديث',
+    description:
+      'ما هو النموذج اللغوي الكبير فعلًا، ولماذا توصف هذه النماذج بـ«الكبيرة» — المقال التأسيسي، قبل التقطيع إلى رموز وكل ما يُبنى فوقه.',
+  },
   'mlops-roadmap-seniors': {
     title: 'خريطة MLOps للخبراء',
     description:
