@@ -49,7 +49,6 @@ const en = {
       courses: 'Courses',
       sessions: 'Sessions',
       team: 'Team',
-      services: 'Services',
       partners: 'Partners',
       articles: 'Articles',
       faq: 'FAQ',
@@ -223,7 +222,6 @@ const en = {
     whereWeAre: 'Where we are',
     practitioner: 'The MLOps Practitioner',
     meetTeam: 'Meet the team',
-    services: 'Services for companies',
     brainsmingleTitle: 'Brainsmingle space',
     rights: 'Free learning for the community.',
     builtBy: 'Built by the community, for the community.',
@@ -368,75 +366,13 @@ const en = {
     email: 'Email',
   },
 
-  servicesPage: {
-    metaTitle: 'Services',
-    metaDesc:
-      'What MLOps MENA offers — free mentorship, research support and internship routes for the community, plus talent outsourcing, MLOps and GenAI training, software project delivery and consultation for companies.',
-    eyebrow: 'What we offer',
-    titleBefore: 'What we give away, and',
-    accent: 'what we sell',
-    lead:
-      'We publish free learning for engineers across Egypt and the wider MENA region — sessions, roadmaps, courses, mentorship. That side is free and stays free. We are not a charity, though: we also run a services business. We train your engineers, we staff your teams with talent we keep following up on, and we build and ship software. The paid work is what keeps the free work alive.',
-    jumpCommunity: 'Free for the community',
-    jumpCompanies: 'For companies',
-
-    communityEyebrow: 'Free for the community',
-    communityTitleBefore: 'What we give back to',
-    communityAccent: 'Egypt and the region',
-    communityLead:
-      'This is the part we give away. It is our contribution to the engineering community here, and nothing on this list has ever had a price on it.',
-    communityNote:
-      'Sessions, roadmaps, articles, study groups and community support cost nothing. They are paid for by the company work below — not by ads, sponsor tiers, or a paywall waiting a few clicks in.',
-    membersRoute: 'Members: the community channels are the fastest route to any of this.',
-    joinWhatsapp: 'Join the WhatsApp community',
-
-    companiesEyebrow: 'For companies',
-    companiesTitleBefore: 'Four ways we work',
-    companiesAccent: 'with your team',
-    companiesLead:
-      'The four things companies actually ask us for. Each one is delivered by the same practitioners who teach the free material.',
-    enquire: 'Enquire about this',
-
-    tracksEyebrow: 'Training tracks',
-    tracksTitleBefore: 'Two subjects,',
-    tracksAccent: 'three tracks',
-    tracksLead:
-      'Corporate training runs on two subjects. MLOps is one track; GenAI splits into RAG and agentic systems, because teams almost always need one of the two first.',
-    covers: 'What it covers',
-
-    benchEyebrow: 'The team behind the work',
-    benchTitleBefore: 'Seniors at',
-    benchAccent: 'every stage',
-    benchLead:
-      'We do not subcontract the hard parts. The delivery team is in-house and senior across every stage a production system touches.',
-
-    howEyebrow: 'How it starts',
-    howTitleBefore: 'From first email to',
-    howAccent: 'engineers working',
-
-    getInTouch: 'Get in touch',
-    contactTitleBefore: 'Tell us what you need',
-    contactAccent: 'built, taught, or staffed',
-    contactLead:
-      'One email is enough to start. Tell us the problem, the stack, and roughly when you need it.',
-    companyTitle: 'Services & delivery',
-    companyDesc: 'Outsourcing, software projects, and MLOps consultation.',
-    trainingTitle: 'Training for your team',
-    trainingDesc: 'MLOps and GenAI tracks, delivered on your own stack.',
-    partnershipsTitle: 'Partnerships & the founder',
-    partnershipsDesc:
-      'Partnerships, sponsorship, and anything you would rather take straight to the founder.',
-    fundingNote:
-      'Every engagement on this page funds the free sessions, roadmaps and mentorship across the rest of this site.',
-  },
-
   movedPage: {
     metaTitle: 'Mentorship',
-    metaDesc: 'Mentorship now lives on the MLOps MENA services page.',
+    metaDesc: 'Mentorship now lives with the MLOps MENA sessions.',
     title: 'Mentorship has moved',
     lead:
-      'Mentorship, research support and internship routes are now on one page with everything else we offer.',
-    cta: 'Go to Services',
+      'Mentorship runs alongside our sessions. This link now takes you there.',
+    cta: 'Go to Sessions',
     redirecting: 'Taking you there now…',
   },
 
@@ -567,7 +503,6 @@ const ar: typeof en = {
       courses: 'الدورات',
       sessions: 'الجلسات',
       team: 'الفريق',
-      services: 'الخدمات',
       partners: 'الشركاء',
       articles: 'المقالات',
       faq: 'الأسئلة الشائعة',
@@ -741,7 +676,6 @@ const ar: typeof en = {
     whereWeAre: 'أين تجدنا',
     practitioner: 'دورة The MLOps Practitioner',
     meetTeam: 'تعرّف على الفريق',
-    services: 'خدماتنا للشركات',
     brainsmingleTitle: 'مساحتنا على Brainsmingle',
     rights: 'تعلّم مجاني للمجتمع.',
     builtBy: 'صنعه المجتمع، من أجل المجتمع.',
@@ -884,73 +818,12 @@ const ar: typeof en = {
     email: 'البريد',
   },
 
-  servicesPage: {
-    metaTitle: 'الخدمات',
-    metaDesc:
-      'ما يقدّمه مجتمع MLOps MENA — إرشاد ودعم بحثي ومسارات تدريب مجانية للمجتمع، إضافة إلى توفير الكفاءات وتدريب الشركات في MLOps والذكاء الاصطناعي التوليدي وتنفيذ المشاريع البرمجية والاستشارات.',
-    eyebrow: 'ماذا نقدّم',
-    titleBefore: 'ما نقدّمه مجانًا،',
-    accent: 'وما نقدّمه كخدمة',
-    lead:
-      'ننشر تعلّمًا مجانيًا لمهندسي مصر والمنطقة — جلسات وخرائط تعلّم ودورات وإرشاد. هذا الجانب مجاني وسيبقى كذلك. لكننا لسنا جمعية خيرية: نحن أيضًا جهة تقدّم خدمات. ندرّب مهندسيكم، ونوفّر لفرقكم كفاءات نتابع عملها بأنفسنا، ونبني البرمجيات ونطلقها. والعمل المدفوع هو ما يُبقي العمل المجاني قائمًا.',
-    jumpCommunity: 'مجانًا للمجتمع',
-    jumpCompanies: 'للشركات',
-
-    communityEyebrow: 'مجانًا للمجتمع',
-    communityTitleBefore: 'ما نردّه إلى',
-    communityAccent: 'مصر والمنطقة',
-    communityLead:
-      'هذا هو الجزء الذي نقدّمه بلا مقابل. إنه إسهامنا في مجتمع المهندسين هنا، ولم يكن لأي بند في هذه القائمة ثمن يومًا.',
-    communityNote:
-      'الجلسات وخرائط التعلّم والمقالات ومجموعات المذاكرة ودعم المجتمع لا تكلّف شيئًا. يموّلها عمل الشركات بالأسفل — لا إعلانات، ولا باقات رعاية، ولا بوابة دفع تنتظرك بعد نقرتين.',
-    membersRoute: 'للأعضاء: قنوات المجتمع هي أسرع طريق إلى أي من هذا.',
-    joinWhatsapp: 'انضم إلى مجتمع واتساب',
-
-    companiesEyebrow: 'للشركات',
-    companiesTitleBefore: 'أربع طرق نعمل بها',
-    companiesAccent: 'مع فريقكم',
-    companiesLead:
-      'الأشياء الأربعة التي تطلبها الشركات منّا فعليًا. ينفّذ كلًّا منها الممارسون أنفسهم الذين يقدّمون المحتوى المجاني.',
-    enquire: 'استفسر عن هذه الخدمة',
-
-    tracksEyebrow: 'مسارات التدريب',
-    tracksTitleBefore: 'موضوعان،',
-    tracksAccent: 'وثلاثة مسارات',
-    tracksLead:
-      'يقوم تدريب الشركات على موضوعين. MLOps مسار واحد؛ أما الذكاء الاصطناعي التوليدي فينقسم إلى RAG والأنظمة الوكيلة، لأن الفرق تحتاج أحدهما أولًا في الغالب.',
-    covers: 'ما الذي يغطّيه',
-
-    benchEyebrow: 'الفريق الذي ينفّذ العمل',
-    benchTitleBefore: 'خبراء في',
-    benchAccent: 'كل مرحلة',
-    benchLead:
-      'لا نُسند الأجزاء الصعبة إلى غيرنا. فريق التنفيذ داخلي وخبير في كل مرحلة يمرّ بها أي نظام في الإنتاج.',
-
-    howEyebrow: 'كيف يبدأ العمل',
-    howTitleBefore: 'من أول رسالة إلى',
-    howAccent: 'مهندسين يعملون',
-
-    getInTouch: 'تواصل معنا',
-    contactTitleBefore: 'أخبرنا بما تحتاج',
-    contactAccent: 'بناءه أو تدريب فريقك عليه',
-    contactLead:
-      'رسالة واحدة تكفي للبدء. أخبرنا بالمشكلة، والمنظومة التقنية، والموعد الذي تحتاجه تقريبًا.',
-    companyTitle: 'الخدمات والتنفيذ',
-    companyDesc: 'توفير الكفاءات، والمشاريع البرمجية، واستشارات MLOps.',
-    trainingTitle: 'تدريب لفريقك',
-    trainingDesc: 'مسارا MLOps والذكاء الاصطناعي التوليدي، على منظومتكم التقنية.',
-    partnershipsTitle: 'الشراكات والمؤسِّسة',
-    partnershipsDesc: 'الشراكات والرعاية وكل ما تفضّل أن تطرحه على المؤسِّسة مباشرة.',
-    fundingNote:
-      'كل تعاقد في هذه الصفحة يموّل الجلسات وخرائط التعلّم والإرشاد المجاني في بقية هذا الموقع.',
-  },
-
   movedPage: {
     metaTitle: 'الإرشاد',
     metaDesc: 'انتقل الإرشاد إلى صفحة خدمات مجتمع MLOps MENA.',
     title: 'انتقلت صفحة الإرشاد',
     lead: 'الإرشاد والدعم البحثي ومسارات التدريب صارت كلها في صفحة واحدة مع بقية ما نقدّمه.',
-    cta: 'انتقل إلى الخدمات',
+    cta: 'انتقل إلى الجلسات',
     redirecting: 'ننقلك إليها الآن…',
   },
 
