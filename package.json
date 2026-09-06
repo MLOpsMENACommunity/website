@@ -2,11 +2,14 @@
   "name": "mlops-mena-community",
   "version": "1.0.0",
   "private": true,
-  "description": "MLOps MENA Community \u2014 free AI & MLOps education for the MENA region",
+  "description": "MLOps MENA Community — free AI & MLOps education for the MENA region",
   "scripts": {
+    "predev": "node scripts/sync-quickstart.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/sync-quickstart.mjs",
     "build": "next build",
     "start": "next start",
+    "sync:quickstart": "node scripts/sync-quickstart.mjs",
     "lint": "next lint",
     "serve": "npx serve out",
     "test": "node --test scripts/*.test.mjs",
@@ -42,5 +45,9 @@
     "tailwindcss": "3.4.14",
     "tsx": "4.23.12",
     "typescript": "5.6.3"
+  },
+  "allowScripts": {
+    "canvas@2.11.2": true,
+    "esbuild@0.28.2": true
   }
 }

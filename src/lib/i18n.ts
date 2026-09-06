@@ -272,6 +272,16 @@ const en = {
     noSectionResults: 'No sections match your search.',
     readingProgress: 'Reading progress',
     copied: 'Copied!',
+    quickStart: 'Quick Start',
+    quickStartLead: 'A one-page starter for this tool. Scroll through it here, or open it full screen.',
+    quickStartOpen: 'Open PDF',
+    otherQuickStart: 'Other Quick Start',
+    otherQuickStartCardDesc:
+      'Extra one-page PDFs shared in the Drive folder that are not tied to a specific tool guide — each titled by its file name.',
+    otherQuickStartLead:
+      'One-page PDFs from the shared Drive folder that are not tied to a specific tool. Read any of them here, or open it full screen.',
+    otherQuickStartEmpty:
+      'No extra files right now. Anything added to the shared Drive folder that is not named after a tool guide shows up here.',
     /* The GitHub Actions guide is read as a grid: an experience level, then how
        you want to read that level. */
     levelNav: 'Experience level',
@@ -763,6 +773,16 @@ const ar: typeof en = {
     noSectionResults: 'لا توجد أقسام تطابق بحثك.',
     readingProgress: 'تقدّم القراءة',
     copied: 'تم النسخ!',
+    quickStart: 'البداية السريعة',
+    quickStartLead: 'دليل بداية من صفحة واحدة لهذه الأداة. تصفّحه هنا أو افتحه بملء الشاشة.',
+    quickStartOpen: 'افتح ملف PDF',
+    otherQuickStart: 'بدايات سريعة أخرى',
+    otherQuickStartCardDesc:
+      'ملفات PDF إضافية من صفحة واحدة مشترَكة في مجلد Drive وغير مرتبطة بدليل أداة بعينها — كلٌّ منها بعنوان مأخوذ من اسم ملفه.',
+    otherQuickStartLead:
+      'ملفات PDF من صفحة واحدة من مجلد Drive المشترك غير مرتبطة بأداة بعينها. اقرأ أيًّا منها هنا أو افتحه بملء الشاشة.',
+    otherQuickStartEmpty:
+      'لا توجد ملفات إضافية حاليًا. أي ملف يُضاف إلى مجلد Drive المشترك ولا يحمل اسم أحد أدلة الأدوات سيظهر هنا.',
     levelNav: 'مستوى الخبرة',
     trackNav: 'طريقة القراءة',
     levels: {

@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import GuideLevelTracks from '@/components/GuideLevelTracks'
 import ToolLogo from '@/components/ToolLogo'
-import { getGuideLevels } from '@/lib/student-guides.server'
+import { getGuideLevels, getQuickStart } from '@/lib/student-guides.server'
 import { localeHref, t, type Lang } from '@/lib/i18n'
 
 /* The hero rail mirrors the lifecycle the Beginner track opens with:
@@ -12,6 +12,7 @@ const stages = ['Run', 'Model', 'Registry', 'Serve']
 export default async function MlflowGuideView({ lang }: { lang: Lang }) {
   const c = t(lang).studentGuidesPage
   const levels = await getGuideLevels('mlflow')
+  const quickStart = getQuickStart('mlflow')
   const sections = levels.reduce((total, level) => total + level.sections, 0)
 
   return (
@@ -54,7 +55,7 @@ export default async function MlflowGuideView({ lang }: { lang: Lang }) {
         </div>
       </section>
 
-      <GuideLevelTracks levels={levels} labels={c} slug="mlflow" />
+      <GuideLevelTracks levels={levels} labels={c} slug="mlflow" quickStart={quickStart} />
     </>
   )
 }

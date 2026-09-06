@@ -575,6 +575,106 @@
 .docker-card-icon { box-shadow: 0 16px 30px -18px rgba(36, 150, 237, 0.8); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s; }
 .docker-guide-card:hover .docker-card-icon { transform: translateY(-3px) rotate(5deg); box-shadow: 0 20px 38px -16px rgba(36, 150, 237, 0.85); }
 
+/* Other Quick Start card: sibling of the Docker card, amber themed. A stack of
+   PDF sheets, floating file nodes, and a scanning sweep. */
+.other-guide-card {
+  border-color: rgba(236, 151, 35, 0.26);
+  background: linear-gradient(105deg, var(--surface) 0%, var(--surface) 48%, rgba(236, 151, 35, 0.08) 76%, rgba(245, 166, 35, 0.05) 100%);
+}
+.other-guide-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-image: radial-gradient(circle, rgba(236, 151, 35, 0.22) 1px, transparent 1px);
+  background-size: 22px 22px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 38%, #000 78%);
+  mask-image: linear-gradient(90deg, transparent 38%, #000 78%);
+  opacity: 0.75;
+  transition: opacity 0.35s, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+[dir='rtl'] .other-guide-card::after { -webkit-mask-image: linear-gradient(-90deg, transparent 38%, #000 78%); mask-image: linear-gradient(-90deg, transparent 38%, #000 78%); }
+.other-guide-card:hover::after { opacity: 1; transform: scale(1.03); }
+.other-card-background { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.other-card-background::before {
+  content: '';
+  position: absolute;
+  width: 24rem;
+  height: 24rem;
+  inset-inline-end: -7rem;
+  top: -6rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(236, 151, 35, 0.16), transparent 68%);
+  animation: githubCardPulse 5.5s ease-in-out infinite;
+}
+/* Sheets of paper fanned out, each drifting like the docker container blocks. */
+.other-doc-stack { position: absolute; inset-inline-end: 8%; top: 14%; display: grid; gap: 0.5rem; transform: rotate(4deg); }
+.other-doc-stack i {
+  position: relative;
+  width: 2.6rem;
+  height: 3.3rem;
+  border: 1px solid rgba(236, 151, 35, 0.34);
+  border-radius: 0.3rem;
+  background: rgba(236, 151, 35, 0.09);
+  box-shadow: 0 10px 24px -16px rgba(236, 151, 35, 0.8);
+  animation: dockerBlock 3.8s ease-in-out infinite;
+}
+/* The folded corner and two "text" ruled lines that read as a document. */
+.other-doc-stack i::before {
+  content: '';
+  position: absolute;
+  inset-inline-end: 0;
+  top: 0;
+  width: 0.7rem;
+  height: 0.7rem;
+  background: linear-gradient(225deg, rgba(236, 151, 35, 0.5) 50%, transparent 50%);
+}
+.other-doc-stack i::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0.35rem;
+  bottom: 0.5rem;
+  height: 1px;
+  background: rgba(236, 151, 35, 0.4);
+  box-shadow: 0 -0.5rem 0 rgba(236, 151, 35, 0.28), 0 -1rem 0 rgba(236, 151, 35, 0.22);
+}
+.other-doc-stack i:nth-child(1) { grid-column: 1; grid-row: 1; }
+.other-doc-stack i:nth-child(2) { grid-column: 2; grid-row: 1; animation-delay: -0.6s; }
+.other-doc-stack i:nth-child(3) { grid-column: 1; grid-row: 2; animation-delay: -1.2s; }
+.other-doc-stack i:nth-child(4) { grid-column: 2; grid-row: 2; animation-delay: -1.8s; }
+.other-doc-stack i:nth-child(5) { grid-column: 3; grid-row: 1; animation-delay: -2.4s; }
+.other-card-node {
+  position: absolute;
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border: 1px solid rgba(236, 151, 35, 0.32);
+  border-radius: 999px;
+  background: var(--nav-bg);
+  color: rgb(var(--c-amber-400));
+  box-shadow: 0 14px 30px -18px rgba(236, 151, 35, 0.8);
+  backdrop-filter: blur(12px);
+  animation: githubNodeFloat 4.8s ease-in-out infinite;
+}
+.other-card-node svg { width: 1.15rem; }
+.other-card-node.node-one { inset-inline-end: 26%; bottom: 17%; }
+.other-card-node.node-two { inset-inline-end: 13%; bottom: 26%; animation-delay: -1.6s; }
+.other-card-node.node-three { inset-inline-end: 5%; bottom: 10%; animation-delay: -3.1s; }
+.other-card-wave {
+  position: absolute;
+  inset-inline-end: 4%;
+  bottom: 9%;
+  width: 26%;
+  height: 5rem;
+  border-top: 1px solid rgba(236, 151, 35, 0.35);
+  border-radius: 50%;
+  animation: dockerWave 3.2s ease-in-out infinite;
+}
+.other-card-wave.wave-two { bottom: 5%; transform: scaleX(0.78); animation-delay: -1.6s; }
+.other-card-icon { color: rgb(var(--c-amber-400)); box-shadow: 0 16px 30px -18px rgba(236, 151, 35, 0.8); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s; }
+.other-guide-card:hover .other-card-icon { transform: translateY(-3px) rotate(5deg); box-shadow: 0 20px 38px -16px rgba(236, 151, 35, 0.85); }
+
 /* DVC card: a commit graph feeding pointer → cache → remote storage nodes. */
 .dvc-guide-card {
   border-color: rgb(var(--c-violet) / 0.26);
@@ -991,6 +1091,10 @@
   .docker-guide-card::after { -webkit-mask-image: linear-gradient(to bottom, transparent 35%, #000); mask-image: linear-gradient(to bottom, transparent 35%, #000); }
   .docker-card-background { opacity: 0.28; }
   .docker-container-stack { inset-inline-end: 2%; }
+  .other-guide-card { background: linear-gradient(145deg, var(--surface), rgba(236, 151, 35, 0.08)); }
+  .other-guide-card::after { -webkit-mask-image: linear-gradient(to bottom, transparent 35%, #000); mask-image: linear-gradient(to bottom, transparent 35%, #000); }
+  .other-card-background { opacity: 0.3; }
+  .other-doc-stack { inset-inline-end: 3%; }
   .dvc-guide-card { background: linear-gradient(145deg, var(--surface), rgb(var(--c-violet) / 0.08)); }
   .dvc-guide-card::after { -webkit-mask-image: linear-gradient(to bottom, transparent 35%, #000); mask-image: linear-gradient(to bottom, transparent 35%, #000); }
   .dvc-card-background { opacity: 0.28; }
@@ -1195,6 +1299,8 @@
 .airflow-guide-page, .airflow-guide-card { --guide-accent: var(--c-teal); }
 .clearml-guide-page, .clearml-guide-card { --guide-accent: var(--c-coral); }
 .mlflow-guide-page, .mlflow-guide-card { --guide-accent: var(--c-cyan-400); }
+/* Not a tool: the catch-all "Other Quick Start" card + page. */
+.other-guide-page, .other-guide-card { --guide-accent: var(--c-amber); }
 .dark .docker-guide-page, .dark .docker-guide-card { --guide-accent: 74 165 255; }
 
 /* GitHub Actions hero: the event → workflow → job → step chain from section 03,
@@ -1335,6 +1441,76 @@
 
 .docker-guide-page .guide-progress i { background: linear-gradient(90deg, #2496ed, #22c3e6, #33cec0); }
 .docker-guide-page .guide-toc-links a::before { background: linear-gradient(#2496ed, #22c3e6, #33cec0); }
+
+/* Other Quick Start hero: sibling of the docker hero, amber themed. A fan of PDF
+   sheets with a scanning line sweeping across them. Purely decorative. */
+.other-guide-hero::before {
+  content: '';
+  position: absolute;
+  width: 28rem;
+  height: 12rem;
+  inset-inline-end: -3rem;
+  bottom: -8rem;
+  border-radius: 50%;
+  border-top: 1px solid rgba(236, 151, 35, 0.22);
+  box-shadow: 0 -24px 80px rgba(236, 151, 35, 0.06);
+}
+.other-hero-fan {
+  position: absolute;
+  inset-inline-end: 6%;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+@media (max-width: 900px) { .other-hero-fan { display: none; } }
+.other-doc-fan { position: relative; width: 9rem; height: 9rem; }
+.other-doc-fan i {
+  position: absolute;
+  inset-inline-start: 50%;
+  top: 50%;
+  width: 4.5rem;
+  height: 5.8rem;
+  margin-inline-start: -2.25rem;
+  margin-top: -2.9rem;
+  border: 1px solid rgba(236, 151, 35, 0.3);
+  border-radius: 0.4rem;
+  background: linear-gradient(160deg, rgba(236, 151, 35, 0.12), rgba(236, 151, 35, 0.03));
+  box-shadow: 0 18px 40px -22px rgba(236, 151, 35, 0.8);
+  transform-origin: bottom center;
+  animation: otherFanFloat 6s ease-in-out infinite;
+}
+.other-doc-fan i::before {
+  content: '';
+  position: absolute;
+  inset-inline-end: 0;
+  top: 0;
+  width: 1.1rem;
+  height: 1.1rem;
+  background: linear-gradient(225deg, rgba(236, 151, 35, 0.5) 50%, transparent 50%);
+  border-bottom-left-radius: 0.3rem;
+}
+.other-doc-fan i:nth-child(1) { transform: rotate(-18deg); }
+.other-doc-fan i:nth-child(2) { transform: rotate(-6deg); animation-delay: -1.5s; }
+.other-doc-fan i:nth-child(3) { transform: rotate(6deg); animation-delay: -3s; }
+.other-doc-fan i:nth-child(4) { transform: rotate(18deg); animation-delay: -4.5s; }
+.other-scan-line {
+  position: absolute;
+  inset-inline: -1rem;
+  top: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgb(var(--c-amber-400)), transparent);
+  box-shadow: 0 0 16px rgb(var(--c-amber-400) / 0.8);
+  animation: otherScan 4.2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+@keyframes otherFanFloat {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -6px; }
+}
+@keyframes otherScan {
+  0%, 100% { top: 8%; opacity: 0.3; }
+  50% { top: 92%; opacity: 1; }
+}
 @keyframes dockerBubble {
   0% { opacity: 0; transform: translateY(2rem) scale(0.6); }
   25% { opacity: 0.8; }
@@ -2484,6 +2660,80 @@
 /* ---- Levelled guide: experience level and reading-section switcher ----
    Two tablists in one sticky bar. Everything that has to sit clear of that bar
    is derived from `--guide-switcher-h`, so the bar's height is stated once. */
+/* ---- Quick Start ----
+   A per-topic PDF on-ramp above the levelled grid. Rendered by GuideQuickStart
+   from a build-time synced PDF; absent when the topic has none. The pdf.js pages
+   scroll inside a fixed-height box so the section never blows out page height. */
+.guide-quickstart {
+  padding-block: 2.5rem 0.5rem;
+}
+.guide-quickstart-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+  margin-bottom: 1.1rem;
+}
+.guide-quickstart-badge {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 0.8rem;
+  border: 1px solid rgb(var(--guide-accent) / 0.3);
+  background: rgb(var(--guide-accent) / 0.1);
+  color: rgb(var(--guide-accent));
+}
+.guide-quickstart-headings { flex: 1 1 auto; min-width: 0; }
+.guide-quickstart-headings h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  /* Clears the sticky site header (4rem) plus the switcher below this section
+     when the nav link scrolls here. */
+  scroll-margin-top: 5rem;
+}
+.guide-quickstart-headings p {
+  margin-top: 0.3rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.guide-quickstart-open {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.6rem;
+  border: 1px solid rgb(var(--guide-accent) / 0.35);
+  color: rgb(var(--guide-accent));
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.guide-quickstart-open:hover {
+  background: rgb(var(--guide-accent) / 0.1);
+  box-shadow: 0 12px 30px -18px rgb(var(--guide-accent) / 0.9);
+}
+.guide-quickstart-frame {
+  position: relative;
+  height: min(78vh, 900px);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: rgb(var(--surface-2));
+  overflow: hidden;
+}
+.guide-quickstart-iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+@media (max-width: 640px) {
+  .guide-quickstart-head { flex-wrap: wrap; }
+  .guide-quickstart-frame { height: 70vh; }
+}
+
 .guide-levels-shell {
   --guide-switcher-h: 3.35rem;
 }
@@ -2911,6 +3161,12 @@
   .mlflow-rail-line::after,
   .mlflow-curve i,
   .mlflow-card-curve i,
+  .other-doc-stack i,
+  .other-card-node,
+  .other-card-wave,
+  .other-card-background::before,
+  .other-doc-fan i,
+  .other-scan-line,
   .guide-arch .arch-lane::after {
     animation: none;
   }

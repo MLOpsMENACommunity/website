@@ -1,10 +1,11 @@
-import { BookOpen } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowRight, BookOpen, FileText, Files, FolderOpen } from 'lucide-react'
 import HexField from '@/components/HexField'
 import Reveal from '@/components/Reveal'
 import StudentGuidesCatalog from '@/components/StudentGuidesCatalog'
-import { getStudentGuideSectionCounts } from '@/lib/student-guides.server'
+import { getOtherQuickStarts, getStudentGuideSectionCounts } from '@/lib/student-guides.server'
 import { studentGuides } from '~/data/student-guides'
-import { t, type Lang } from '@/lib/i18n'
+import { localeHref, t, type Lang } from '@/lib/i18n'
 
 /** Staggered entrance: each block starts `step` later than the one above it. */
 const step = (n: number) => ({ '--enter-delay': `${n * 110}ms` }) as React.CSSProperties
@@ -14,6 +15,8 @@ export default function StudentGuidesView({ lang }: { lang: Lang }) {
   /* Section counts are read from the guide markdown at build time so the per-card
      figure cannot drift from the guide itself. */
   const sectionsBySlug = getStudentGuideSectionCounts()
+  /* Drive PDFs not named after a tool guide back a single extra card + page. */
+  const otherFiles = getOtherQuickStarts()
 
   return (
     <>
@@ -55,6 +58,43 @@ export default function StudentGuidesView({ lang }: { lang: Lang }) {
             sectionsBySlug={sectionsBySlug}
           />
         )}
+
+        {/* A single extra card for everything in the Drive folder that is not a
+            tool guide. Always shown so it is a permanent entry point; the target
+            page carries its own empty state when the sync found no such files. */}
+        <Reveal>
+            <Link
+              href={localeHref(lang, '/student-guides/other')}
+              className="other-guide-card student-guide-card card card-hover group mt-5 flex min-h-80 flex-col overflow-hidden p-6 sm:p-8"
+            >
+              {/* Amber-themed animation, sibling to the docker card's: a stack of
+                  PDF sheets, floating file nodes, and a scanning sweep. */}
+              <div className="other-card-background" aria-hidden="true">
+                <div className="other-doc-stack"><i /><i /><i /><i /><i /></div>
+                <span className="other-card-node node-one"><FolderOpen /></span>
+                <span className="other-card-node node-two"><FileText /></span>
+                <span className="other-card-node node-three"><Files /></span>
+                <i className="other-card-wave wave-one" />
+                <i className="other-card-wave wave-two" />
+              </div>
+              <div className="relative flex h-full flex-col md:max-w-[68%]">
+                <div className="flex items-start justify-between gap-4">
+                  <span className="guide-card-logo other-card-icon">
+                    <Files className="h-6 w-6" />
+                  </span>
+                  {otherFiles.length > 0 && <span className="chip">{otherFiles.length} PDF</span>}
+                </div>
+                <h2 className="mt-6 text-2xl font-semibold leading-snug text-fg sm:text-3xl">{c.otherQuickStart}</h2>
+                <p className="mt-3 max-w-2xl flex-1 text-sm leading-relaxed text-muted sm:text-base">
+                  {c.otherQuickStartCardDesc}
+                </p>
+                <span className="mt-5 inline-flex items-center gap-2 border-t border-line pt-4 text-sm font-semibold text-cyan-400">
+                  {c.openGuide}
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1 rtl:-scale-x-100 rtl:group-hover:-translate-x-1" />
+                </span>
+              </div>
+            </Link>
+          </Reveal>
       </section>
     </>
   )

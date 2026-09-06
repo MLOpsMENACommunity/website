@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, ArrowRight, BookOpen, GraduationCap, Lightbulb, type LucideIcon } from 'lucide-react'
 import GuideArticle from './GuideArticle'
 import GuideNavigation from './GuideNavigation'
-import type { GuideLevel, GuideLevelId, GuideTrackId } from '@/lib/student-guides.server'
+import GuideQuickStart from './GuideQuickStart'
+import type { GuideLevel, GuideLevelId, GuideQuickStart as QuickStart, GuideTrackId } from '@/lib/student-guides.server'
 
 type Labels = {
   levelNav: string
@@ -20,6 +21,9 @@ type Labels = {
   noSectionResults: string
   readingProgress: string
   copied: string
+  quickStart: string
+  quickStartLead: string
+  quickStartOpen: string
 }
 
 const TRACKS: { id: GuideTrackId; Icon: LucideIcon }[] = [
@@ -59,12 +63,16 @@ export default function GuideLevelTracks({
   levels,
   labels,
   slug,
+  quickStart,
 }: {
   levels: GuideLevel[]
   labels: Labels
   /* Scopes the per-tool accent: `<slug>-guide-page` re-points `--guide-accent`,
      which the whole `.student-guide-prose` block reads. */
   slug: string
+  /* Present only when the topic has a synced PDF; renders above the grid and
+     adds a pinned nav entry. */
+  quickStart?: QuickStart | null
 }) {
   const [levelId, setLevelId] = useState<GuideLevelId>(levels[0].id)
   const [trackId, setTrackId] = useState<GuideTrackId>('detailed')
@@ -143,6 +151,7 @@ export default function GuideLevelTracks({
 
   return (
     <div className={`guide-levels-shell ${slug}-guide-page`}>
+      {quickStart && <GuideQuickStart quickStart={quickStart} slug={slug} labels={labels} />}
       <div ref={anchorRef} aria-hidden="true" />
       <div className="guide-switcher">
         <div className="guide-switcher-inner mx-auto max-w-content px-5 sm:px-8">
@@ -203,6 +212,7 @@ export default function GuideLevelTracks({
           eyebrow={labels.levels[levelId]}
           title={labels.tracks[trackId]}
           scopeId={activePane.key}
+          pinnedHeadings={quickStart ? [quickStart.heading] : undefined}
         />
         {/* All nine panes ship in the HTML so every section is indexable and a
             switch costs nothing; the inactive ones are simply not displayed. */}

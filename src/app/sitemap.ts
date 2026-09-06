@@ -9,6 +9,8 @@ const staticPages = [
   '', '/roadmaps', '/student-guides', '/courses', '/courses/mlops-practitioner',
   /* Derived from the catalogue, so a new guide cannot be listed there and forgotten here. */
   ...studentGuides.map((guide) => `/student-guides/${guide.slug}`),
+  /* The catch-all page for Drive PDFs not tied to a specific tool guide. */
+  '/student-guides/other',
   '/sessions', '/team', '/articles', '/services', '/faq', '/privacy-policy',
 ]
 

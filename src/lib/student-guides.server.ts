@@ -40,6 +40,18 @@ export type GuidePane = {
   headings: GuideHeading[]
 }
 
+/* A per-topic PDF on-ramp shown above the levelled grid. The PDF lives in a
+   public Drive folder and is embedded straight from Drive — nothing is
+   downloaded. `scripts/sync-quickstart.mjs` records each topic's Drive file id
+   in `public/quickstart/index.json` at build time, so a topic has a Quick Start
+   only when the map lists its slug. `heading` is the fixed anchor the
+   on-this-page nav links to. */
+export type GuideQuickStart = {
+  /* Google Drive file id; embedded via `drive.google.com/file/d/<id>/preview`. */
+  fileId: string
+  heading: GuideHeading
+}
+
 export type GuideLevel = {
   id: GuideLevelId
   /* Headings across all three of this level's panes. */
@@ -189,6 +201,78 @@ export async function getGuideLevels(slug: string): Promise<GuideLevel[]> {
       }
     }),
   )
+}
+
+/* Reads the slug → Drive file-id map at `public/quickstart/index.json` (written
+   by `scripts/sync-quickstart.mjs`) and returns what the page needs to embed a
+   Quick Start viewer, or null when the topic has no entry. Nothing is read from
+   the PDF itself — the browser loads it straight from Drive. The heading id is a
+   fixed `quickstart-<slug>` so it never collides with a pane heading and is
+   stable to link to. */
+export function getQuickStart(slug: string): GuideQuickStart | null {
+  let map: Record<string, unknown>
+  try {
+    const raw = fs.readFileSync(path.join(process.cwd(), 'public', 'quickstart', 'index.json'), 'utf8')
+    map = JSON.parse(raw)
+  } catch {
+    return null
+  }
+  const fileId = map?.[slug]
+  if (typeof fileId !== 'string' || fileId.length === 0) return null
+  return {
+    fileId,
+    heading: { id: `quickstart-${slug}`, title: 'Quick Start', level: 2 },
+  }
+}
+
+/* A PDF in the Drive folder that is not named after a guide slug. These back the
+   standalone "Other Quick Start" page: each is embedded straight from Drive and
+   titled from its own file name. */
+export type OtherQuickStart = {
+  /* Google Drive file id; embedded via `drive.google.com/file/d/<id>/preview`. */
+  fileId: string
+  /* Original file name, e.g. `Kubernetes basics.pdf` — shown as the caption. */
+  name: string
+  /* A readable heading derived from the file name (extension dropped, separators
+     turned into spaces); doubles as the anchor id source. */
+  title: string
+}
+
+/* `MLflow_cheat-sheet.pdf` -> `MLflow cheat sheet`. The author's own casing is
+   kept (so acronyms survive); only the extension and separators are tidied. */
+function titleFromFileName(name: string): string {
+  const cleaned = name
+    .replace(/\.pdf$/i, '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return cleaned || name
+}
+
+/* Reads the `_other` list from `public/quickstart/index.json` — every PDF in the
+   Drive folder whose name is not a guide slug (written by
+   `scripts/sync-quickstart.mjs`). Returns [] when the file is missing, malformed,
+   or has no such entries. Nothing is read from the PDFs themselves; the browser
+   loads each straight from Drive. */
+export function getOtherQuickStarts(): OtherQuickStart[] {
+  let map: Record<string, unknown>
+  try {
+    const raw = fs.readFileSync(path.join(process.cwd(), 'public', 'quickstart', 'index.json'), 'utf8')
+    map = JSON.parse(raw)
+  } catch {
+    return []
+  }
+  const list = map?.['_other']
+  if (!Array.isArray(list)) return []
+  return list
+    .filter(
+      (entry): entry is { id: string; name: string } =>
+        !!entry &&
+        typeof entry === 'object' &&
+        typeof (entry as { id?: unknown }).id === 'string' &&
+        typeof (entry as { name?: unknown }).name === 'string',
+    )
+    .map((entry) => ({ fileId: entry.id, name: entry.name, title: titleFromFileName(entry.name) }))
 }
 
 /* Counted from the markdown rather than written down anywhere, so the figure on a
