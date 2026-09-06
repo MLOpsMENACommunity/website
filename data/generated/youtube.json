@@ -3,9 +3,14 @@
   "stats": {
     "subscriberCount": 1400,
     "viewCount": 16500,
-    "videoCount": 4
+    "videoCount": 5
   },
   "videos": [
+    {
+      "id": "Gnro52bcUsg",
+      "title": "The MLops Practitioner - session 3",
+      "published": "2026-09-06T16:09:59.000Z"
+    },
     {
       "id": "pkZcMjF1znU",
       "title": "Hands on CI CD pipelines",
@@ -15,11 +20,6 @@
       "id": "AFcoKDtyhec",
       "title": "handson docker mlops mena community",
       "published": "2026-08-24T12:34:27.000Z"
-    },
-    {
-      "id": "slxkWpCAqI8",
-      "title": "The MLOps Practitioner - Session2",
-      "published": "2026-08-24T07:08:57.000Z"
     },
     {
       "id": "rJFIn83w0Dc",
