@@ -20,7 +20,7 @@ import { t, localeHref, type Lang } from '@/lib/i18n'
 import { buildNow, formatSessionDate, partitionSessions, recordingUrl } from '@/lib/sessions'
 import { sessionPoster } from '@/lib/sessions.server'
 import {
-  tPillar, tRoadmap, tSession, tStudyGroup, tFaq, tMember, tArticle, tRepo, tPartner,
+  tPillar, tRoadmap, tSession, tStudyGroup, tFaq, tMember, tArticle, tRepo,
   courseAr, upcomingCourseAr,
 } from '@/lib/content-i18n'
 import { course } from '~/data/mlops-practitioner'
@@ -495,37 +495,63 @@ export default function HomeView({ lang }: { lang: Lang }) {
           <SectionHeading eyebrow={h.partners.eyebrow} title={h.partners.title} accent={h.partners.accent} align="center" />
         </Reveal>
 
-        <div className="mx-auto mt-12 grid max-w-3xl gap-4 sm:grid-cols-2">
-          {partners.map((raw, i) => {
-            const p = tPartner(lang, raw)
-            return (
-              <Reveal key={raw.name} delay={i * 90} variant="scale">
-                <a href={raw.href} target="_blank" rel="noreferrer"
-                   className="card card-hover flex h-full flex-col items-center justify-center p-8 text-center">
-                  {raw.logo ? (
-                    // DevisionX: logo only, no label — per your instruction.
-                    <span className="inline-flex items-center justify-center rounded-2xl bg-white px-8 py-6">
-                      <Image src={asset(raw.logo)} alt={raw.name} width={260} height={104}
-                             className="h-16 w-auto object-contain" />
-                    </span>
-                  ) : (
-                    <>
-                      <p className="text-2xl font-bold text-fg">{raw.name}</p>
-                      {p.role && (
-                        <p className="mt-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-teal">
-                          {p.role}
-                        </p>
-                      )}
-                      {p.blurb && (
-                        <p className="mt-4 text-sm leading-relaxed text-muted">{p.blurb}</p>
-                      )}
-                    </>
-                  )}
-                </a>
-              </Reveal>
-            )
-          })}
-        </div>
+        {/* Logo-only ticker: the track translates exactly -50% of its own width,
+            so the loop is seamless; pauses on hover, and falls back to a plain
+            horizontal scroller under prefers-reduced-motion. */}
+        <Reveal delay={80}>
+          <div className="marquee mt-12">
+            <div className="marquee-track [animation-duration:72s]">
+              {/* Six copies, not two: one group of three logos (~720px) is
+                  narrower than the 72rem container, so a two-copy track runs
+                  out of content mid-loop and the "infinite" scroll visibly
+                  gaps. Six keeps half the track (the -50% travel) wider than
+                  the container on every screen. All but the first are loop
+                  padding only — aria-hidden, and display:none without motion. */}
+              {[0, 1, 2, 3, 4, 5].map((copyIndex) => (
+                <ul
+                  key={copyIndex}
+                  className="marquee-group !gap-4 !pe-4"
+                  aria-hidden={copyIndex > 0}
+                  aria-label={copyIndex === 0 ? h.partners.eyebrow : undefined}
+                >
+                  {partners.map((raw) => (
+                    <li key={raw.name} className="shrink-0">
+                      <a
+                        href={raw.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={raw.name}
+                        className="group flex h-24 w-56 items-center justify-center rounded-2xl bg-white px-8 shadow-sm ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-lg"
+                      >
+                        {raw.logo ? (
+                          <Image
+                            src={asset(raw.logo)}
+                            alt={raw.name}
+                            width={240}
+                            height={60}
+                            className="h-12 w-auto object-contain transition duration-300 group-hover:scale-[1.04]"
+                          />
+                        ) : (
+                          <span className="text-xl font-bold tracking-tight text-[#0b1220] transition duration-300 group-hover:scale-[1.04]">
+                            {raw.name}
+                          </span>
+                        )}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ))}
+            </div>
+          </div>
+        </Reveal>
+
+        <Reveal delay={120}>
+          <div className="mt-10 flex justify-center">
+            <Link href={href('/partners')} className="btn-ghost">
+              {h.partners.eyebrow} <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
+            </Link>
+          </div>
+        </Reveal>
       </section>
 
       {/* ---------- FAQ ---------- */}

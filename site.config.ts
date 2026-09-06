@@ -103,12 +103,20 @@ export const partners = [
   },
   {
     name: 'DevisionX',
-    // Logo only, no label — per your instruction.
-    role: null,
+    role: 'Industry Partner',
     blurb: null,
     href: 'https://devisionx.com',
     logo: '/partners/devisionx.png',
     accent: 'amber',
+  },
+  {
+    name: 'DataCamp',
+    role: 'Donate Educational Partner',
+    blurb:
+      'Through DataCamp Donates, our members get free access to DataCamp’s full catalogue of data and AI courses — hands-on tracks in Python, SQL, machine learning, and more to complement the community roadmaps.',
+    href: 'https://www.datacamp.com/donates',
+    logo: '/partners/datacamp.png',
+    accent: 'teal',
   },
 ] as const
 
@@ -120,6 +128,7 @@ export const nav = [
   { key: 'sessions', href: '/sessions' },
   { key: 'team', href: '/team' },
   { key: 'services', href: '/services' },
+  { key: 'partners', href: '/partners' },
   { key: 'articles', href: '/articles' },
   { key: 'faq', href: '/faq' },
 ] as const
