@@ -49,6 +49,7 @@ export default function GuideNavigation({
   title,
   eyebrow,
   scopeId,
+  pinnedHeadings,
 }: {
   headings: GuideHeading[]
   labels: Labels
@@ -59,17 +60,25 @@ export default function GuideNavigation({
   /* Id of the element holding the article this navigation describes. A levelled
      guide has several, only one of them visible. */
   scopeId?: string
+  /* Cross-cutting entries kept at the top of the list whatever pane is open —
+     the Quick Start section lives above the grid and belongs to no pane, so its
+     link must not swap out with the pane headings. */
+  pinnedHeadings?: GuideHeading[]
 }) {
   const [activeId, setActiveId] = useState(headings[0]?.id ?? '')
   const [query, setQuery] = useState('')
   const [progress, setProgress] = useState(0)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const pinned = pinnedHeadings ?? []
+  const matchesQuery = (heading: GuideHeading) =>
+    heading.title.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())
   const filtered = query.trim()
-    ? headings.filter((heading) => heading.title.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
-    : headings.filter((heading) => heading.level === 2)
-  const activeHeading = headings.find((heading) => heading.id === activeId)
-  const activeIndex = headings.findIndex((heading) => heading.id === activeId)
-  const activeSection = [...headings.slice(0, activeIndex + 1)].reverse().find((heading) => heading.level === 2)
+    ? [...pinned.filter(matchesQuery), ...headings.filter(matchesQuery)]
+    : [...pinned, ...headings.filter((heading) => heading.level === 2)]
+  const spied = [...pinned, ...headings]
+  const activeHeading = spied.find((heading) => heading.id === activeId)
+  const activeIndex = spied.findIndex((heading) => heading.id === activeId)
+  const activeSection = [...spied.slice(0, activeIndex + 1)].reverse().find((heading) => heading.level === 2)
   const navigationActiveId = query.trim() ? activeId : activeSection?.id ?? activeId
 
   useEffect(() => {
@@ -80,8 +89,9 @@ export default function GuideNavigation({
 
     const update = () => {
       /* Heading ids are unique across every pane, so this only ever resolves to
-         elements inside the one on screen. */
-      const elements = headings
+         elements inside the one on screen. Pinned headings (Quick Start) sit
+         above the grid, so they lead the list for the scroll-spy. */
+      const elements = [...pinned, ...headings]
         .map((heading) => document.getElementById(heading.id))
         .filter((element): element is HTMLElement => Boolean(element))
       const current = [...elements].reverse().find((element) => element.getBoundingClientRect().top <= 150) ?? elements[0]
@@ -101,7 +111,10 @@ export default function GuideNavigation({
       window.removeEventListener('scroll', update)
       window.removeEventListener('resize', update)
     }
-  }, [headings, scopeId])
+    /* `pinned` is a fresh array each render; key the effect on its ids so it is
+       stable but still re-runs if the pinned set ever changes. */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [headings, scopeId, pinned.map((heading) => heading.id).join('|')])
 
   useEffect(() => {
     const scope = scopeId ? document.getElementById(scopeId) : document

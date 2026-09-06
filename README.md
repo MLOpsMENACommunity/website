@@ -202,6 +202,41 @@ then add the slug to `GUIDE_SLUGS` in `src/lib/student-guides.server.ts`, an ent
 `src/components/StudentGuidesCatalog.tsx` and `globals.css`. The markdown has to exist before
 the slug is registered, because the catalogue counts every pane at build time.
 
+### Quick Start PDFs
+
+Each guide can show a **Quick Start** section above its level grid, backed by one PDF per
+topic that lives in a **public Google Drive folder**
+(id `1yqPc7Hpq9F-YB9Pi5sL2jqbZdkX7FAXz`). Nothing is downloaded: the PDF is embedded straight
+from Drive through an `<iframe>` to `https://drive.google.com/file/d/<id>/preview`.
+
+`npm run predev` and `npm run prebuild` both run `scripts/sync-quickstart.mjs`, which scrapes
+the public folder page for `{id, name}` pairs (no API key, no rclone) and writes the map
+`public/quickstart/index.json`. The script is failure-tolerant: on any error it warns, exits
+0, and never clobbers an existing `index.json`. That file is committed, so a fresh clone works
+before any sync runs.
+
+**Sharing requirement:** the folder *and* every file inside it must be shared as **"anyone
+with the link"** — a restricted file shows a Google sign-in wall inside the iframe.
+
+For a PDF to attach to a topic's Quick Start, name it after that topic's slug:
+
+| Topic | File name in Drive |
+|---|---|
+| Docker | `docker.pdf` |
+| GitHub Actions | `github-actions.pdf` |
+| DVC | `dvc.pdf` |
+| Airflow | `airflow.pdf` |
+| ClearML | `clearml.pdf` |
+| MLflow | `mlflow.pdf` |
+
+**Other Quick Start:** any PDF in the folder whose name is *not* a guide slug is collected
+into an `_other` list in the same `index.json` and shown on a standalone page at
+`/student-guides/other` (Arabic `/ar/student-guides/other`). Each such file is titled from its
+own file name — the `.pdf` extension is dropped and `-`/`_` become spaces, but the author's
+casing is kept (`MLflow_cheat-sheet.pdf` → "MLflow cheat sheet"). An amber card on the student
+guides index links to that page, and it only appears when at least one such PDF exists, so it
+never links to an empty page.
+
 ### Adding a session
 
 Add it to the single `sessions` array in `data/sessions.ts` and put a 1200px cover at
