@@ -566,11 +566,19 @@ export function tRepo<T extends { name: string; desc: string | null }>(lang: Lan
 /* Partners                                                             */
 /* ------------------------------------------------------------------ */
 
-const partnersAr: Record<string, { role: string; blurb: string }> = {
+const partnersAr: Record<string, Partial<{ role: string; blurb: string }>> = {
   Zomra: {
     role: 'شريك المنصّة التعليمية',
     blurb:
       'دوراتنا وجلساتنا المجانية تُستضاف وتُقدَّم على Zomra، ما يمنح كل دارس في المنطقة مكانًا منظّمًا للتسجيل والمتابعة وقياس تقدّمه.',
+  },
+  DevisionX: {
+    role: 'شريك من الصناعة',
+  },
+  DataCamp: {
+    role: 'شريك تعليمي (Donates)',
+    blurb:
+      'عبر مبادرة DataCamp Donates يحصل أعضاؤنا على وصول مجاني إلى مكتبة DataCamp الكاملة من دورات البيانات والذكاء الاصطناعي — مسارات عملية في بايثون وSQL وتعلّم الآلة وغيرها، تكمّل خرائط تعلّم المجتمع.',
   },
 }
 

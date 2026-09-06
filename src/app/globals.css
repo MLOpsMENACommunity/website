@@ -1120,6 +1120,9 @@
   .enter, .enter-fade { opacity: 1; animation: none; }
   .draw-line { transform: none; animation: none; }
   .marquee-group { flex-wrap: wrap; justify-content: center; }
+  /* The aria-hidden groups exist only to feed the loop; without motion they
+     would just repeat every logo down the scroller. */
+  .marquee-group[aria-hidden='true'] { display: none; }
   .brand-text-animated { animation: none; }
   .twinkle { animation: none; }
   .marquee-track { animation: none; }
