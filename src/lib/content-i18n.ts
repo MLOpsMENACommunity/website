@@ -81,6 +81,24 @@ type SessionCopy = Pick<Session, 'subtitle' | 'speakerRole'> & {
 }
 
 export const sessionsAr: Record<string, SessionCopy> = {
+  'mlops-practitioner-3-inference-serving': {
+    subtitle: 'الاستدلال والتقديم واستراتيجيات الإصدار',
+    speakerRole: 'مؤسِّسة مجتمع MLOps MENA ومهندسة MLOps أولى',
+    note: 'الدرس الثالث من دورة The MLOps Practitioner المكوّنة من خمسة دروس. الدرسان الأول والثاني متاحان على يوتيوب إن كنت تلحق بالركب.',
+    topics: [
+      'التنسيق باستخدام Apache Airflow',
+      'لماذا تهمّ أنماط الاستدلال',
+      'أنماط الاستدلال الثلاثة',
+      'ما هو تقديم النماذج',
+      'FastAPI',
+      'BentoML',
+      'TensorRT + Triton',
+      'ONNX Runtime + OpenVINO',
+      'vLLM',
+      'اختبار الحِمل باستخدام Locust',
+      'استراتيجيات الإصدار',
+    ],
+  },
   'docker-deep-dive': {
     subtitle: 'Docker: أساس البناء لـ MLOps — اليوم الأول',
     speakerRole: 'مدرّب · خبرة أكثر من 3 سنوات',
@@ -239,99 +257,8 @@ export function tFaq<T extends { q: string; a: string }>(lang: Lang, f: T) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Services & the upcoming course                                       */
+/* Tracks                                                               */
 /* ------------------------------------------------------------------ */
-
-/**
- * Keyed by `id` across both `communityServices` and `companyServices` in
- * `data/services.ts` — the two arrays share one namespace here because they
- * render through the same card, and an id collision between them would be a
- * bug worth failing on rather than a case worth supporting.
- */
-const servicesAr: Record<string, { title: string; blurb: string; items: string[] }> = {
-  mentorship: {
-    title: 'إرشاد للأعضاء',
-    blurb: 'مساعدة فردية من مهندسين يمارسون هذا العمل، مجانًا لأعضاء المجتمع.',
-    items: [
-      'التوجيه المهني',
-      'مراجعة الأعمال والمستودعات',
-      'التحضير للمقابلات',
-      'تخطّي مشكلة تقنية بعينها',
-    ],
-  },
-  research: {
-    title: 'دعم البحث العلمي',
-    blurb: 'مساعدة الباحثين في الشقّ الهندسي من العمل القابل للنشر.',
-    items: [
-      'قابلية إعادة إنتاج النتائج وتتبّع التجارب',
-      'إعداد الأدوات وبيئات العمل',
-      'مراجعة هندسية قبل التقديم للنشر',
-    ],
-  },
-  internships: {
-    title: 'مسارات تدريب',
-    blurb: 'توجيه الطلاب إلى فرص حقيقية لدى الشركات التي نعمل معها.',
-    items: [
-      'التعريف بالشركات الشريكة',
-      'مراجعة أعمالك قبل التقديم',
-      'خبرة إنتاج حقيقية، لا مشاريع تدريبية شكلية',
-    ],
-  },
-  outsourcing: {
-    title: 'توفير الكفاءات',
-    blurb:
-      'مهندسون من مجموعة كفاءاتنا يعملون ضمن فريقكم — مع فريق إشراف منّا يتابع العمل، لا وكالة ترسل سيرة ذاتية ثم تختفي.',
-    items: [
-      'مهندسو ذكاء اصطناعي وMLOps وDevOps وبرمجيات بعد تقييم دقيق',
-      'يعملون داخل فريقكم وعلى منظومتكم التقنية ووفق دوراتكم',
-      'مسؤول إشراف يتابع الإنتاجية والجودة أسبوعيًا',
-      'بديل إن لم يكن الترشيح مناسبًا',
-      'تعاقدات قصيرة أو ارتباطات طويلة المدى',
-    ],
-  },
-  training: {
-    title: 'تدريب لموظفيكم',
-    blurb:
-      'تدريب عملي للمهندسين الموجودين لديكم بالفعل، على مسارين: MLOps، والذكاء الاصطناعي التوليدي — شاملًا RAG والأنظمة الوكيلة.',
-    items: [
-      'مساران — MLOps والذكاء الاصطناعي التوليدي',
-      'يُدرَّس على منظومتكم التقنية وحالات استخدامكم',
-      'دفعات مباشرة قائمة على التطبيق العملي لا على الشرائح',
-      'تقارير تقدّم لكل مهندس تصل إلى قائد الفريق',
-      'حضوريًا في مصر أو عن بُعد عبر المنطقة',
-    ],
-  },
-  projects: {
-    title: 'تنفيذ المشاريع البرمجية',
-    blurb:
-      'فريق داخلي من الخبراء ينقل المشروع من التصميم المعماري إلى الإنتاج — كل المراحل مغطّاة، ولا يُحتسب مبتدئ بسعر خبير.',
-    items: [
-      'من الاستكشاف والتصميم المعماري حتى الإطلاق',
-      'خبراء في الذكاء الاصطناعي وMLOps وDevOps والواجهات الخلفية والأمامية والاختبار والسحابة',
-      'تسليم مع توثيق وخطوط CI/CD وأدلة تشغيل',
-      'مشاريع بنطاق محدّد أو فريق مخصّص',
-    ],
-  },
-  consultation: {
-    title: 'استشارات MLOps',
-    blurb: 'مساعدة عملية للفرق التي تنقل التعلّم الآلي إلى الإنتاج وتُبقيه يعمل.',
-    items: [
-      'تقييم نضج ممارسات MLOps',
-      'استشارات معمارية',
-      'مراجعة التكلفة والأداء',
-      'دعم التوظيف وإجراء المقابلات التقنية',
-    ],
-  },
-}
-
-export function tService<T extends { id: string; title: string; blurb: string; items: readonly string[] }>(
-  lang: Lang,
-  o: T,
-) {
-  if (lang !== 'ar') return o
-  const x = servicesAr[o.id]
-  return x ? { ...o, ...x } : o
-}
 
 const tracksAr: Record<string, { title: string; summary: string; topics: string[] }> = {
   mlops: {
@@ -462,9 +389,9 @@ const teamAr: Record<string, { role: string; bio: string }> = {
     role: 'مسؤول محور المحتوى',
     bio: 'يتولّى المحتوى المكتوب للمجتمع — خرائط التعلّم والمقالات والمادة التي تصاحب كل جلسة.',
   },
-  'Adham AbdelAzeem': {
-    role: 'مسؤول محور البحث',
-    bio: 'باحث مساعد في معهد الرياضة وعلوم الرياضة بجامعة TU Dortmund، يعمل على تطبيقات التعلّم الآلي بلغة Python. قضى قبلها عامًا في MARS GmbH في الرؤية الحاسوبية لصور المنتجات وتحسين عمليات التصنيع بالتعلّم الآلي. بدأ بالهندسة الطبية الحيوية في مصر قبل الماجستير في ألمانيا.',
+  'Khadija Ahaidous': {
+    role: 'مسؤولة محور البحث',
+    bio: 'تقود اتجاه البحث في المجتمع — الأوراق التي نقرأها والعمل الذي ننشره والإرشاد الأكاديمي المصاحب لهما.',
   },
   'Radwa Khattab': {
     role: 'مسؤولة محور نمو المجتمع والشراكات',
@@ -494,6 +421,16 @@ export const teamSummaryAr = 'مؤسِّسة، ومديران للمجتمع، �
 
 /** Keyed by ExternalArticle.id — a title is editorial and will change. */
 export const articlesAr: Record<string, { title: string; description: string }> = {
+  'tokenization-how-llms-turn-text-something-can-process-mlops-mena': {
+    title: 'التقطيع إلى رموز: كيف يحوّل النموذج اللغوي النص إلى شيء يستطيع معالجته',
+    description:
+      'تكتب جملة وتفترض أن النموذج يستقبلها كما كتبتها. هذا لا يحدث. ما الذي يجري على النص فعليًا قبل أن يراه النموذج أصلًا.',
+  },
+  'introduction-large-language-models-understanding-foundation': {
+    title: 'مقدّمة في النماذج اللغوية الكبيرة: أساس الذكاء الاصطناعي الحديث',
+    description:
+      'ما هو النموذج اللغوي الكبير فعلًا، ولماذا توصف هذه النماذج بـ«الكبيرة» — المقال التأسيسي، قبل التقطيع إلى رموز وكل ما يُبنى فوقه.',
+  },
   'mlops-roadmap-seniors': {
     title: 'خريطة MLOps للخبراء',
     description:
