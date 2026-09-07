@@ -16,7 +16,7 @@ on:
   # so this is self-sustaining — but if it ever goes quiet for two months the
   # cron stops silently.
   schedule:
-    - cron: '17 */6 * * *'
+    - cron: '17 */3 * * *'
   workflow_dispatch:
 
 permissions:
