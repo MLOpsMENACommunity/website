@@ -311,6 +311,74 @@
   animation: shimmer 9s ease-in-out infinite;
 }
 
+/* ---- Home hero extras ---- */
+
+/* Live badge above the headline: a pulsing teal dot plus the member count. */
+.live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 1.05rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--nav-bg);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--card-shadow);
+  color: rgb(var(--body));
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.live-pill .live-dot {
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--brand-teal);
+  box-shadow: 0 0 0 0 rgba(51, 206, 192, 0.55);
+  animation: livePulse 2.2s ease-out infinite;
+}
+@keyframes livePulse {
+  0% { box-shadow: 0 0 0 0 rgba(51, 206, 192, 0.55); }
+  70% { box-shadow: 0 0 0 9px rgba(51, 206, 192, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(51, 206, 192, 0); }
+}
+
+/* A faint blueprint grid drifting behind the hero copy. Same idea as
+   .guides-hero, but centred under the headline. */
+.hero-grid::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--hex) 1px, transparent 1px),
+    linear-gradient(90deg, var(--hex) 1px, transparent 1px);
+  background-size: 46px 46px;
+  -webkit-mask-image: radial-gradient(ellipse 62% 65% at 50% 0%, #000, transparent 72%);
+  mask-image: radial-gradient(ellipse 62% 65% at 50% 0%, #000, transparent 72%);
+  animation: guidesGridDrift 32s linear infinite;
+}
+
+/* Headline lines rise out of a clipped mask. The asymmetric padding gives
+   descenders — and Arabic diacritics — room outside the tight display
+   line-height without the glyph being clipped mid-paint. */
+.hero-line-mask {
+  display: block;
+  overflow: hidden;
+  padding-block: 0.08em 0.16em;
+}
+.hero-line-mask + .hero-line-mask { margin-top: 0.25rem; }
+.hero-line-mask > span {
+  display: block;
+  transform: translateY(120%);
+  animation: heroLineUp 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--enter-delay, 0ms);
+}
+@keyframes heroLineUp {
+  to { transform: translateY(0); }
+}
+
 /* Infinite tool ticker. The track holds two copies of the list, so translating
    it exactly -50% loops seamlessly. */
 .marquee {
@@ -335,6 +403,31 @@
 }
 .marquee:hover .marquee-track {
   animation-play-state: paused;
+}
+
+/* ---- Partner logo belt ----------------------------------------------------
+   A calmer "logo river" built on the ticker above. It reuses the two-copy
+   translate loop, but each pill is sized so one group is always wider than the
+   belt: the loop never gaps, yet — helped by a wide edge fade — only the three
+   distinct partners are ever on screen, so the repeat never reads as a
+   duplicated pair. Pauses on hover; the block-padding leaves room for the
+   card's hover lift and hairline inside the clipped belt. */
+.partner-belt {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+}
+.partner-belt .marquee-track {
+  animation-duration: 36s;
+}
+.partner-belt .marquee-group {
+  align-items: stretch;
+  gap: 1.5rem;
+  padding-inline-end: 1.5rem;
+  padding-block: 0.75rem;
+}
+.partner-belt-item {
+  flex: none;
+  width: clamp(14rem, 74vw, 26rem);
 }
 
 /* Decorative SVG nodes in HexField. */
@@ -1118,6 +1211,9 @@
   html { scroll-behavior: auto; }
   .reveal { opacity: 1; transform: none; filter: none; transition: none; }
   .enter, .enter-fade { opacity: 1; animation: none; }
+  .hero-line-mask > span { transform: none; animation: none; }
+  .hero-grid::after { animation: none; }
+  .live-pill .live-dot { animation: none; }
   .draw-line { transform: none; animation: none; }
   .marquee-group { flex-wrap: wrap; justify-content: center; }
   /* The aria-hidden groups exist only to feed the loop; without motion they
@@ -1129,6 +1225,11 @@
   .guides-hero::after { animation: none; }
   .marquee {
     overflow-x: auto;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  /* The belt sets its own edge fade, so it needs its own reset here. */
+  .partner-belt {
     -webkit-mask-image: none;
     mask-image: none;
   }

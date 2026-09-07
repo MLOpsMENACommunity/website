@@ -128,7 +128,6 @@ export const nav = [
   { key: 'sessions', href: '/sessions' },
   { key: 'team', href: '/team' },
   { key: 'services', href: '/services' },
-  { key: 'partners', href: '/partners' },
   { key: 'articles', href: '/articles' },
   { key: 'faq', href: '/faq' },
 ] as const

@@ -535,35 +535,6 @@ export function tRepo<T extends { name: string; desc: string | null }>(lang: Lan
 }
 
 /* ------------------------------------------------------------------ */
-/* Partners                                                             */
-/* ------------------------------------------------------------------ */
-
-const partnersAr: Record<string, Partial<{ role: string; blurb: string }>> = {
-  Zomra: {
-    role: 'شريك المنصّة التعليمية',
-    blurb:
-      'دوراتنا وجلساتنا المجانية تُستضاف وتُقدَّم على Zomra، ما يمنح كل دارس في المنطقة مكانًا منظّمًا للتسجيل والمتابعة وقياس تقدّمه.',
-  },
-  DevisionX: {
-    role: 'شريك من الصناعة',
-  },
-  DataCamp: {
-    role: 'شريك تعليمي (Donates)',
-    blurb:
-      'عبر مبادرة DataCamp Donates يحصل أعضاؤنا على وصول مجاني إلى مكتبة DataCamp الكاملة من دورات البيانات والذكاء الاصطناعي — مسارات عملية في بايثون وSQL وتعلّم الآلة وغيرها، تكمّل خرائط تعلّم المجتمع.',
-  },
-}
-
-export function tPartner<T extends { name: string; role: string | null; blurb: string | null }>(
-  lang: Lang,
-  p: T,
-) {
-  if (lang !== 'ar') return p
-  const o = partnersAr[p.name]
-  return o ? { ...p, ...o } : p
-}
-
-/* ------------------------------------------------------------------ */
 /* Roadmap metadata                                                     */
 /* ------------------------------------------------------------------ */
 
