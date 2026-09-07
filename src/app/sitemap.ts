@@ -11,7 +11,7 @@ const staticPages = [
   ...studentGuides.map((guide) => `/student-guides/${guide.slug}`),
   /* The catch-all page for Drive PDFs not tied to a specific tool guide. */
   '/student-guides/other',
-  '/sessions', '/team', '/articles', '/partners', '/faq', '/privacy-policy',
+  '/sessions', '/team', '/articles', '/services', '/faq', '/privacy-policy',
 ]
 
 export default function sitemap(): MetadataRoute.Sitemap {

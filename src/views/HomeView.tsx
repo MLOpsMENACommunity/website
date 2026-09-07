@@ -2,7 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import {
   ArrowRight, ArrowUpRight, Radio, Map, GraduationCap, FlaskConical, Briefcase, Users,
-  Star, Github, Layers, CalendarDays, PlayCircle, Linkedin, Mail, Sparkles,
+  Star, Github, Layers, CalendarDays, PlayCircle, Linkedin, Mail, Sparkles, Handshake,
 } from 'lucide-react'
 import Hero from '@/components/Hero'
 import ThisWeek from '@/components/ThisWeek'
@@ -35,6 +35,19 @@ import { founder, directors, leads, teamCount } from '~/data/team'
 import { partners, channels, contacts, brainsmingle } from '~/site.config'
 
 const icons = { Radio, Map, GraduationCap, FlaskConical, Briefcase, Users } as const
+
+/** Static class strings per partner accent — Tailwind only ships classes it
+    can see, so the chip/border pairs are spelled out rather than interpolated. */
+const partnerAccent = {
+  teal: {
+    chip: 'border-teal/35 text-teal',
+    hoverBorder: 'hover:border-teal/40',
+  },
+  amber: {
+    chip: 'border-amber-400/35 text-amber-400',
+    hoverBorder: 'hover:border-amber-400/40',
+  },
+} as const
 
 /**
  * Without an explicit timeZone this inherits the machine's — UTC on the CI
@@ -71,6 +84,92 @@ export default function HomeView({ lang }: { lang: Lang }) {
   return (
     <>
       <Hero lang={lang} />
+
+      {/* ---------- Partners ----------
+          Minimal by request: just a "Partners" label over the logo belt, no
+          title or blurb. Deliberately NOT wrapped in <Reveal> — it sits high on
+          the page and must be visible the moment the page opens rather than
+          waiting for a scroll to fade in. */}
+      <section aria-labelledby="partners-heading" className="mx-auto max-w-content px-5 py-16 sm:px-8 sm:py-20">
+        <div className="text-center">
+          <h2 id="partners-heading" className="brand-text text-4xl font-bold tracking-tight sm:text-5xl">
+            {h.partners.eyebrow}
+          </h2>
+        </div>
+
+        {/* Logo + tag river. Two tiled groups feed one seamless loop; each pill
+            is sized so a group always overflows the belt, so the scroll never
+            gaps — while the wide edge fade keeps only the three distinct logos
+            in view, never a duplicated pair. The clone group is hidden from
+            assistive tech and pulled out of the tab order. */}
+        <div className="marquee partner-belt mt-12">
+          <div className="marquee-track">
+            {[0, 1].map((copyIndex) => (
+              <ul
+                key={copyIndex}
+                className="marquee-group"
+                aria-hidden={copyIndex === 1}
+                aria-label={copyIndex === 0 ? h.partners.eyebrow : undefined}
+              >
+                {partners.map((raw) => {
+                  const a = partnerAccent[raw.accent]
+                  return (
+                    <li key={raw.name} className="partner-belt-item">
+                      <a
+                        href={raw.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        tabIndex={copyIndex === 1 ? -1 : undefined}
+                        aria-label={`${raw.name} — ${raw.role}`}
+                        className={`card card-hover group flex h-full flex-col items-center justify-center gap-4 p-6 ${a.hoverBorder}`}
+                      >
+                        {/* White stage keeps third-party logos legible in both themes. */}
+                        <span className="grid h-16 w-full place-items-center rounded-xl bg-white px-6 ring-1 ring-black/5">
+                          {raw.logo ? (
+                            <Image
+                              src={asset(raw.logo)}
+                              alt={raw.name}
+                              width={240}
+                              height={60}
+                              className="max-h-10 w-auto object-contain transition duration-300 group-hover:scale-[1.05]"
+                            />
+                          ) : (
+                            <span className="text-3xl font-extrabold tracking-tight text-[#0b1220]">
+                              {raw.name}
+                            </span>
+                          )}
+                        </span>
+                        <span className={`chip ${a.chip}`}>{raw.role}</span>
+                      </a>
+                    </li>
+                  )
+                })}
+              </ul>
+            ))}
+          </div>
+        </div>
+
+        <Link
+          href={href('/#contact')}
+          className="card card-hover group mt-8 flex flex-col items-center justify-between gap-5 border-dashed p-6 text-center sm:flex-row sm:p-7"
+        >
+          <div className="max-w-2xl">
+            <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-cyan-400/10 text-cyan-400 transition duration-300 group-hover:scale-110">
+                <Handshake className="h-5 w-5" />
+              </span>
+              <h3 className="text-base font-semibold text-fg">{h.partners.becomePartner}</h3>
+            </div>
+            <p className="mt-3 text-sm leading-relaxed text-muted sm:text-start">
+              {h.partners.becomePartnerDesc}
+            </p>
+          </div>
+          <span className="btn-ghost shrink-0">
+            {h.partners.startConversation}
+            <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1 rtl:-scale-x-100 rtl:group-hover:-translate-x-1" />
+          </span>
+        </Link>
+      </section>
 
       {/* ---------- This week ---------- */}
       <ThisWeek lang={lang} />
@@ -487,71 +586,6 @@ export default function HomeView({ lang }: { lang: Lang }) {
             </div>
           </Reveal>
         </div>
-      </section>
-
-      {/* ---------- Partners ---------- */}
-      <section className="mx-auto max-w-content px-5 py-20 sm:px-8">
-        <Reveal>
-          <SectionHeading eyebrow={h.partners.eyebrow} title={h.partners.title} accent={h.partners.accent} align="center" />
-        </Reveal>
-
-        {/* Logo-only ticker: the track translates exactly -50% of its own width,
-            so the loop is seamless; pauses on hover, and falls back to a plain
-            horizontal scroller under prefers-reduced-motion. */}
-        <Reveal delay={80}>
-          <div className="marquee mt-12">
-            <div className="marquee-track [animation-duration:72s]">
-              {/* Six copies, not two: one group of three logos (~720px) is
-                  narrower than the 72rem container, so a two-copy track runs
-                  out of content mid-loop and the "infinite" scroll visibly
-                  gaps. Six keeps half the track (the -50% travel) wider than
-                  the container on every screen. All but the first are loop
-                  padding only — aria-hidden, and display:none without motion. */}
-              {[0, 1, 2, 3, 4, 5].map((copyIndex) => (
-                <ul
-                  key={copyIndex}
-                  className="marquee-group !gap-4 !pe-4"
-                  aria-hidden={copyIndex > 0}
-                  aria-label={copyIndex === 0 ? h.partners.eyebrow : undefined}
-                >
-                  {partners.map((raw) => (
-                    <li key={raw.name} className="shrink-0">
-                      <a
-                        href={raw.href}
-                        target="_blank"
-                        rel="noreferrer"
-                        title={raw.name}
-                        className="group flex h-24 w-56 items-center justify-center rounded-2xl bg-white px-8 shadow-sm ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-lg"
-                      >
-                        {raw.logo ? (
-                          <Image
-                            src={asset(raw.logo)}
-                            alt={raw.name}
-                            width={240}
-                            height={60}
-                            className="h-12 w-auto object-contain transition duration-300 group-hover:scale-[1.04]"
-                          />
-                        ) : (
-                          <span className="text-xl font-bold tracking-tight text-[#0b1220] transition duration-300 group-hover:scale-[1.04]">
-                            {raw.name}
-                          </span>
-                        )}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              ))}
-            </div>
-          </div>
-        </Reveal>
-
-        <Reveal delay={120}>
-          <div className="mt-10 flex justify-center">
-            <Link href={href('/partners')} className="btn-ghost">
-              {h.partners.eyebrow} <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
-            </Link>
-          </div>
-        </Reveal>
       </section>
 
       {/* ---------- FAQ ---------- */}

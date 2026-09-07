@@ -49,7 +49,7 @@ const en = {
       courses: 'Courses',
       sessions: 'Sessions',
       team: 'Team',
-      partners: 'Partners',
+      services: 'Services',
       articles: 'Articles',
       faq: 'FAQ',
     },
@@ -102,6 +102,7 @@ const en = {
       exploreRoadmaps: 'Explore the roadmaps',
       exploreGuides: 'Explore student guides',
       watchPast: 'Watch past sessions',
+      liveBadge: (n: number) => `${n.toLocaleString('en-GB')}+ engineers already in the room`,
     },
     thisWeek: {
       eyebrow: 'Happening now',
@@ -184,6 +185,10 @@ const en = {
       eyebrow: 'Partners',
       title: 'Built with',
       accent: 'people who ship',
+      lead: 'Organizations that put courses, platforms, and real industry tracks in our members\' hands — free.',
+      becomePartner: 'Become a partner',
+      becomePartnerDesc: 'Host a track, sponsor a cohort, or open your platform to thousands of engineers across MENA.',
+      startConversation: 'Start a conversation',
     },
     faq: {
       eyebrow: 'FAQ',
@@ -392,22 +397,6 @@ const en = {
     moreLead: 'We publish regularly on LinkedIn and Medium. Follow the page so you do not miss them.',
   },
 
-  partnersPage: {
-    metaTitle: 'Partners',
-    metaDesc:
-      'The organisations we build MLOps MENA with — educational platforms, industry partners, and learning-resource providers who help keep our courses, sessions, and roadmaps free for the region.',
-    eyebrow: 'Our partners',
-    titleBefore: 'The people and platforms',
-    accent: 'we build with',
-    lead: 'We keep the community side free by teaming up with organisations that share the mission — platforms that host our learning, companies that back the work, and providers who open their resources to our members.',
-    visit: 'Visit',
-    countLabel: (n: number) => (n === 1 ? '1 partner' : `${n} partners`),
-    becomeTitle: 'Want to partner with us?',
-    becomeLead:
-      'If your organisation wants to support free MLOps and AI education across MENA — hosting, sponsorship, resources, or something new — we would like to talk.',
-    becomeCta: 'Talk to the founder',
-  },
-
   privacyPage: {
     metaTitle: 'Privacy Policy',
     metaDesc:
@@ -503,7 +492,7 @@ const ar: typeof en = {
       courses: 'الدورات',
       sessions: 'الجلسات',
       team: 'الفريق',
-      partners: 'الشركاء',
+      services: 'الخدمات',
       articles: 'المقالات',
       faq: 'الأسئلة الشائعة',
     },
@@ -556,6 +545,7 @@ const ar: typeof en = {
       exploreRoadmaps: 'استكشف خرائط التعلّم',
       exploreGuides: 'استكشف أدلة الدارسين',
       watchPast: 'شاهد الجلسات السابقة',
+      liveBadge: (n: number) => `${n.toLocaleString('ar-EG-u-nu-latn')}+ مهندس معنا بالفعل`,
     },
     thisWeek: {
       eyebrow: 'يحدث الآن',
@@ -638,6 +628,10 @@ const ar: typeof en = {
       eyebrow: 'الشركاء',
       title: 'نبنيه مع',
       accent: 'من يصنعون فعلًا',
+      lead: 'مؤسسات تضع الدورات والمنصّات ومسارات الصناعة الحقيقية بين يدي أعضائنا — مجانًا.',
+      becomePartner: 'كن شريكًا',
+      becomePartnerDesc: 'استضف مسارًا، أو رعَ دورة، أو افتح منصّتك لآلاف المهندسين في المنطقة.',
+      startConversation: 'ابدأ الحديث',
     },
     faq: {
       eyebrow: 'الأسئلة الشائعة',
@@ -843,21 +837,6 @@ const ar: typeof en = {
     moreLead: 'ننشر بانتظام على لينكدإن وميديوم. تابع الصفحة حتى لا يفوتك جديد.',
   },
 
-  partnersPage: {
-    metaTitle: 'الشركاء',
-    metaDesc:
-      'المؤسسات التي نبني معها مجتمع MLOps MENA — منصّات تعليمية وشركاء من الصناعة ومزوّدو موارد تعلّم يساعدوننا في إبقاء دوراتنا وجلساتنا وخرائط التعلّم مجانية للمنطقة.',
-    eyebrow: 'شركاؤنا',
-    titleBefore: 'الأشخاص والمنصّات',
-    accent: 'الذين نبني معهم',
-    lead: 'نُبقي جانب المجتمع مجانيًا بالتعاون مع مؤسسات تشاركنا الرسالة — منصّات تستضيف تعلّمنا، وشركات تدعم العمل، ومزوّدون يفتحون مواردهم لأعضائنا.',
-    visit: 'زيارة',
-    countLabel: (n: number) => (n === 1 ? 'شريك واحد' : `${n} شركاء`),
-    becomeTitle: 'هل تريد الشراكة معنا؟',
-    becomeLead:
-      'إن أرادت مؤسستك دعم تعليم MLOps والذكاء الاصطناعي المجاني في المنطقة — استضافة أو رعاية أو موارد أو فكرة جديدة — يسعدنا التحدّث إليك.',
-    becomeCta: 'تحدّث إلى المؤسِّسة',
-  },
 
   privacyPage: {
     metaTitle: 'سياسة الخصوصية',
