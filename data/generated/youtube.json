@@ -2,8 +2,8 @@
   "channelId": "UCKX8X4NwhP9Qb4g13SCa84Q",
   "stats": {
     "subscriberCount": 1400,
-    "viewCount": 16900,
-    "videoCount": 5
+    "viewCount": 17000,
+    "videoCount": 6
   },
   "videos": [
     {
@@ -20,6 +20,11 @@
       "id": "AFcoKDtyhec",
       "title": "handson docker mlops mena community",
       "published": "2026-08-24T12:34:27.000Z"
+    },
+    {
+      "id": "slxkWpCAqI8",
+      "title": "The MLOps Practitioner - Session2",
+      "published": "2026-08-24T07:08:57.000Z"
     },
     {
       "id": "rJFIn83w0Dc",
