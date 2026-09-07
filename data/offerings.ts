@@ -1,8 +1,8 @@
 /**
  * The upcoming course.
  *
- * Community and company offerings used to live beside this in `data/services.ts`,
- * which went with the services page.
+ * What we offer — free community help and paid company services — moved to
+ * `data/services.ts` when the services page was split out.
  */
 
 /** Course 02 — announced, not yet scheduled. */

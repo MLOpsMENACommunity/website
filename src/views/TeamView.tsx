@@ -107,6 +107,9 @@ export default function TeamView({ lang }: { lang: Lang }) {
                 <Link href={localeHref(lang, '/#contact')} className="btn-primary">
                   <Mail className="h-4 w-4" /> {copy.common.contactUs}
                 </Link>
+                <Link href={localeHref(lang, '/services')} className="btn-ghost">
+                  {copy.footer.services} <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
+                </Link>
               </div>
             </div>
           </Reveal>

@@ -51,7 +51,7 @@ export const roleAddresses = [
   // Company work — outsourcing, project delivery, consultation. Forwards to
   // mlopsmenacommunity@gmail.com like the rest; create the Cloudflare Email
   // Routing rule with `scripts/bulk-email-routing.py --rules` before this
-  // address is advertised, or enquiries sent to it bounce.
+  // address is advertised, or enquiries from /services bounce.
   { address: 'services@mlopsmena.com', label: 'Services for companies' },
 ] as const
 
