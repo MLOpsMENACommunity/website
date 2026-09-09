@@ -3,9 +3,14 @@
   "stats": {
     "subscriberCount": 1500,
     "viewCount": 17300,
-    "videoCount": 6
+    "videoCount": 7
   },
   "videos": [
+    {
+      "id": "43MGkzT5bYQ",
+      "title": "Kubernetes Deployment Strategies Explained Part 1 | Recreate, Rolling Update, Blue-Green",
+      "published": "2026-09-09T19:52:35.000Z"
+    },
     {
       "id": "Gnro52bcUsg",
       "title": "Inference, serving and release strategies - session 3",
