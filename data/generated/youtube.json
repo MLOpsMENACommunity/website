@@ -3,9 +3,14 @@
   "stats": {
     "subscriberCount": 1500,
     "viewCount": 24100,
-    "videoCount": 7
+    "videoCount": 8
   },
   "videos": [
+    {
+      "id": "Wx9RfYuO3WY",
+      "title": "Kubernetes Deployment Strategies Explained Part2  | Canary, A/B Routing, Shadow Traffic",
+      "published": "2026-09-10T15:09:57.000Z"
+    },
     {
       "id": "43MGkzT5bYQ",
       "title": "Kubernetes Deployment Strategies Explained Part 1 | Recreate, Rolling Update, Blue-Green",
