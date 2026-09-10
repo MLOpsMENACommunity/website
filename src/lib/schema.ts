@@ -55,7 +55,16 @@ export function organizationSchema() {
     image: abs('/logo-full.png'),
     description: site.description,
     email: contacts.email,
-    sameAs: [channels.linkedin, channels.x, channels.youtube, channels.github, channels.discord],
+    // Add channels.ollama once its profile resolves; a sameAs that 404s is a
+    // knowledge-graph signal pointing at nothing.
+    sameAs: [
+      channels.linkedin,
+      channels.x,
+      channels.youtube,
+      channels.github,
+      channels.huggingface,
+      channels.discord,
+    ],
   }
 }
 

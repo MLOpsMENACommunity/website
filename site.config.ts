@@ -22,6 +22,14 @@ export const channels = {
   x: 'https://x.com/MLOpsMENA',
   youtube: 'https://www.youtube.com/@MLOpsMENACommunity',
   github: 'https://github.com/MLOpsMENACommunity',
+  /** The org's Spaces listing rather than the profile root — the live demos are
+   *  what a visitor comes for. huggingface.co/MLOpsMENA also resolves, and is
+   *  the better target once models and datasets land alongside the Spaces. */
+  huggingface: 'https://huggingface.co/spaces/MLOpsMENA',
+  /** Deliberately not rendered yet. An Ollama profile page only exists once the
+   *  account has published a public model, so this 404s today — see the
+   *  commented-out lines in Footer.tsx and lib/schema.ts to switch it on. */
+  ollama: 'https://ollama.com/mlopsmena',
   brainsmingle: 'https://brainsmingle.com/spaces/mlops-mena-community',
   zomra: 'https://zomra.io/courses/the-mlops-practitioner',
 } as const
@@ -62,7 +70,10 @@ export const brainsmingle = {
   note: 'Free to join this week with code',
 } as const
 
-export const primaryChannel: keyof typeof channels = 'whatsapp'
+/** Drives every "Join the Community" button — Nav (desktop and mobile), Hero,
+ *  and the reminders button on ThisWeek. One switch, so the whole site points
+ *  at the same room. */
+export const primaryChannel: keyof typeof channels = 'discord'
 
 /**
  * Community at a glance. Rendered as animated counters.

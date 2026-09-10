@@ -10,9 +10,10 @@ const step = (n: number) => ({ '--enter-delay': `${n * 110}ms` }) as React.CSSPr
 
 export default function Hero({ lang = 'en' }: { lang?: Lang }) {
   const copy = t(lang).home.hero
-  /** The WhatsApp stat — the primary channel, so the badge counts the room
-      people actually join, not a sum that double-counts one person on three
-      platforms. */
+  /** The WhatsApp stat — the largest single room, so the badge counts real
+      people rather than a sum that double-counts one person on three platforms.
+      Deliberately not tied to `primaryChannel`: the join button can point
+      wherever we want new members without shrinking the number shown here. */
   const whatsapp = getStats().find((s) => s.id === 'whatsapp')
 
   return (

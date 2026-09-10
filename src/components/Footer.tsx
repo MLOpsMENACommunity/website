@@ -3,6 +3,7 @@ import type { ComponentType } from 'react'
 import { Youtube, Linkedin, MessageCircle, Mail, Github, Sparkles } from 'lucide-react'
 import Logo from './Logo'
 import XIcon from './XIcon'
+import HuggingFaceIcon from './HuggingFaceIcon'
 import { site, channels, contacts, brainsmingle } from '~/site.config'
 import { t, localeHref, type Lang } from '@/lib/i18n'
 
@@ -13,6 +14,10 @@ const social: { href: string; label: string; Icon: ComponentType<{ className?: s
   { href: channels.x, label: 'X', Icon: XIcon },
   { href: channels.youtube, label: 'YouTube', Icon: Youtube },
   { href: channels.github, label: 'GitHub', Icon: Github },
+  { href: channels.huggingface, label: 'Hugging Face', Icon: HuggingFaceIcon },
+  // Ollama slots in here once its profile resolves — see `ollama` in
+  // site.config.ts. Needs `import OllamaIcon from './OllamaIcon'` too.
+  // { href: channels.ollama, label: 'Ollama', Icon: OllamaIcon },
   { href: `mailto:${contacts.email}`, label: 'Email', Icon: Mail },
 ]
 
@@ -97,6 +102,8 @@ export default function Footer({ lang = 'en' }: { lang?: Lang }) {
               <li><a href={channels.x} target="_blank" rel="noreferrer" className="text-muted transition hover:text-cyan-400">X</a></li>
               <li><a href={channels.youtube} target="_blank" rel="noreferrer" className="text-muted transition hover:text-cyan-400">YouTube</a></li>
               <li><a href={channels.github} target="_blank" rel="noreferrer" className="text-muted transition hover:text-cyan-400">GitHub</a></li>
+              <li><a href={channels.huggingface} target="_blank" rel="noreferrer" className="text-muted transition hover:text-cyan-400">Hugging Face</a></li>
+              {/* <li><a href={channels.ollama} target="_blank" rel="noreferrer" className="text-muted transition hover:text-cyan-400">Ollama</a></li> */}
               <li><a href={channels.zomra} target="_blank" rel="noreferrer" className="text-muted transition hover:text-cyan-400">Zomra</a></li>
             </ul>
 
