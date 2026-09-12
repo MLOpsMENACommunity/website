@@ -6,14 +6,15 @@ import { pageMetadata } from '@/lib/seo'
 const copy = t('ar').movedPage
 
 /**
- * Mentorship folded into the services page. This route stays so the links we
- * have already published keep resolving, but it is kept out of the index and
- * points its canonical at the page that replaced it.
+ * Mentorship was folded into the services page, and that page is gone. The
+ * route stays so the links we have already published keep resolving — it now
+ * sends people to sessions, the nearest live thing — and it is kept out of the
+ * index with its canonical pointing at the destination.
  */
 export const metadata: Metadata = {
   ...pageMetadata({
     lang: 'ar',
-    path: '/services',
+    path: '/sessions',
     title: copy.metaTitle,
     description: copy.metaDesc,
   }),
@@ -21,5 +22,5 @@ export const metadata: Metadata = {
 }
 
 export default function ArMentorshipPage() {
-  return <MovedView lang="ar" to="/services" />
+  return <MovedView lang="ar" to="/sessions" />
 }

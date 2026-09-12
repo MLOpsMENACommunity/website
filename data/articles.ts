@@ -30,6 +30,26 @@ import generated from './generated/articles.json'
  */
 const curated: ExternalArticle[] = [
   {
+    id: 'tokenization-how-llms-turn-text-something-can-process-mlops-mena',
+    title: 'Tokenization: How LLMs Turn Text Into Something They Can Process',
+    description:
+      'You type a sentence and assume the model receives it as you wrote it. It does not. What actually happens to your text before the model ever sees it.',
+    date: '2026-08-11',
+    platform: 'LinkedIn',
+    href: 'https://www.linkedin.com/pulse/tokenization-how-llms-turn-text-something-can-process-mlops-mena-idj2e',
+    tags: ['llm', 'tokenization'],
+  },
+  {
+    id: 'introduction-large-language-models-understanding-foundation',
+    title: 'Introduction to Large Language Models: Understanding the Foundation of Modern AI',
+    description:
+      'What a large language model actually is, and why these models are called \'large\' — the foundation piece, before tokenization and everything built on top of it.',
+    date: '2026-08-01',
+    platform: 'LinkedIn',
+    href: 'https://www.linkedin.com/pulse/introduction-large-language-models-understanding-foundation-qni7e',
+    tags: ['llm', 'fundamentals'],
+  },
+  {
     id: 'mlops-roadmap-seniors',
     title: 'MLOps Roadmap for Seniors',
     description:
