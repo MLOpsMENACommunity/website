@@ -11,14 +11,14 @@
  * `public/quickstart/index.json`.
  *
  * There is no API key on purpose: the folder is public. That also makes this
- * best-effort — Google can change the page shape or rate-limit at any time — so,
+ * best-effort â€” Google can change the page shape or rate-limit at any time â€” so,
  * like the other fetchers, a failure NEVER breaks the build: it logs a warning,
  * leaves the existing index.json in place, and exits 0. A topic simply keeps
  * whatever mapping was last written (or shows no Quick Start section).
  *
  * Files whose name (minus .pdf) is a known guide slug are mapped to that guide,
  * so a stray file can never land in the wrong guide. Every other PDF in the
- * folder is still recorded, under `_other`, as an `{id, name}` list — those back
+ * folder is still recorded, under `_other`, as an `{id, name}` list â€” those back
  * the "Other Quick Start" page, which shows each one titled from its file name.
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -31,8 +31,8 @@ const FOLDER_ID = '1yqPc7Hpq9F-YB9Pi5sL2jqbZdkX7FAXz'
 
 /* Kept in step with GUIDE_SLUGS in src/lib/student-guides.server.ts. A file is
    only recorded when its name matches one of these, so the two lists must
-   agree — the test guards this. */
-const GUIDE_SLUGS = ['docker', 'github-actions', 'dvc', 'airflow', 'clearml', 'mlflow']
+   agree â€” the test guards this. */
+const GUIDE_SLUGS = ['docker', 'github-actions', 'dvc', 'airflow', 'clearml', 'mlflow', 'langfuse', 'ragas', 'evidently']
 
 const OUT_DIR = path.join(ROOT, 'public', 'quickstart')
 const INDEX_FILE = path.join(OUT_DIR, 'index.json')
@@ -64,14 +64,14 @@ async function getText(url) {
  *
  * Drive ships the folder contents inside a bootstrap array in the HTML, where
  * each file appears as `["<fileId>",["<parentId>"],"<name>",...]`. This pulls
- * the id + name pairs out of that structure. It is inherently brittle — if the
+ * the id + name pairs out of that structure. It is inherently brittle â€” if the
  * page shape changes this returns [] and the caller degrades gracefully.
  */
 export function parseDriveFolder(html) {
   /* Drive ships the folder listing as a JS string literal with the quotes and
      brackets hex-escaped (`\x22` for ", `\x5b`/`\x5d` for []). Un-escape those
      first so the id/name structure below can be matched literally. Harmless on
-     an already-unescaped page — there is just nothing to replace. */
+     an already-unescaped page â€” there is just nothing to replace. */
   const decoded = html.replace(/\\x([0-9a-fA-F]{2})/g, (_, hex) =>
     String.fromCharCode(parseInt(hex, 16)),
   )
@@ -102,7 +102,7 @@ function slugFromName(name) {
  * disk. A file named `<slug>.pdf` maps to that guide; every other PDF is kept
  * under `_other` (sorted by name) so the "Other Quick Start" page can list it.
  *
- * Key order is deterministic — GUIDE_SLUGS order, then `_other` — so the file on
+ * Key order is deterministic â€” GUIDE_SLUGS order, then `_other` â€” so the file on
  * disk only changes when the mapping actually does.
  */
 export function buildIndex(files) {
@@ -129,7 +129,7 @@ export function buildIndex(files) {
   return ordered
 }
 
-/** The map already on disk, or {} — used to leave things untouched on failure. */
+/** The map already on disk, or {} â€” used to leave things untouched on failure. */
 function readExisting() {
   try {
     const parsed = JSON.parse(readFileSync(INDEX_FILE, 'utf8'))
@@ -143,13 +143,13 @@ async function main() {
   const folderUrl = `https://drive.google.com/drive/folders/${FOLDER_ID}`
   const html = await getText(folderUrl)
   if (!html) {
-    log.warn('could not read the Drive folder — keeping existing index.json, skipping sync')
+    log.warn('could not read the Drive folder â€” keeping existing index.json, skipping sync')
     return
   }
 
   const files = parseDriveFolder(html)
   if (files.length === 0) {
-    log.warn('no PDFs found in the folder — keeping existing index.json, skipping sync')
+    log.warn('no PDFs found in the folder â€” keeping existing index.json, skipping sync')
     return
   }
 
@@ -164,7 +164,7 @@ async function main() {
   const topics = GUIDE_SLUGS.filter((slug) => slug in ordered)
   const otherCount = Array.isArray(ordered._other) ? ordered._other.length : 0
   const summary = `${topics.length} topic(s)${topics.length ? ` (${topics.join(', ')})` : ''}, ${otherCount} other`
-  if (before === after) log.info(`quick start sync: unchanged — ${summary}`)
+  if (before === after) log.info(`quick start sync: unchanged â€” ${summary}`)
   else log.ok(`quick start sync: ${summary}`)
 }
 

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useDeferredValue, useState } from 'react'
-import { ArrowRight, Database, GitPullRequest, Layers, LineChart, Network, Package, Rocket, Search, Server, Workflow, X } from 'lucide-react'
+import { ArrowRight, Database, FlaskConical, Gauge, GitPullRequest, Layers, LineChart, Network, Package, Rocket, Search, Server, Workflow, X } from 'lucide-react'
 import type { StudentGuide } from '~/data/student-guides'
 import ToolLogo, { type ToolSlug } from './ToolLogo'
 import { localeHref, type Lang } from '@/lib/i18n'
@@ -78,6 +78,9 @@ export default function StudentGuidesCatalog({
             const isAirflow = guide.slug === 'airflow'
             const isClearML = guide.slug === 'clearml'
             const isMlflow = guide.slug === 'mlflow'
+            const isLangfuse = guide.slug === 'langfuse'
+            const isRagas = guide.slug === 'ragas'
+            const isEvidently = guide.slug === 'evidently'
             const sections = sectionsBySlug[guide.slug]
             return (
               <Link
@@ -96,6 +99,12 @@ export default function StudentGuidesCatalog({
                 isClearML ? 'clearml-guide-card md:col-span-2 lg:col-span-3' : ''
               } ${
                 isMlflow ? 'mlflow-guide-card md:col-span-2 lg:col-span-3' : ''
+              } ${
+                isLangfuse ? 'langfuse-guide-card md:col-span-2 lg:col-span-3' : ''
+              } ${
+                isRagas ? 'ragas-guide-card md:col-span-2 lg:col-span-3' : ''
+              } ${
+                isEvidently ? 'evidently-guide-card md:col-span-2 lg:col-span-3' : ''
               }`}
             >
               {isGitHub && (
@@ -157,9 +166,49 @@ export default function StudentGuidesCatalog({
                   <i className="mlflow-card-line line-two" />
                 </div>
               )}
+              {isEvidently && (
+                <div className="evidently-card-background" aria-hidden="true">
+                  <div className="evidently-card-chart">
+                    <i className="evidently-limit" />
+                    <span className="evidently-reference"><b /><b /><b /><b /><b /><b /><b /></span>
+                    <span className="evidently-current"><b /><b /><b /><b /><b /><b /><b /></span>
+                    <em>DRIFT 0.21</em>
+                  </div>
+                </div>
+              )}
+              {isRagas && (
+                <div className="ragas-card-background" aria-hidden="true">
+                  <div className="ragas-card-radar">
+                    <i className="ragas-radar-ring ring-outer" />
+                    <i className="ragas-radar-ring ring-inner" />
+                    <i className="ragas-radar-axis axis-x" />
+                    <i className="ragas-radar-axis axis-y" />
+                    <i className="ragas-radar-shape" />
+                    <i className="ragas-radar-sweep" />
+                    <span className="ragas-radar-mark"><ToolLogo slug="ragas" /></span>
+                  </div>
+                  <div className="ragas-card-scorecard">
+                    <span><b>Faith</b><i style={{ '--ragas-score': '88%' } as React.CSSProperties} /></span>
+                    <span><b>Context</b><i style={{ '--ragas-score': '76%' } as React.CSSProperties} /></span>
+                    <span><b>Recall</b><i style={{ '--ragas-score': '92%' } as React.CSSProperties} /></span>
+                    <strong>PASS · 0.85</strong>
+                  </div>
+                </div>
+              )}
+              {isLangfuse && (
+                <div className="langfuse-card-background" aria-hidden="true">
+                  <div className="langfuse-card-waterfall"><i /><i /><i /><i /><i /></div>
+                  <span className="langfuse-card-node node-one"><ToolLogo slug="langfuse" /></span>
+                  <span className="langfuse-card-node node-two"><Gauge /></span>
+                  <span className="langfuse-card-node node-three"><FlaskConical /></span>
+                  <i className="langfuse-card-line line-one" />
+                  <i className="langfuse-card-line line-two" />
+                </div>
+              )}
+
               <div className="relative flex h-full flex-col md:max-w-[68%]">
                 <div className="flex items-start justify-between gap-4">
-                  <span className={`guide-card-logo ${isDocker ? 'docker-card-icon' : isDvc ? 'dvc-card-icon' : isAirflow ? 'airflow-card-icon' : isClearML ? 'clearml-card-icon' : isMlflow ? 'mlflow-card-icon' : 'github-card-icon'}`}>
+                  <span className={`guide-card-logo ${isDocker ? 'docker-card-icon' : isDvc ? 'dvc-card-icon' : isAirflow ? 'airflow-card-icon' : isClearML ? 'clearml-card-icon' : isMlflow ? 'mlflow-card-icon' : isLangfuse ? 'langfuse-card-icon' : isRagas ? 'ragas-card-icon' : isEvidently ? 'evidently-card-icon' : 'github-card-icon'}`}>
                     <ToolLogo slug={guide.slug as ToolSlug} />
                   </span>
                   <span className="chip">{guide.category}</span>
