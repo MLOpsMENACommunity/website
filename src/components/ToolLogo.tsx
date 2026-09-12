@@ -6,12 +6,12 @@ import type { ReactElement } from 'react'
  * Drawn as inline SVG rather than shipped as files in /public: `next/image`
  * with `images.unoptimized` does not prepend `basePath`, so every raster asset
  * needs the `asset()` helper and still costs a request. These are geometric
- * interpretations of each project's visual identity — a whale over containers,
- * a pinwheel, a commit graph — not reproductions of the trademarked wordmarks,
+ * interpretations of each project's visual identity â€” a whale over containers,
+ * a pinwheel, a commit graph â€” not reproductions of the trademarked wordmarks,
  * and they inherit `currentColor` so the brand colour lives in CSS next to the
  * rest of the per-tool theming.
  */
-export type ToolSlug = 'docker' | 'github-actions' | 'dvc' | 'airflow' | 'mlflow' | 'clearml'
+export type ToolSlug = 'docker' | 'github-actions' | 'dvc' | 'airflow' | 'mlflow' | 'clearml' | 'langfuse' | 'ragas' | 'evidently'
 
 const MARKS: Record<ToolSlug, ReactElement> = {
   /* A whale carrying a stack of containers. */
@@ -75,6 +75,35 @@ const MARKS: Record<ToolSlug, ReactElement> = {
       <rect x="17.8" y="20.2" width="3.6" height="8.4" rx="1.2" opacity="0.6" />
       <rect x="23" y="15.4" width="3.6" height="13.2" rx="1.2" opacity="0.8" />
       <path d="M17.4 12.6l4-5.2 3.2 2.4 3.6-5.4" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+    </g>
+  ),
+  /* An angular evaluation seal: radar facets close around a passing score. */
+  'ragas': (
+    <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
+      <path d="M16 3.8 27.6 10.5 27.6 21.5 16 28.2 4.4 21.5 4.4 10.5Z" />
+      <path d="M16 8.1 23.9 12.3 22.1 21.2 13.7 23.9 8.1 17.3 10.7 10.9Z" fill="currentColor" fillOpacity="0.18" />
+      <path d="M16 3.8v4.3M27.6 10.5l-3.7 1.8M27.6 21.5l-5.5-.3M16 28.2l-2.3-4.3M4.4 21.5l3.7-4.2M4.4 10.5l6.3.4" opacity="0.55" />
+      <path d="m12.5 16.2 2.4 2.5 5-5.5" strokeWidth="2.5" />
+    </g>
+  ),
+  /* Two measured distributions split by a monitored control limit. */
+  'evidently': (
+    <g fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="square" strokeLinejoin="miter">
+      <path d="M4 26.5h24M5.5 5.5v21" opacity="0.48" />
+      <path d="M6 22.5c2.2 0 2.5-7.8 5.6-7.8s3.5 7.8 6.1 7.8" opacity="0.55" />
+      <path d="M13.6 22.5c2.2 0 2.7-11.8 5.8-11.8s3.8 11.8 7.4 11.8" />
+      <path d="M22.8 5v18.5" strokeDasharray="2.2 2.2" />
+      <rect x="21.2" y="4" width="3.2" height="3.2" fill="currentColor" stroke="none" />
+    </g>
+  ),
+  /* A trace path with four observations around a central span. */
+  'langfuse': (
+    <g fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4.5 8.5h8.2l4.1 7 5.1-7h5.6" />
+      <path d="M4.5 23.5h8.2l4.1-7 5.1 7h5.6" opacity="0.52" />
+      <circle cx="4.5" cy="8.5" r="2.3" fill="currentColor" stroke="none" />
+      <circle cx="16.8" cy="15.5" r="2.6" fill="currentColor" stroke="none" />
+      <circle cx="27.5" cy="8.5" r="2.3" fill="currentColor" stroke="none" />
     </g>
   ),
 }

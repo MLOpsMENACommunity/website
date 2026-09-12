@@ -16,7 +16,7 @@ export type GuideHeading = {
 }
 
 /* ---- Levelled guides ----
-   A guide is read as a 3 × 3 grid: pick an experience level, then pick how you
+   A guide is read as a 3 أ— 3 grid: pick an experience level, then pick how you
    want to read it. Each of the nine panes is its own markdown document at
    `content/student-guides/<slug>/<level>-<track>.md`, written for that
    combination, plus the presentational blocks documented in `globals.css`
@@ -30,7 +30,7 @@ const TRACK_IDS: GuideTrackId[] = ['detailed', 'interview', 'tips']
 
 /* Every guide on the site is levelled. Listed here so the catalogue counts and
    the sitemap cannot drift from what actually exists on disk. */
-export const GUIDE_SLUGS = ['docker', 'github-actions', 'dvc', 'airflow', 'clearml', 'mlflow'] as const
+export const GUIDE_SLUGS = ['docker', 'github-actions', 'dvc', 'airflow', 'clearml', 'mlflow', 'langfuse', 'ragas', 'evidently'] as const
 
 export type GuidePane = {
   /* Doubles as the panel's DOM id and its location hash, so a level and section
@@ -41,7 +41,7 @@ export type GuidePane = {
 }
 
 /* A per-topic PDF on-ramp shown above the levelled grid. The PDF lives in a
-   public Drive folder and is embedded straight from Drive — nothing is
+   public Drive folder and is embedded straight from Drive â€” nothing is
    downloaded. `scripts/sync-quickstart.mjs` records each topic's Drive file id
    in `public/quickstart/index.json` at build time, so a topic has a Quick Start
    only when the map lists its slug. `heading` is the fixed anchor the
@@ -70,8 +70,8 @@ function plainText(value: string) {
     .replace(/<[^>]+>/g, ' ')
     .replace(/&amp;/g, '&')
     .replace(/&quot;/g, '"')
-    .replace(/&mdash;/g, '—')
-    .replace(/&rarr;/g, '→')
+    .replace(/&mdash;/g, 'â€”')
+    .replace(/&rarr;/g, 'â†’')
     .replace(/\s+/g, ' ')
     .trim()
 }
@@ -92,7 +92,7 @@ function headingsFromHtml(html: string) {
 
        ```yaml .github/workflows/ci.yml
 
-   The name lands on `<pre data-file="…">` and becomes the code window label. */
+   The name lands on `<pre data-file="â€¦">` and becomes the code window label. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function codeHandler(_state: unknown, node: CodeNode): any {
   const language = node.lang?.match(/^[^ \t]+/)?.[0]
@@ -203,10 +203,10 @@ export async function getGuideLevels(slug: string): Promise<GuideLevel[]> {
   )
 }
 
-/* Reads the slug → Drive file-id map at `public/quickstart/index.json` (written
+/* Reads the slug â†’ Drive file-id map at `public/quickstart/index.json` (written
    by `scripts/sync-quickstart.mjs`) and returns what the page needs to embed a
    Quick Start viewer, or null when the topic has no entry. Nothing is read from
-   the PDF itself — the browser loads it straight from Drive. The heading id is a
+   the PDF itself â€” the browser loads it straight from Drive. The heading id is a
    fixed `quickstart-<slug>` so it never collides with a pane heading and is
    stable to link to. */
 export function getQuickStart(slug: string): GuideQuickStart | null {
@@ -231,7 +231,7 @@ export function getQuickStart(slug: string): GuideQuickStart | null {
 export type OtherQuickStart = {
   /* Google Drive file id; embedded via `drive.google.com/file/d/<id>/preview`. */
   fileId: string
-  /* Original file name, e.g. `Kubernetes basics.pdf` — shown as the caption. */
+  /* Original file name, e.g. `Kubernetes basics.pdf` â€” shown as the caption. */
   name: string
   /* A readable heading derived from the file name (extension dropped, separators
      turned into spaces); doubles as the anchor id source. */
@@ -249,7 +249,7 @@ function titleFromFileName(name: string): string {
   return cleaned || name
 }
 
-/* Reads the `_other` list from `public/quickstart/index.json` — every PDF in the
+/* Reads the `_other` list from `public/quickstart/index.json` â€” every PDF in the
    Drive folder whose name is not a guide slug (written by
    `scripts/sync-quickstart.mjs`). Returns [] when the file is missing, malformed,
    or has no such entries. Nothing is read from the PDFs themselves; the browser
