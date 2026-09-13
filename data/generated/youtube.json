@@ -2,10 +2,15 @@
   "channelId": "UCKX8X4NwhP9Qb4g13SCa84Q",
   "stats": {
     "subscriberCount": 1500,
-    "viewCount": 26200,
-    "videoCount": 8
+    "viewCount": 26600,
+    "videoCount": 9
   },
   "videos": [
+    {
+      "id": "asIGEjkUQCI",
+      "title": "Hands on FastAPI and backend For MLOps",
+      "published": "2026-09-13T14:19:37.000Z"
+    },
     {
       "id": "Wx9RfYuO3WY",
       "title": "Kubernetes Deployment Strategies Explained Part2  | Canary, A/B Routing, Shadow Traffic",
@@ -43,12 +48,12 @@
     },
     {
       "id": "_rfZUcMQFeg",
-      "title": "Observability and drift detection - Session 5",
+      "title": "Model optimization — faster, smaller, cheaper - Session 5",
       "published": "2026-08-12T22:36:33.000Z"
     },
     {
       "id": "i7jT4Dr6qgE",
-      "title": "Model optimization — faster, smaller, cheaper - Session4",
+      "title": "Observability and drift detection - Session 4",
       "published": "2026-08-12T22:32:38.000Z"
     },
     {
