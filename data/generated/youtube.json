@@ -1,14 +1,14 @@
 {
   "channelId": "UCKX8X4NwhP9Qb4g13SCa84Q",
   "stats": {
-    "subscriberCount": 1500,
-    "viewCount": 27300,
+    "subscriberCount": 1600,
+    "viewCount": 29500,
     "videoCount": 10
   },
   "videos": [
     {
       "id": "g79F3WLZKSQ",
-      "title": "Observability and Drift Detection - Session 4",
+      "title": "MLOps #4 | Observability and Drift Detection",
       "published": "2026-09-14T09:23:43.000Z"
     },
     {
@@ -28,7 +28,7 @@
     },
     {
       "id": "Gnro52bcUsg",
-      "title": "Inference, serving and release strategies - session 3",
+      "title": "MLOps #3 | Model Serving at Scale: BentoML, Triton & vLLM + Canary and Shadow Deployments",
       "published": "2026-09-06T16:09:59.000Z"
     },
     {
@@ -43,17 +43,17 @@
     },
     {
       "id": "slxkWpCAqI8",
-      "title": "Experiment tracking, versioning and automation - Session2",
+      "title": "MLOps #2 | MLflow, DVC & GitHub Actions: Experiment Tracking and ML Pipeline Automation",
       "published": "2026-08-24T07:08:57.000Z"
     },
     {
       "id": "rJFIn83w0Dc",
-      "title": "From notebook to production-ready code - Session1",
+      "title": "MLOps #1 | From Notebook to Production-Ready ML Code | FastAPI, Docker & pytest",
       "published": "2026-08-17T07:19:50.000Z"
     },
     {
       "id": "_rfZUcMQFeg",
-      "title": "Model optimization — faster, smaller, cheaper - Session 5",
+      "title": "MLOps #5 | Model optimization — faster, smaller, cheaper",
       "published": "2026-08-12T22:36:33.000Z"
     },
     {
