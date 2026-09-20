@@ -3,9 +3,19 @@
   "stats": {
     "subscriberCount": 1200,
     "viewCount": 34600,
-    "videoCount": 10
+    "videoCount": 12
   },
   "videos": [
+    {
+      "id": "n9iphdrNfr8",
+      "title": "Prometheus & Grafana Monitoring Stack: Architecture, Metrics & PromQL (Part 1)",
+      "published": "2026-09-20T18:07:01.000Z"
+    },
+    {
+      "id": "W2xsdMvvvHI",
+      "title": "Redis for semantic caching",
+      "published": "2026-09-20T17:27:16.000Z"
+    },
     {
       "id": "g79F3WLZKSQ",
       "title": "MLOps #4 | Observability and Drift Detection",
@@ -50,11 +60,6 @@
       "id": "rJFIn83w0Dc",
       "title": "MLOps #1 | From Notebook to Production-Ready ML Code | FastAPI, Docker & pytest",
       "published": "2026-08-17T07:19:50.000Z"
-    },
-    {
-      "id": "_rfZUcMQFeg",
-      "title": "MLOps #5 | Model optimization — faster, smaller, cheaper",
-      "published": "2026-08-12T22:36:33.000Z"
     },
     {
       "id": "n0dv6KZHq9M",
